@@ -104,7 +104,7 @@ function speakBrowser(text: string, rate = 0.87, pitch = 0.95, onDone?: () => vo
     utt.pitch  = pitch
     utt.volume = volume
     // Small natural pause between sentences
-    utt.onend  = () => setTimeout(speakNext, 120)
+    utt.onend  = () => setTimeout(speakNext, 60)
     utt.onerror = () => onDone?.()
     window.speechSynthesis.speak(utt)
   }
@@ -221,7 +221,7 @@ export function useTTS() {
     return new Promise<void>(async (resolve) => {
       const done = () => { setIsSpeaking(false); resolve() }
       const ok = await playViaElevenLabs(cleaned, false, done)
-      if (!ok) speakBrowser(cleaned, 0.87, 0.95, done, voiceVolumeRef.current)
+      if (!ok) speakBrowser(cleaned, 0.97, 0.95, done, voiceVolumeRef.current)
     })
   }, [voiceEnabled, stopAudio, playViaElevenLabs])
 

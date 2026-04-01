@@ -94,10 +94,10 @@ export default function BreathePage() {
   const { play: playSound, stop: stopSound, current: currentSound, volume: ambientVolume, setVolume: setAmbientVolume } = useAmbientSound()
 
   const SOUNDS: { type: SoundType; label: string; emoji: string }[] = [
-    { type: "none",  label: "Off",   emoji: "🔇" },
-    { type: "rain",  label: "Rain",  emoji: "🌧" },
-    { type: "ocean", label: "Ocean", emoji: "🌊" },
-    { type: "bowl",  label: "Bowl",  emoji: "🎵" },
+    { type: "none",   label: "Off",    emoji: "🔇" },
+    { type: "chimes", label: "Chimes", emoji: "🎐" },
+    { type: "drift",  label: "Drift",  emoji: "✨" },
+    { type: "garden", label: "Garden", emoji: "🌿" },
   ]
 
   const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -154,28 +154,34 @@ export default function BreathePage() {
       if (seqIndexRef.current === 0) {
         cyclesRef.current += 1
         setCycles(cyclesRef.current)
-        // Speak encouragement at specific cycle milestones
-        const encouragement = CYCLE_ENCOURAGEMENTS[cyclesRef.current]
-        if (encouragement && voiceEnabledRef.current) {
-          // Brief pause then encouragement, then next phase cue
-          setTimeout(async () => {
-            if (abortedRef.current) return
-            await speak(encouragement, { rate: 0.8, pitch: 0.9 })
-          }, 200)
-        }
       }
       const next = sequenceRef.current[seqIndexRef.current]
+      const encouragement = seqIndexRef.current === 0
+        ? CYCLE_ENCOURAGEMENTS[cyclesRef.current]
+        : undefined
+
+      if (encouragement && voiceEnabledRef.current) {
+        // Suspend the tick while encouragement plays so the visual doesn't race ahead.
+        // Phase label + countdown only advance once encouragement is done — in sync with voice cue.
+        setTimeout(async () => {
+          if (abortedRef.current) return
+          await speak(encouragement, { rate: 0.8, pitch: 0.9 })
+          if (abortedRef.current) return
+          phaseRef.current = next.phase
+          countRef.current = next.duration
+          setPhase(next.phase)
+          setCountdown(next.duration)
+          speakPhase(next.phase)
+          timerRef.current = setTimeout(tick, 1000)
+        }, 200)
+        return // exit without rescheduling — tick resumes above after encouragement
+      }
+
       phaseRef.current = next.phase
       countRef.current = next.duration
       setPhase(next.phase)
       setCountdown(next.duration)
-      // Only speak phase cue if no encouragement on this cycle, or it's not cycle start
-      if (!CYCLE_ENCOURAGEMENTS[cyclesRef.current] || seqIndexRef.current !== 0) {
-        speakPhase(next.phase)
-      } else {
-        // Delay phase cue until after encouragement (~2.5s for short phrase)
-        setTimeout(() => { if (!abortedRef.current) speakPhase(next.phase) }, 2800)
-      }
+      speakPhase(next.phase)
     } else {
       setCountdown(countRef.current)
     }
@@ -206,7 +212,7 @@ export default function BreathePage() {
     if (voiceEnabledRef.current) {
       await speak(selectedPattern.intro, { rate: 0.82, pitch: 0.9 })
       // Small pause after intro before breathing begins
-      await new Promise<void>((res) => setTimeout(res, 800))
+      await new Promise<void>((res) => setTimeout(res, 300))
     }
 
     if (abortedRef.current) return // user stopped during intro
@@ -418,7 +424,7 @@ export default function BreathePage() {
             {/* Ambient sound */}
             <div className="glass-card rounded-2xl px-4 py-3">
               <div className="flex items-center justify-between mb-2.5">
-                <span className="text-xs font-medium text-foreground">Ambient sound</span>
+                <span className="text-xs font-medium text-foreground">Spa music</span>
                 <span className="text-xs text-muted-foreground tabular-nums">{currentSound === "none" ? "Off" : `${Math.round(ambientVolume * 100)}%`}</span>
               </div>
               <div className="flex gap-1.5 mb-3">

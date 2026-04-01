@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server"
 
+const MAX_MESSAGES = 60
+const MAX_MESSAGE_CHARS = 6000
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -7,6 +10,20 @@ export async function POST(request: Request) {
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {
       return NextResponse.json({ error: "AI service not configured" }, { status: 503 })
+    }
+
+    // Validate message array
+    if (!Array.isArray(body.messages)) {
+      return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+    }
+    if (body.messages.length > MAX_MESSAGES) {
+      return NextResponse.json({ error: "Too many messages" }, { status: 400 })
+    }
+    for (const msg of body.messages) {
+      const content = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content)
+      if (content.length > MAX_MESSAGE_CHARS) {
+        return NextResponse.json({ error: "Message too long" }, { status: 400 })
+      }
     }
 
     const isStreaming = body.stream === true

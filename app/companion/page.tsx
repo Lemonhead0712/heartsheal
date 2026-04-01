@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, Send, Heart, Sparkles, RefreshCw, AlertCircle, Mic, MicOff, Volume2, VolumeX, Square, Download, X } from "lucide-react"
+import { ChevronLeft, Send, Heart, Sparkles, RefreshCw, AlertCircle, Mic, MicOff, Volume2, VolumeX, Square, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { PageContainer } from "@/components/page-container"
@@ -533,7 +533,7 @@ export default function CompanionPage() {
             >
               <div className="relative w-24 h-24 mx-auto mb-6">
                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/30 to-rose-200 dark:from-primary/20 dark:to-rose-900/40 flex items-center justify-center shadow-lg">
-                  <img src="/icon.png" alt="HeartsHeal" className="w-14 h-14 object-contain" />
+                  <img src="/icon.png" alt="HeartsHeal" className="w-14 h-14 object-contain mix-blend-multiply dark:mix-blend-screen" />
                 </div>
                 <span className="absolute -bottom-1 -right-1 text-2xl">✨</span>
               </div>
@@ -647,7 +647,7 @@ export default function CompanionPage() {
               className="mb-6"
             >
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/30 to-rose-200 dark:from-primary/20 dark:to-rose-900/40 flex items-center justify-center shadow-xl">
-                <img src="/icon.png" alt="HeartsHeal" className="w-14 h-14 object-contain" />
+                <img src="/icon.png" alt="HeartsHeal" className="w-14 h-14 object-contain mix-blend-multiply dark:mix-blend-screen" />
               </div>
             </motion.div>
 

@@ -7,7 +7,6 @@ import { ChevronLeft, Send, Heart, Sparkles, RefreshCw, AlertCircle, Mic, MicOff
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { PageContainer } from "@/components/page-container"
-import { BottomNav } from "@/components/bottom-nav"
 import { cn } from "@/lib/utils"
 import { useTTS, useSTT } from "@/hooks/use-speech"
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
@@ -505,7 +504,7 @@ export default function CompanionPage() {
   if (phase === "intro") {
     return (
       <PageContainer>
-        <div className="min-h-screen bg-page-gradient flex flex-col">
+        <div className="bg-page-gradient flex flex-col">
           <div className="max-w-2xl mx-auto px-4 pt-8 pb-24 md:pb-12 flex flex-col items-center text-center">
             <Link href="/" className="self-start mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
               <ChevronLeft className="w-4 h-4" /> Back
@@ -566,7 +565,6 @@ export default function CompanionPage() {
             </motion.div>
           </div>
         </div>
-        <BottomNav />
       </PageContainer>
     )
   }
@@ -575,7 +573,7 @@ export default function CompanionPage() {
   if (phase === "select") {
     return (
       <PageContainer>
-        <div className="min-h-screen bg-page-gradient">
+        <div className="bg-page-gradient">
           <div className="max-w-2xl mx-auto px-4 pt-8 pb-24 md:pb-12">
             <button onClick={() => setPhase("intro")} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
               <ChevronLeft className="w-4 h-4" /> Back
@@ -609,7 +607,6 @@ export default function CompanionPage() {
             </motion.div>
           </div>
         </div>
-        <BottomNav />
       </PageContainer>
     )
   }

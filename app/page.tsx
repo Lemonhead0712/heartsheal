@@ -105,14 +105,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-page-gradient">
       <motion.div
-        className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-10 md:pt-10 md:pb-16"
+        className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-6 md:pt-6 md:pb-10"
         variants={container}
         initial="hidden"
         animate="show"
       >
 
         {/* ── Hero ── */}
-        <motion.section className="text-center max-w-2xl mx-auto mb-10 md:mb-14" variants={item}>
+        <motion.section className="text-center max-w-2xl mx-auto mb-6 md:mb-8" variants={item}>
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wide mb-5">
             <Heart className="w-3.5 h-3.5 fill-primary/30" />
             {greeting.salutation}
@@ -145,7 +145,7 @@ export default function Home() {
         </motion.section>
 
         {/* ── Crisis Support Banner ── */}
-        <motion.section variants={item} className="mb-10 md:mb-14">
+        <motion.section variants={item} className="mb-6 md:mb-8">
           <div className="glass-card rounded-2xl px-5 py-4 max-w-2xl mx-auto">
             <div className="flex items-start gap-3">
               <span className="text-xl shrink-0">🆘</span>
@@ -163,13 +163,13 @@ export default function Home() {
         </motion.section>
 
         {/* ── Inspirational Quote ── */}
-        <motion.section className="mb-10 md:mb-14" variants={item}>
+        <motion.section className="mb-6 md:mb-8" variants={item}>
           <InspirationalQuote />
         </motion.section>
 
         {/* ── Account & Sync (signed-out only) ── */}
         {!user && (
-          <motion.section className="mb-10 md:mb-14" variants={item}>
+          <motion.section className="mb-6 md:mb-8" variants={item}>
             <div className="glass-card rounded-2xl px-5 py-5 max-w-2xl mx-auto">
               <div className="flex items-center gap-2 mb-1">
                 <Cloud className="w-4 h-4 text-primary" />
@@ -198,12 +198,12 @@ export default function Home() {
         )}
 
         {/* ── Welcome Banner (first visit only) ── */}
-        <motion.section className="mb-10 md:mb-14" variants={item}>
+        <motion.section className="mb-6 md:mb-8" variants={item}>
           <WelcomeBanner />
         </motion.section>
 
         {/* ── Feature Cards ── */}
-        <motion.section className="mb-12 md:mb-16" variants={item}>
+        <motion.section className="mb-8 md:mb-10" variants={item}>
           <div className="flex items-center gap-3 mb-6">
             <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
               Your Healing Tools
@@ -256,7 +256,7 @@ export default function Home() {
         </motion.section>
 
         {/* ── Dashboard Grid ── */}
-        <motion.section className="mb-12 md:mb-16" variants={item}>
+        <motion.section className="mb-8 md:mb-10" variants={item}>
           <div className="flex items-center gap-3 mb-6">
             <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
               Your Dashboard
@@ -271,7 +271,7 @@ export default function Home() {
         </motion.section>
 
         {/* ── Closing affirmation ── */}
-        <motion.section variants={item} className="text-center py-8">
+        <motion.section variants={item} className="text-center py-4">
           <div className="section-divider mb-6" />
           <p className="font-serif text-lg text-muted-foreground italic">
             "Healing is not linear. Every moment you're here is an act of courage."

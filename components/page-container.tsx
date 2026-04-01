@@ -15,7 +15,7 @@ export function PageContainer({ children, className, bare = false }: PageContain
   if (bare) {
     return (
       <div className={cn("min-h-screen bg-page-gradient", className)}>
-        <div className="mx-auto max-w-2xl px-4 py-8">{children}</div>
+        <div className="mx-auto max-w-2xl px-4 py-5">{children}</div>
       </div>
     )
   }
@@ -24,7 +24,7 @@ export function PageContainer({ children, className, bare = false }: PageContain
     <>
       <DesktopNav />
       <div className={cn("min-h-screen bg-page-gradient pb-[76px] md:pb-0", className)}>
-        <div className="mx-auto max-w-2xl px-4 py-8">{children}</div>
+        <div className="mx-auto max-w-2xl px-4 py-5">{children}</div>
         <Footer />
       </div>
       <BottomNav />

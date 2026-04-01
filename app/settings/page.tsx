@@ -142,22 +142,22 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-page-gradient pb-24">
-      <motion.div className="max-w-2xl mx-auto px-4 py-8" variants={container} initial="hidden" animate="show">
+      <motion.div className="max-w-2xl mx-auto px-4 py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
-        <motion.div className="flex flex-col items-center mb-6" variants={item}>
+        <motion.div className="flex flex-col items-center mb-3" variants={item}>
           <Logo size="small" />
         </motion.div>
-        <motion.div className="mb-8" variants={item}>
+        <motion.div className="mb-5" variants={item}>
           <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors text-sm">
             <ChevronLeft className="mr-1 h-4 w-4" /> Back to Dashboard
           </Link>
-          <h1 className="font-serif text-3xl font-semibold text-foreground mt-4 mb-1">Settings & Data</h1>
+          <h1 className="font-serif text-3xl font-semibold text-foreground mt-3 mb-1">Settings & Data</h1>
           <p className="text-muted-foreground text-sm">Your data lives on your device — private, always.</p>
         </motion.div>
 
         {/* Stats overview */}
-        <motion.div className="grid grid-cols-3 gap-3 mb-6" variants={item}>
+        <motion.div className="grid grid-cols-3 gap-3 mb-4" variants={item}>
           {[
             { label: "Emotion Logs", value: stats.emotions, icon: "💗" },
             { label: "Journal Entries", value: stats.journal, icon: "📓" },

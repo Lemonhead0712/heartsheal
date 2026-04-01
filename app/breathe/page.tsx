@@ -238,14 +238,14 @@ export default function BreathePage() {
 
   return (
     <div className="min-h-screen bg-page-gradient pb-20">
-      <motion.div className="max-w-2xl mx-auto px-4 py-8" variants={container} initial="hidden" animate="show">
+      <motion.div className="max-w-2xl mx-auto px-4 py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
-        <motion.div className="flex flex-col items-center mb-6" variants={item}>
+        <motion.div className="flex flex-col items-center mb-3" variants={item}>
           <Logo size="small" />
         </motion.div>
 
-        <motion.div className="mb-8" variants={item}>
+        <motion.div className="mb-5" variants={item}>
           <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors text-sm">
             <ChevronLeft className="mr-1 h-4 w-4" /> Back to Dashboard
           </Link>
@@ -262,14 +262,14 @@ export default function BreathePage() {
 
         {/* Affirmation — hide once session starts */}
         {sessionState === "idle" && (
-          <motion.div className="mb-8" variants={item}>
+          <motion.div className="mb-5" variants={item}>
             <AiBreathingAffirmation breathingPattern={selectedPattern.name} />
           </motion.div>
         )}
 
         {/* Pattern selector — hide once session starts */}
         {sessionState === "idle" && (
-          <motion.div className="mb-8" variants={item}>
+          <motion.div className="mb-5" variants={item}>
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
               Choose a technique
             </h2>
@@ -296,7 +296,7 @@ export default function BreathePage() {
         )}
 
         {/* Breathing circle */}
-        <motion.div className="flex flex-col items-center mb-8" variants={item}>
+        <motion.div className="flex flex-col items-center mb-5" variants={item}>
 
           {/* Session name when active */}
           <AnimatePresence>

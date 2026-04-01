@@ -144,22 +144,22 @@ function EmotionalLog() {
   return (
     <div className="min-h-screen bg-page-gradient pb-20">
       <motion.div
-        className="container mx-auto px-4 py-8 max-w-4xl"
+        className="container mx-auto px-4 py-5 max-w-4xl"
         variants={container}
         initial="hidden"
         animate="show"
       >
-        <motion.div className="flex flex-col items-center mb-6" variants={item}>
+        <motion.div className="flex flex-col items-center mb-3" variants={item}>
           <Logo size="small" />
         </motion.div>
 
-        <motion.div className="mb-8 flex justify-between items-center" variants={item}>
+        <motion.div className="mb-5 flex justify-between items-center" variants={item}>
           <div>
             <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors">
               <ChevronLeft className="mr-1 h-4 w-4" />
               Back to Dashboard
             </Link>
-            <h1 className="text-3xl font-bold text-foreground mt-4 mb-2">Emotional State Log</h1>
+            <h1 className="text-3xl font-bold text-foreground mt-3 mb-2">Emotional State Log</h1>
             <p className="text-muted-foreground">Track your emotions and reflect on your emotional patterns</p>
           </div>
           <div className="flex items-center">
@@ -179,7 +179,7 @@ function EmotionalLog() {
         )}
 
           <motion.div variants={item}>
-            <Card className="mb-8 border-border/40 bg-card shadow-card">
+            <Card className="mb-5 border-border/40 bg-card shadow-card">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-primary">How are you feeling?</CardTitle>

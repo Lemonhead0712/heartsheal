@@ -385,6 +385,13 @@ export default function CompanionPage() {
     }
   }, [])
 
+  // Scroll window to top whenever the chat phase mounts (prevents page from staying scrolled down)
+  useEffect(() => {
+    if (phase === "chat") {
+      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior })
+    }
+  }, [phase])
+
   useEffect(() => {
     const el = chatContainerRef.current
     if (!el) return

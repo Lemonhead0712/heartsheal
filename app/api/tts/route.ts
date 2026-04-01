@@ -6,7 +6,8 @@ const VOICE_ID = "21m00Tcm4TlvDq8ikWAM"
 export async function POST(request: Request) {
   try {
     const { text } = await request.json()
-    if (!text) return NextResponse.json({ error: "No text provided" }, { status: 400 })
+    if (!text || typeof text !== "string") return NextResponse.json({ error: "No text provided" }, { status: 400 })
+    if (text.length > 2000) return NextResponse.json({ error: "Text too long" }, { status: 400 })
 
     const apiKey = process.env.ELEVENLABS_API_KEY
     if (!apiKey) {

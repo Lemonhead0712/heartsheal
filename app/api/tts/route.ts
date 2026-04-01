@@ -3,6 +3,33 @@ import { NextResponse } from "next/server"
 // ElevenLabs "Rachel" — calm, warm, empathetic female voice
 const VOICE_ID = "21m00Tcm4TlvDq8ikWAM"
 
+/**
+ * Wraps plain text in SSML with:
+ * - 90% speaking rate via <prosody rate="90%">
+ * - Natural breathing pauses after punctuation via <break> tags
+ * Enables warm, unhurried, conversational delivery.
+ */
+function prepareSSML(text: string): string {
+  // Strip any existing HTML/SSML tags for safety, then escape XML chars
+  const cleaned = text.replace(/<[^>]+>/g, "")
+  const escaped = cleaned
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+
+  const withBreaks = escaped
+    // Sentence endings — thoughtful pause before continuing
+    .replace(/([.!?])\s+/g, '$1<break time="450ms"/> ')
+    // Comma / semicolon — brief breath
+    .replace(/([,;])\s+/g, '$1<break time="200ms"/> ')
+    // Em dash — a moment of thought
+    .replace(/\s*—\s*/g, '<break time="300ms"/> ')
+    // Ellipsis — contemplative pause
+    .replace(/\.\.\.\s*/g, '<break time="500ms"/> ')
+
+  return `<speak><prosody rate="90%">${withBreaks}</prosody></speak>`
+}
+
 export async function POST(request: Request) {
   try {
     const { text } = await request.json()
@@ -14,6 +41,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "TTS not configured" }, { status: 503 })
     }
 
+    const ssml = prepareSSML(text)
+
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream`,
       {
@@ -24,12 +53,13 @@ export async function POST(request: Request) {
           Accept: "audio/mpeg",
         },
         body: JSON.stringify({
-          text,
+          text: ssml,
           model_id: "eleven_multilingual_v2", // highest quality, most natural output
+          enable_ssml_parsing: true,           // parse <break> and <prosody> tags
           voice_settings: {
-            stability: 0.45,        // lower = more natural pitch variation, less robotic monotone
+            stability: 0.42,        // slightly lower for more natural pitch variation
             similarity_boost: 0.80, // keeps Rachel's warm character intact
-            style: 0.20,            // subtle expression — enough warmth without over-acting
+            style: 0.25,            // warmth and expressiveness for empathetic delivery
             use_speaker_boost: true,
           },
         }),

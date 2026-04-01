@@ -35,7 +35,7 @@ export function WelcomeBanner({ className }: WelcomeBannerProps) {
           exit={{ opacity: 0, y: -12, scale: 0.97 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           className={cn(
-            "relative flex items-center gap-3 rounded-2xl px-4 py-3 pr-10",
+            "relative flex items-center gap-3 rounded-2xl px-4 py-3 pr-10 mb-6 md:mb-8",
             "bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20",
             className,
           )}

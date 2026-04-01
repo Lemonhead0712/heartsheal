@@ -37,7 +37,7 @@ If you are located in the European Economic Area, you have the right to access, 
   },
   {
     title: "Cookies and tracking",
-    body: `HeartsHeal does not use advertising cookies or third-party tracking. We use Vercel Analytics for anonymous, aggregated usage statistics (page views, performance). No personal data is collected through analytics.`,
+    body: `HeartsHeal does not use advertising cookies or third-party tracking. We collect anonymous, aggregated usage statistics (page views, performance) with no personal data attached.`,
   },
   {
     title: "Children's privacy",

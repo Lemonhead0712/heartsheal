@@ -24,7 +24,7 @@ export async function POST(request: Request) {
         model: "tts-1-hd",       // highest quality OpenAI TTS model
         input: text,
         voice: VOICE,
-        speed: 0.95,             // slightly unhurried, warm conversational pace
+        speed: 1.05,             // crisp, natural conversational pace
         response_format: "mp3",
       }),
     })

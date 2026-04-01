@@ -238,13 +238,12 @@ export default function BreathePage() {
 
   return (
     <div className="min-h-screen bg-page-gradient pb-20">
-      <motion.div className="max-w-2xl mx-auto px-4 py-5" variants={container} initial="hidden" animate="show">
+      <motion.div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
         <motion.div className="flex flex-col items-center mb-3" variants={item}>
           <Logo size="small" />
         </motion.div>
-
         <motion.div className="mb-5" variants={item}>
           <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors text-sm">
             <ChevronLeft className="mr-1 h-4 w-4" /> Back to Dashboard
@@ -260,297 +259,186 @@ export default function BreathePage() {
           </div>
         </motion.div>
 
-        {/* Affirmation — hide once session starts */}
-        {sessionState === "idle" && (
-          <motion.div className="mb-5" variants={item}>
-            <AiBreathingAffirmation breathingPattern={selectedPattern.name} />
-          </motion.div>
-        )}
+        {/* Two-column grid */}
+        <motion.div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-8 items-start" variants={item}>
 
-        {/* Pattern selector — hide once session starts */}
-        {sessionState === "idle" && (
-          <motion.div className="mb-5" variants={item}>
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-              Choose a technique
-            </h2>
-            <div className="grid grid-cols-2 gap-3">
-              {patterns.map((p) => (
-                <button
-                  key={p.name}
-                  onClick={() => { reset(); setSelectedPattern(p) }}
-                  className={`
-                    text-left p-4 rounded-2xl border transition-all duration-200
-                    ${selectedPattern.name === p.name
-                      ? "border-primary/40 bg-gradient-to-br " + p.color + " shadow-md"
-                      : "border-border/40 bg-card hover:border-primary/20 hover:bg-muted/30"
-                    }
-                  `}
-                >
-                  <p className="font-semibold text-sm text-foreground mb-0.5">{p.name}</p>
-                  <p className="text-xs text-muted-foreground leading-snug">{p.description}</p>
-                  <p className="text-[11px] text-primary/70 mt-1.5 font-medium">{p.benefit}</p>
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
+          {/* ── Main column: affirmation, pattern selector, breathing circle ── */}
+          <div className="min-w-0">
 
-        {/* Breathing circle */}
-        <motion.div className="flex flex-col items-center mb-5" variants={item}>
-
-          {/* Session name when active */}
-          <AnimatePresence>
-            {sessionState !== "idle" && (
-              <motion.p
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="text-sm font-medium text-primary/70 mb-4"
-              >
-                {selectedPattern.name}
-              </motion.p>
+            {/* Affirmation — hide once session starts */}
+            {sessionState === "idle" && (
+              <div className="mb-5">
+                <AiBreathingAffirmation breathingPattern={selectedPattern.name} />
+              </div>
             )}
-          </AnimatePresence>
 
-          <div className="relative flex items-center justify-center w-64 h-64 mb-6">
-            {/* Outer glow ring */}
-            <motion.div
-              className="absolute rounded-full"
-              style={{ width: "100%", height: "100%" }}
-              animate={isIntro
-                ? { scale: [1, 1.04, 1], opacity: [0.06, 0.12, 0.06] }
-                : { scale: 1, opacity: 0.1 }
-              }
-              transition={isIntro
-                ? { duration: 3, repeat: Infinity, ease: "easeInOut" }
-                : {}
-              }
-            >
-              <div className="w-full h-full rounded-full bg-primary/10" />
-            </motion.div>
+            {/* Pattern selector — hide once session starts */}
+            {sessionState === "idle" && (
+              <div className="mb-5">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Choose a technique</h2>
+                <div className="grid grid-cols-2 gap-3">
+                  {patterns.map((p) => (
+                    <button key={p.name} onClick={() => { reset(); setSelectedPattern(p) }}
+                      className={`text-left p-4 rounded-2xl border transition-all duration-200 ${
+                        selectedPattern.name === p.name
+                          ? "border-primary/40 bg-gradient-to-br " + p.color + " shadow-md"
+                          : "border-border/40 bg-card hover:border-primary/20 hover:bg-muted/30"
+                      }`}
+                    >
+                      <p className="font-semibold text-sm text-foreground mb-0.5">{p.name}</p>
+                      <p className="text-xs text-muted-foreground leading-snug">{p.description}</p>
+                      <p className="text-[11px] text-primary/70 mt-1.5 font-medium">{p.benefit}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Breathing circle */}
-            <motion.div
-              className={`rounded-full shadow-lg ${
-                isIntro
-                  ? "bg-gradient-to-br from-primary/20 to-primary/40"
-                  : "bg-gradient-to-br from-primary/30 to-primary/60"
-              }`}
-              style={{ width: "140px", height: "140px" }}
-              animate={{
-                scale: isIntro
-                  ? [1, 1.06, 1]
-                  : isRunning ? circleScale : 1,
-              }}
-              transition={isIntro
-                ? { duration: 4, repeat: Infinity, ease: "easeInOut" }
-                : {
-                    duration: isRunning && phase !== "idle" ? phaseDuration : 0.5,
-                    ease: phase === "inhale" ? "easeIn" : phase === "exhale" ? "easeOut" : "linear",
-                  }
-              }
-            />
-
-            {/* Center text */}
-            <div className="absolute flex flex-col items-center px-4 text-center">
-              <AnimatePresence mode="wait">
-                {isIntro ? (
-                  <motion.div
-                    key="intro"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="flex flex-col items-center gap-1"
-                  >
-                    <p className="text-white font-semibold text-sm drop-shadow leading-tight">
-                      Settling in…
-                    </p>
-                    <div className="flex gap-1 mt-1">
-                      {[0, 1, 2].map((i) => (
-                        <motion.div
-                          key={i}
-                          className="w-1 h-1 rounded-full bg-white/70"
-                          animate={{ opacity: [0.3, 1, 0.3] }}
-                          transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.4 }}
-                        />
-                      ))}
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.p
-                    key={phase}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.25 }}
-                    className="text-white font-semibold text-sm drop-shadow"
-                  >
-                    {phaseLabel[phase]}
+            <div className="flex flex-col items-center">
+              <AnimatePresence>
+                {sessionState !== "idle" && (
+                  <motion.p initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                    className="text-sm font-medium text-primary/70 mb-4">
+                    {selectedPattern.name}
                   </motion.p>
                 )}
               </AnimatePresence>
 
-              {isRunning && phase !== "idle" && (
-                <motion.span
-                  key={countdown}
-                  initial={{ scale: 1.3, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="text-white/90 text-2xl font-bold mt-1 drop-shadow"
-                >
-                  {countdown}
-                </motion.span>
+              <div className="relative flex items-center justify-center w-64 h-64 mb-6">
+                <motion.div className="absolute rounded-full" style={{ width: "100%", height: "100%" }}
+                  animate={isIntro ? { scale: [1, 1.04, 1], opacity: [0.06, 0.12, 0.06] } : { scale: 1, opacity: 0.1 }}
+                  transition={isIntro ? { duration: 3, repeat: Infinity, ease: "easeInOut" } : {}}>
+                  <div className="w-full h-full rounded-full bg-primary/10" />
+                </motion.div>
+                <motion.div
+                  className={`rounded-full shadow-lg ${isIntro ? "bg-gradient-to-br from-primary/20 to-primary/40" : "bg-gradient-to-br from-primary/30 to-primary/60"}`}
+                  style={{ width: "140px", height: "140px" }}
+                  animate={{ scale: isIntro ? [1, 1.06, 1] : isRunning ? circleScale : 1 }}
+                  transition={isIntro ? { duration: 4, repeat: Infinity, ease: "easeInOut" } : {
+                    duration: isRunning && phase !== "idle" ? phaseDuration : 0.5,
+                    ease: phase === "inhale" ? "easeIn" : phase === "exhale" ? "easeOut" : "linear",
+                  }}
+                />
+                <div className="absolute flex flex-col items-center px-4 text-center">
+                  <AnimatePresence mode="wait">
+                    {isIntro ? (
+                      <motion.div key="intro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-1">
+                        <p className="text-white font-semibold text-sm drop-shadow leading-tight">Settling in…</p>
+                        <div className="flex gap-1 mt-1">
+                          {[0, 1, 2].map((i) => (
+                            <motion.div key={i} className="w-1 h-1 rounded-full bg-white/70"
+                              animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.4 }} />
+                          ))}
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.p key={phase} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.25 }} className="text-white font-semibold text-sm drop-shadow">
+                        {phaseLabel[phase]}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                  {isRunning && phase !== "idle" && (
+                    <motion.span key={countdown} initial={{ scale: 1.3, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                      className="text-white/90 text-2xl font-bold mt-1 drop-shadow">{countdown}</motion.span>
+                  )}
+                </div>
+              </div>
+
+              {cycles > 0 && (
+                <p className="text-sm text-muted-foreground mb-4">{cycles} {cycles === 1 ? "cycle" : "cycles"} completed</p>
               )}
+
+              <div className="flex items-center gap-3">
+                {sessionState === "idle" && (
+                  <button onClick={start} className="flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-semibold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+                    <Play className="w-4 h-4" /> Begin Session
+                  </button>
+                )}
+                {isIntro && (
+                  <button onClick={stopBreathing} className="flex items-center gap-2 px-6 py-3 rounded-full border border-border/50 text-muted-foreground text-sm hover:bg-muted/30 transition-all duration-200">
+                    Cancel
+                  </button>
+                )}
+                {isRunning && (
+                  <>
+                    <button onClick={stopBreathing} className="flex items-center gap-2 px-6 py-3 rounded-full bg-muted text-foreground font-semibold text-sm hover:bg-muted/80 transition-all duration-200">
+                      <Pause className="w-4 h-4" /> End Session
+                    </button>
+                    <button onClick={reset} className="flex items-center gap-2 px-4 py-3 rounded-full border border-border/50 text-muted-foreground text-sm hover:bg-muted/30 transition-all duration-200">
+                      <RotateCcw className="w-4 h-4" /> Reset
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-
-          {/* Cycle counter */}
-          {cycles > 0 && (
-            <p className="text-sm text-muted-foreground mb-4">
-              {cycles} {cycles === 1 ? "cycle" : "cycles"} completed
-            </p>
-          )}
-
-          {/* Controls */}
-          <div className="flex items-center gap-3">
-            {sessionState === "idle" && (
-              <button
-                onClick={start}
-                className="flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-semibold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-              >
-                <Play className="w-4 h-4" />
-                Begin Session
-              </button>
-            )}
-
-            {isIntro && (
-              <button
-                onClick={stopBreathing}
-                className="flex items-center gap-2 px-6 py-3 rounded-full border border-border/50 text-muted-foreground text-sm hover:bg-muted/30 transition-all duration-200"
-              >
-                Cancel
-              </button>
-            )}
-
-            {isRunning && (
-              <>
-                <button
-                  onClick={stopBreathing}
-                  className="flex items-center gap-2 px-6 py-3 rounded-full bg-muted text-foreground font-semibold text-sm hover:bg-muted/80 transition-all duration-200"
-                >
-                  <Pause className="w-4 h-4" />
-                  End Session
-                </button>
-                <button
-                  onClick={reset}
-                  className="flex items-center gap-2 px-4 py-3 rounded-full border border-border/50 text-muted-foreground text-sm hover:bg-muted/30 transition-all duration-200"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  Reset
-                </button>
-              </>
-            )}
 
           </div>
 
-          {/* ── Sound controls panel ── */}
-          <div className="w-full max-w-xs mt-5 space-y-4">
+          {/* ── Sidebar: technique detail + sound controls ── */}
+          <aside className="lg:sticky lg:top-[76px] lg:self-start space-y-4 min-w-0">
 
-            {/* Voice guidance row */}
+            {/* Technique detail */}
+            <div className={`glass-card rounded-2xl p-5 bg-gradient-to-br ${selectedPattern.color}`}>
+              <h3 className="font-semibold text-foreground mb-3">{selectedPattern.name}</h3>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label: "Inhale", val: selectedPattern.inhale },
+                  { label: "Hold",   val: selectedPattern.hold1 || "—" },
+                  { label: "Exhale", val: selectedPattern.exhale },
+                  { label: "Hold",   val: selectedPattern.hold2 || "—" },
+                ].map(({ label, val }, i) => (
+                  <div key={i} className="text-center">
+                    <p className="text-xl font-bold text-foreground">{val}</p>
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground mt-3">{selectedPattern.benefit}</p>
+            </div>
+
+            {/* Voice guidance */}
             <div className="glass-card rounded-2xl px-4 py-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={toggleVoice}
-                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
-                      voiceEnabled ? "text-primary" : "text-muted-foreground"
-                    }`}
-                  >
+                  <button onClick={toggleVoice} className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${voiceEnabled ? "text-primary" : "text-muted-foreground"}`}>
                     {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
                   </button>
                   <span className="text-xs font-medium text-foreground">Voice guidance</span>
                 </div>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {Math.round(voiceVolume * 100)}%
-                </span>
+                <span className="text-xs text-muted-foreground tabular-nums">{Math.round(voiceVolume * 100)}%</span>
               </div>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={voiceVolume}
-                disabled={!voiceEnabled}
-                onChange={(e) => setVoiceVolume(Number(e.target.value))}
-                className="w-full accent-primary disabled:opacity-40"
-              />
+              <input type="range" min={0} max={1} step={0.05} value={voiceVolume} disabled={!voiceEnabled}
+                onChange={(e) => setVoiceVolume(Number(e.target.value))} className="w-full accent-primary disabled:opacity-40" />
+              {sessionState === "idle" && voiceEnabled && (
+                <p className="text-xs text-muted-foreground/60 mt-2">You'll hear an introduction before each session</p>
+              )}
             </div>
 
-            {/* Ambient sound row */}
+            {/* Ambient sound */}
             <div className="glass-card rounded-2xl px-4 py-3">
               <div className="flex items-center justify-between mb-2.5">
                 <span className="text-xs font-medium text-foreground">Ambient sound</span>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {currentSound === "none" ? "Off" : `${Math.round(ambientVolume * 100)}%`}
-                </span>
+                <span className="text-xs text-muted-foreground tabular-nums">{currentSound === "none" ? "Off" : `${Math.round(ambientVolume * 100)}%`}</span>
               </div>
               <div className="flex gap-1.5 mb-3">
                 {SOUNDS.map(({ type, label, emoji }) => (
-                  <button
-                    key={type}
-                    onClick={() => type === "none" ? stopSound() : playSound(type)}
+                  <button key={type} onClick={() => type === "none" ? stopSound() : playSound(type)}
                     className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-xl text-[10px] font-medium border transition-all duration-200 ${
-                      currentSound === type
-                        ? "bg-primary/10 border-primary/30 text-primary"
-                        : "border-border/40 text-muted-foreground hover:border-primary/20"
-                    }`}
-                  >
+                      currentSound === type ? "bg-primary/10 border-primary/30 text-primary" : "border-border/40 text-muted-foreground hover:border-primary/20"
+                    }`}>
                     <span className="text-base leading-none">{emoji}</span>
                     <span>{label}</span>
                   </button>
                 ))}
               </div>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={ambientVolume}
-                disabled={currentSound === "none"}
-                onChange={(e) => setAmbientVolume(Number(e.target.value))}
-                className="w-full accent-primary disabled:opacity-40"
-              />
+              <input type="range" min={0} max={1} step={0.05} value={ambientVolume} disabled={currentSound === "none"}
+                onChange={(e) => setAmbientVolume(Number(e.target.value))} className="w-full accent-primary disabled:opacity-40" />
             </div>
 
-          </div>
+          </aside>
 
-          {/* Voice guidance hint */}
-          {sessionState === "idle" && voiceEnabled && (
-            <p className="text-xs text-muted-foreground/60 mt-3 text-center">
-              Voice guidance is on — you'll hear an introduction before each session
-            </p>
-          )}
-        </motion.div>
-
-        {/* Technique detail — show always on idle, show compact during session */}
-        <motion.div
-          className={`glass-card rounded-2xl p-5 bg-gradient-to-br ${selectedPattern.color}`}
-          variants={item}
-        >
-          <h3 className="font-semibold text-foreground mb-3">{selectedPattern.name}</h3>
-          <div className="grid grid-cols-4 gap-2">
-            {[
-              { label: "Inhale",  val: selectedPattern.inhale },
-              { label: "Hold",    val: selectedPattern.hold1 || "—" },
-              { label: "Exhale",  val: selectedPattern.exhale },
-              { label: "Hold",    val: selectedPattern.hold2 || "—" },
-            ].map(({ label, val }, i) => (
-              <div key={i} className="text-center">
-                <p className="text-xl font-bold text-foreground">{val}</p>
-                <p className="text-xs text-muted-foreground">{label}</p>
-              </div>
-            ))}
-          </div>
-          <p className="text-sm text-muted-foreground mt-3">{selectedPattern.benefit}</p>
         </motion.div>
 
       </motion.div>

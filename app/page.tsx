@@ -105,7 +105,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-page-gradient">
       <motion.div
-        className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-6 md:pt-6 md:pb-10"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-4 pb-6 md:pt-6 md:pb-10"
         variants={container}
         initial="hidden"
         animate="show"

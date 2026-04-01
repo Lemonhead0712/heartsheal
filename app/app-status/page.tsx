@@ -37,7 +37,7 @@ export default function AppStatusPage() {
           animate="show"
         >
           <motion.div className="flex flex-col items-center mb-6" variants={item}>
-            <Logo size="small" />
+            <Logo size="medium" />
           </motion.div>
 
           <motion.div className="mb-8" variants={item}>

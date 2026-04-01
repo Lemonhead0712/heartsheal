@@ -30,10 +30,35 @@ export const metadata: Metadata = {
   description:
     "A safe, calming space for emotional healing, guided breathing, reflective journaling, and personal growth.",
   keywords: ["mental health", "emotional wellness", "journaling", "meditation", "grief", "healing"],
+  metadataBase: new URL("https://heartsheal.netlify.app"),
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+    shortcut: "/icon.png",
+  },
   openGraph: {
     title: "HeartsHeal — Your Space for Healing",
     description: "A safe, calming space for emotional healing and personal growth.",
+    url: "https://heartsheal.netlify.app",
+    siteName: "HeartsHeal",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "HeartsHeal — Your Space for Healing",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HeartsHeal — Your Space for Healing",
+    description: "A safe, calming space for emotional healing, guided breathing, and reflective journaling.",
+    images: ["/og-image.png"],
   },
 }
 

@@ -518,7 +518,7 @@ export default function CompanionPage() {
             >
               <div className="relative w-24 h-24 mx-auto mb-6">
                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/30 to-rose-200 dark:from-primary/20 dark:to-rose-900/40 flex items-center justify-center shadow-lg">
-                  <Heart className="w-10 h-10 text-primary fill-primary/40" />
+                  <img src="/icon.png" alt="HeartsHeal" className="w-14 h-14 object-contain" />
                 </div>
                 <span className="absolute -bottom-1 -right-1 text-2xl">✨</span>
               </div>
@@ -632,7 +632,7 @@ export default function CompanionPage() {
               className="mb-6"
             >
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/30 to-rose-200 dark:from-primary/20 dark:to-rose-900/40 flex items-center justify-center shadow-xl">
-                <Heart className="w-10 h-10 text-primary fill-primary/40" />
+                <img src="/icon.png" alt="HeartsHeal" className="w-14 h-14 object-contain" />
               </div>
             </motion.div>
 

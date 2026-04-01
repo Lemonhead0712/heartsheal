@@ -24,7 +24,7 @@ export function Logo({ size = "medium", className }: LogoProps) {
       <img
         src="/icon.png"
         alt="HeartsHeal logo"
-        className={cn(img, "flex-shrink-0 object-contain")}
+        className={cn(img, "flex-shrink-0 object-contain mix-blend-multiply dark:mix-blend-screen")}
         aria-hidden="true"
       />
       <span className={cn("font-serif text-foreground", text)}>HeartsHeal</span>

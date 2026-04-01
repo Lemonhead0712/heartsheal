@@ -146,7 +146,7 @@ export default function Home() {
 
         {/* ── Crisis Support Banner ── */}
         <motion.section variants={item} className="mb-6 md:mb-8">
-          <div className="glass-card rounded-2xl px-5 py-4 max-w-2xl mx-auto">
+          <div className="glass-card rounded-2xl px-5 py-4">
             <div className="flex items-start gap-3">
               <span className="text-xl shrink-0">🆘</span>
               <div>
@@ -170,7 +170,7 @@ export default function Home() {
         {/* ── Account & Sync (signed-out only) ── */}
         {!user && (
           <motion.section className="mb-6 md:mb-8" variants={item}>
-            <div className="glass-card rounded-2xl px-5 py-5 max-w-2xl mx-auto">
+            <div className="glass-card rounded-2xl px-5 py-5">
               <div className="flex items-center gap-2 mb-1">
                 <Cloud className="w-4 h-4 text-primary" />
                 <h3 className="font-semibold text-sm text-foreground">Save your progress</h3>

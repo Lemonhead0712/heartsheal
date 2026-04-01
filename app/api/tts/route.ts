@@ -4,13 +4,13 @@ import { NextResponse } from "next/server"
 const VOICE_ID = "21m00Tcm4TlvDq8ikWAM"
 
 /**
- * Wraps plain text in SSML with:
- * - 90% speaking rate via <prosody rate="90%">
- * - Natural breathing pauses after punctuation via <break> tags
- * Enables warm, unhurried, conversational delivery.
+ * Wraps plain text in SSML with natural <break> pause tags.
+ * Uses only <speak> + <break> which are reliably supported by ElevenLabs.
+ * Speaking pacing is controlled by voice_settings (stability/style) rather than <prosody>
+ * which has inconsistent ElevenLabs support.
  */
 function prepareSSML(text: string): string {
-  // Strip any existing HTML/SSML tags for safety, then escape XML chars
+  // Strip any existing HTML/SSML tags for safety, then escape XML special chars
   const cleaned = text.replace(/<[^>]+>/g, "")
   const escaped = cleaned
     .replace(/&/g, "&amp;")
@@ -19,15 +19,15 @@ function prepareSSML(text: string): string {
 
   const withBreaks = escaped
     // Sentence endings — thoughtful pause before continuing
-    .replace(/([.!?])\s+/g, '$1<break time="450ms"/> ')
+    .replace(/([.!?])\s+/g, '$1<break time="400ms"/> ')
     // Comma / semicolon — brief breath
-    .replace(/([,;])\s+/g, '$1<break time="200ms"/> ')
+    .replace(/([,;])\s+/g, '$1<break time="150ms"/> ')
     // Em dash — a moment of thought
-    .replace(/\s*—\s*/g, '<break time="300ms"/> ')
+    .replace(/\s*—\s*/g, '<break time="250ms"/> ')
     // Ellipsis — contemplative pause
-    .replace(/\.\.\.\s*/g, '<break time="500ms"/> ')
+    .replace(/\.\.\.\s*/g, '<break time="450ms"/> ')
 
-  return `<speak><prosody rate="90%">${withBreaks}</prosody></speak>`
+  return `<speak>${withBreaks}</speak>`
 }
 
 export async function POST(request: Request) {

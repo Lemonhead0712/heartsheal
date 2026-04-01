@@ -9,7 +9,6 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
-import { BottomNav } from "@/components/bottom-nav"
 import { cn } from "@/lib/utils"
 import { exportUserData, importUserData, clearAllData, readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
 import { useAuth } from "@/contexts/auth-context"
@@ -141,7 +140,7 @@ export default function SettingsPage() {
   const item: Variants = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } } }
 
   return (
-    <div className="min-h-screen bg-page-gradient pb-24">
+    <div className="bg-page-gradient">
       <motion.div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
@@ -396,7 +395,6 @@ export default function SettingsPage() {
         )}
       </AnimatePresence>
 
-      <BottomNav />
     </div>
   )
 }

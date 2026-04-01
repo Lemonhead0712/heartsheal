@@ -117,18 +117,18 @@ export default function Home() {
             <Heart className="w-3.5 h-3.5 fill-primary/30" />
             {greeting.salutation}
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-foreground mb-4 text-balance leading-tight">
+          <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-semibold tracking-tight text-foreground mb-5 text-balance leading-[1.1]">
             Healing begins with{" "}
             <span className="text-primary">one breath.</span>
           </h1>
-          <p className="text-muted-foreground text-base sm:text-lg leading-relaxed text-pretty max-w-xl mx-auto mb-6">
+          <p className="text-muted-foreground text-base sm:text-lg leading-relaxed text-pretty max-w-xl mx-auto mb-8">
             {greeting.sub}
           </p>
 
           {/* Loss type pills */}
-          <div className="flex flex-wrap justify-center gap-2 mb-8">
+          <div className="flex flex-wrap justify-center gap-3 mb-10">
             {lossTypes.map((t) => (
-              <span key={t} className="pill-badge bg-secondary text-muted-foreground text-xs">
+              <span key={t} className="pill-badge bg-secondary text-muted-foreground text-sm px-4 py-1.5">
                 {t}
               </span>
             ))}
@@ -170,25 +170,25 @@ export default function Home() {
         {/* ── Account & Sync (signed-out only) ── */}
         {!user && (
           <motion.section className="mb-6 md:mb-8" variants={item}>
-            <div className="glass-card rounded-2xl px-5 py-5">
+            <div className="rounded-2xl px-5 py-5 bg-primary/5 border border-primary/15">
               <div className="flex items-center gap-2 mb-1">
                 <Cloud className="w-4 h-4 text-primary" />
-                <h3 className="font-semibold text-sm text-foreground">Save your progress</h3>
+                <h3 className="font-semibold text-sm text-foreground">Your progress, safe across devices</h3>
               </div>
               <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-                Create a free account to keep your emotional logs, journal entries, and insights safe — and access them from any device.
+                Free forever — create an account to keep your logs and journal safe and accessible anywhere.
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => openAuth("signup")}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all shadow-md"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/40 text-primary text-sm font-semibold hover:bg-primary/10 active:scale-[0.98] transition-all"
                 >
                   <Cloud className="w-4 h-4" />
                   Create Free Account
                 </button>
                 <button
                   onClick={() => openAuth("signin")}
-                  className="px-5 py-3 rounded-xl border border-border/60 text-sm font-semibold text-foreground hover:bg-muted/50 active:scale-[0.98] transition-all"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/60 text-muted-foreground text-sm font-semibold hover:bg-muted/50 active:scale-[0.98] transition-all"
                 >
                   Sign In
                 </button>

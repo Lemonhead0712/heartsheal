@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { ChevronLeft, Plus, Save, AlertCircle, RefreshCw, Clock, Calendar } from "lucide-react"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 import { Logo } from "@/components/logo"
-import { BottomNav } from "@/components/bottom-nav"
 import { EmojiPicker } from "@/components/emoji-picker"
 
 import { useEmotionLogs } from "@/hooks/use-emotion-logs"
@@ -137,7 +136,7 @@ function EmotionalLog() {
   }
 
   return (
-    <div className="min-h-screen bg-page-gradient pb-20">
+    <div className="bg-page-gradient">
       <motion.div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
@@ -277,7 +276,6 @@ function EmotionalLog() {
         </motion.div>
       </motion.div>
 
-      <BottomNav />
     </div>
   )
 }

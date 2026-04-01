@@ -8,19 +8,35 @@ import { useCallback, useEffect, useRef, useState } from "react"
 ───────────────────────────────────────── */
 export function cleanForSpeech(text: string): string {
   return text
-    .replace(/\*{1,3}([^*]+)\*{1,3}/g, "$1")   // *italic*, **bold**, ***both***
-    .replace(/_{1,2}([^_]+)_{1,2}/g, "$1")      // _italic_, __bold__
-    .replace(/`{1,3}([^`]+)`{1,3}/g, "$1")      // `code`, ```block```
-    .replace(/#{1,6}\s+/g, "")                  // ## headings
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")    // [link text](url) → link text
-    .replace(/!?\[([^\]]*)\]\([^)]+\)/g, "$1")  // ![img](url) → alt text
-    .replace(/^[-*+]\s+/gm, "")                 // bullet points
-    .replace(/^\d+\.\s+/gm, "")                 // numbered lists
-    .replace(/>{1,}\s*/gm, "")                  // > blockquotes
-    .replace(/---+/g, ".")                       // horizontal rules → pause
-    .replace(/\n{2,}/g, " … ")                  // paragraph breaks → natural pause
-    .replace(/\n/g, " ")                         // remaining newlines → space
-    .replace(/\s{2,}/g, " ")                     // collapse multiple spaces
+    // ── Strip markdown formatting ──
+    .replace(/\*{1,3}([^*]+)\*{1,3}/g, "$1")
+    .replace(/_{1,2}([^_]+)_{1,2}/g, "$1")
+    .replace(/`{1,3}([^`]+)`{1,3}/g, "$1")
+    .replace(/#{1,6}\s+/g, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/!?\[([^\]]*)\]\([^)]+\)/g, "$1")
+    .replace(/^[-*+]\s+/gm, "")
+    .replace(/^\d+\.\s+/gm, "")
+    .replace(/>{1,}\s*/gm, "")
+    // ── Convert written punctuation to spoken pauses ──
+    .replace(/\s*—\s*/g, ", ")          // em dash → brief pause, not a robotic halt
+    .replace(/\s*–\s*/g, ", ")          // en dash → same
+    .replace(/;/g, ".")                 // semicolon → full stop (reads more naturally)
+    .replace(/:\s(?=[a-z])/g, ", ")     // colon before lowercase → comma (list intro)
+    .replace(/\(([^)]+)\)/g, ", $1,")  // (parenthetical) → , parenthetical,
+    .replace(/"/g, "")                  // strip smart/straight quotes
+    .replace(/"/g, "")
+    .replace(/'/g, "'")                 // normalize apostrophes
+    .replace(/\.\.\./g, ".")            // ellipsis → single period
+    .replace(/…/g, ".")
+    .replace(/---+/g, ".")
+    // ── Paragraph and line breaks → sentence boundaries ──
+    .replace(/\n{2,}/g, ". ")
+    .replace(/\n/g, " ")
+    // ── Collapse whitespace ──
+    .replace(/,\s*,/g, ",")             // double commas
+    .replace(/\.\s*\./g, ".")           // double periods
+    .replace(/\s{2,}/g, " ")
     .trim()
 }
 
@@ -40,10 +56,21 @@ function getBestVoice(): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices()
   if (!voices.length) return null
   const tests = [
-    (v: SpeechSynthesisVoice) => /online.*natural|natural.*online/i.test(v.name) && v.lang.startsWith("en"),
-    (v: SpeechSynthesisVoice) => /Aria|Jenny|Samantha|Karen|Moira/i.test(v.name),
+    // Microsoft Edge neural voices — most human-sounding in any browser
+    (v: SpeechSynthesisVoice) => /Microsoft Aria Online/i.test(v.name),
+    (v: SpeechSynthesisVoice) => /Microsoft Jenny Online/i.test(v.name),
+    (v: SpeechSynthesisVoice) => /Microsoft Emma Online/i.test(v.name),
+    (v: SpeechSynthesisVoice) => /Microsoft.*Online.*Natural/i.test(v.name) && v.lang.startsWith("en"),
+    // Any "natural" or "online" neural voice
+    (v: SpeechSynthesisVoice) => /online|natural/i.test(v.name) && v.lang.startsWith("en"),
+    // Google neural voices
+    (v: SpeechSynthesisVoice) => /Google US English/i.test(v.name),
     (v: SpeechSynthesisVoice) => /Google UK English Female/i.test(v.name),
+    // Apple system voices
+    (v: SpeechSynthesisVoice) => /Samantha|Karen|Moira|Tessa/i.test(v.name),
+    // Any English female
     (v: SpeechSynthesisVoice) => v.lang.startsWith("en") && /female|woman/i.test(v.name),
+    // Any English voice
     (v: SpeechSynthesisVoice) => v.lang.startsWith("en"),
   ]
   for (const test of tests) {
@@ -53,7 +80,7 @@ function getBestVoice(): SpeechSynthesisVoice | null {
   return null
 }
 
-function speakBrowser(text: string, rate = 0.85, pitch = 0.92, onDone?: () => void, volume = 1) {
+function speakBrowser(text: string, rate = 0.87, pitch = 0.95, onDone?: () => void, volume = 1) {
   if (typeof window === "undefined" || !window.speechSynthesis) { onDone?.(); return }
   window.speechSynthesis.cancel()
 
@@ -76,7 +103,8 @@ function speakBrowser(text: string, rate = 0.85, pitch = 0.92, onDone?: () => vo
     utt.rate   = rate
     utt.pitch  = pitch
     utt.volume = volume
-    utt.onend  = speakNext
+    // Small natural pause between sentences
+    utt.onend  = () => setTimeout(speakNext, 120)
     utt.onerror = () => onDone?.()
     window.speechSynthesis.speak(utt)
   }
@@ -179,7 +207,7 @@ export function useTTS() {
     stopAudio()
     setIsSpeaking(true)
     return new Promise<void>((resolve) => {
-      speakBrowser(cleaned, 0.88, 0.92, () => { setIsSpeaking(false); resolve() }, voiceVolumeRef.current)
+      speakBrowser(cleaned, 0.87, 0.95, () => { setIsSpeaking(false); resolve() }, voiceVolumeRef.current)
     })
   }, [voiceEnabled, stopAudio])
 

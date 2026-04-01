@@ -301,7 +301,7 @@ export default function CompanionPage() {
     if (isSpeakingRef.current) return
 
     if (voiceConvRef.current) {
-      // Patience timer: accumulate transcript and wait 3s of silence before sending
+      // Patience timer: accumulate transcript and wait 6s of silence before sending
       voiceBufferRef.current = voiceBufferRef.current
         ? voiceBufferRef.current + " " + transcript
         : transcript
@@ -320,12 +320,20 @@ export default function CompanionPage() {
   }, [sendContent])
 
   const handleSttEnd = useCallback((hadResult: boolean) => {
-    // If in voice mode with no result and no pending timer, restart mic after brief pause
-    if (voiceConvRef.current && !hadResult && !isLoadingRef.current && !voiceTimerRef.current) {
+    if (!voiceConvRef.current || isLoadingRef.current) return
+
+    if (hadResult && voiceTimerRef.current) {
+      // User spoke and patience timer is running — keep mic open so they can continue
+      setTimeout(() => {
+        if (voiceConvRef.current && voiceTimerRef.current) startListeningRef.current()
+      }, 150)
+    } else if (!hadResult && !voiceTimerRef.current) {
+      // Silence with nothing buffered — restart to keep listening for new speech
       setTimeout(() => {
         if (voiceConvRef.current) startListeningRef.current()
       }, 100)
     }
+    // If hadResult and no timer: message already sent, mic stays off until Haven responds
   }, [])
 
   const { status: sttStatus, startListening, stopListening } = useSTT(handleTranscript, handleSttEnd)

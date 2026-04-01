@@ -147,7 +147,7 @@ export default function CompanionPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-5",
+          model: "claude-sonnet-4-6",
           max_tokens: 1000,
           system: SYSTEM_PROMPT,
           messages: messagesToSend,
@@ -162,7 +162,7 @@ export default function CompanionPage() {
     }
   }, [])
 
-  // ── Streaming AI caller — returns full text, updates message display live ──
+  // ── Non-streaming AI caller — works reliably on all serverless platforms ──
   const callClaudeStreaming = useCallback(async (
     currentMessages: Message[],
     lossContext: string,
@@ -174,36 +174,17 @@ export default function CompanionPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: voiceMode ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-5",
-          max_tokens: voiceMode ? 200 : 1000, // hard cap tokens in voice mode
-          stream: true,
+          model: voiceMode ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6",
+          max_tokens: voiceMode ? 200 : 1000,
           system: voiceMode ? VOICE_SYSTEM_PROMPT : SYSTEM_PROMPT,
           messages: buildMessages(currentMessages, lossContext, sessionMemoryRef.current, recentEmotionsRef.current),
         }),
       })
-      if (!response.ok || !response.body) throw new Error("API error")
-
-      const reader  = response.body.getReader()
-      const decoder = new TextDecoder()
-      let fullText  = ""
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        const lines = decoder.decode(value, { stream: true }).split("\n")
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue
-          const payload = line.slice(6).trim()
-          if (!payload || payload === "[DONE]") continue
-          try {
-            const parsed = JSON.parse(payload)
-            // Anthropic SSE delta format
-            const delta = parsed.delta?.text ?? ""
-            if (delta) { fullText += delta; onChunk(fullText) }
-          } catch {}
-        }
-      }
-      return fullText || null
+      if (!response.ok) throw new Error("API error")
+      const data = await response.json()
+      const text = data.content?.[0]?.text ?? null
+      if (text) onChunk(text)
+      return text
     } catch {
       setError("Something went wrong. Please try again.")
       return null

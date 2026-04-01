@@ -60,7 +60,7 @@ export default function RootLayout({
           <HapticProvider>
             <div className="flex flex-1 flex-col">
               <DesktopNav />
-              <main className="flex-1 pb-[76px] md:pb-0">{children}</main>
+              <main className="flex-1 pb-[84px] md:pb-0">{children}</main>
               <Footer />
             </div>
             <BottomNav />

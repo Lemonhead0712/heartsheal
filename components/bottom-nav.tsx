@@ -37,7 +37,7 @@ export function BottomNav() {
         className="glass-nav"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="grid grid-cols-5 max-w-lg mx-auto h-[60px]">
+        <div className="grid grid-cols-5 max-w-lg mx-auto h-[68px]">
           {navItems.map(({ name, href, icon: Icon }) => {
             const active = pathname === href
             return (
@@ -48,7 +48,7 @@ export function BottomNav() {
                 aria-label={name}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex flex-col items-center justify-center gap-0.5 touch-manipulation select-none",
+                  "relative flex flex-col items-center justify-center gap-1 touch-manipulation select-none",
                   "transition-colors duration-200",
                   active
                     ? "text-primary"
@@ -59,19 +59,19 @@ export function BottomNav() {
                 {active && (
                   <motion.span
                     layoutId="bottom-nav-pill"
-                    className="absolute inset-x-3 top-1.5 bottom-1 rounded-2xl bg-primary/10"
+                    className="absolute inset-x-2 top-1.5 bottom-1 rounded-2xl bg-primary/10"
                     transition={{ type: "spring", bounce: 0.3, duration: 0.4 }}
                   />
                 )}
 
                 {/* Icon */}
-                <div className="relative z-10 flex items-center justify-center w-6 h-6">
+                <div className="relative z-10 flex items-center justify-center w-7 h-7">
                   <Icon
                     className={cn(
                       "transition-all duration-200",
                       active
-                        ? "w-5 h-5 stroke-[2]"
-                        : "w-[18px] h-[18px] stroke-[1.5]",
+                        ? "w-6 h-6 stroke-[2]"
+                        : "w-[22px] h-[22px] stroke-[1.5]",
                     )}
                     aria-hidden="true"
                   />
@@ -80,7 +80,7 @@ export function BottomNav() {
                 {/* Label */}
                 <span
                   className={cn(
-                    "relative z-10 text-[10px] font-medium leading-none tracking-wide",
+                    "relative z-10 text-[11px] font-medium leading-none tracking-wide",
                     active ? "text-primary" : "",
                   )}
                 >

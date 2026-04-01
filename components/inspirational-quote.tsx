@@ -111,7 +111,7 @@ export function InspirationalQuote({ className }: InspirationalQuoteProps) {
   return (
     <div
       className={cn(
-        "glass-card rounded-3xl px-6 py-8 sm:px-10 sm:py-10 max-w-2xl mx-auto text-center relative group",
+        "glass-card rounded-3xl px-6 py-8 sm:px-10 sm:py-10 text-center relative group",
         className,
       )}
       onMouseEnter={() => setPaused(true)}

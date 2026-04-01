@@ -312,7 +312,7 @@ export default function CompanionPage() {
         voiceBufferRef.current = ""
         voiceTimerRef.current = null
         if (accumulated) sendContent(accumulated, messagesRef.current, true)
-      }, 3000)
+      }, 6000)
     } else {
       setInput((prev) => prev ? prev + " " + transcript : transcript)
       textareaRef.current?.focus()

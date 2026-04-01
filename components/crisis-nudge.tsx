@@ -48,7 +48,7 @@ export function CrisisNudge() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 16 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-sm"
+          className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-50 w-[calc(100%-2rem)] max-w-sm"
         >
           <div className="bg-card border border-primary/20 rounded-2xl shadow-xl px-5 py-4 flex items-start gap-3">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">

@@ -5,7 +5,6 @@ import Link from "next/link"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 import { ChevronLeft, Wind, Play, Pause, RotateCcw, Volume2, VolumeX } from "lucide-react"
 import { Logo } from "@/components/logo"
-import { BottomNav } from "@/components/bottom-nav"
 import { AiBreathingAffirmation } from "@/components/ai-breathing-affirmation"
 import { useTTS } from "@/hooks/use-speech"
 import { useAmbientSound, type SoundType } from "@/hooks/use-ambient-sound"
@@ -237,7 +236,7 @@ export default function BreathePage() {
   }
 
   return (
-    <div className="min-h-screen bg-page-gradient pb-20">
+    <div className="bg-page-gradient">
       <motion.div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
@@ -442,7 +441,6 @@ export default function BreathePage() {
         </motion.div>
 
       </motion.div>
-      <BottomNav />
     </div>
   )
 }

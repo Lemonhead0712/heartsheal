@@ -24,11 +24,11 @@ export async function POST(request: Request) {
         },
         body: JSON.stringify({
           text,
-          model_id: "eleven_turbo_v2",
+          model_id: "eleven_multilingual_v2", // highest quality, most natural output
           voice_settings: {
-            stability: 0.75,        // consistent, calm
-            similarity_boost: 0.85, // natural warmth
-            style: 0.2,             // subtle expression
+            stability: 0.45,        // lower = more natural pitch variation, less robotic monotone
+            similarity_boost: 0.80, // keeps Rachel's warm character intact
+            style: 0.20,            // subtle expression — enough warmth without over-acting
             use_speaker_boost: true,
           },
         }),

@@ -345,7 +345,7 @@ export default function SettingsPage() {
                 <h2 className="font-semibold text-sm text-foreground">Danger Zone</h2>
               </div>
               <p className="text-xs text-muted-foreground mb-3">Permanently deletes all emotion logs, journal entries, and quiz results from this device. This cannot be undone.</p>
-              <div className="flex items-center mb-5">
+              <div className={cn("flex items-center", user && "mb-5")}>
                 <Button onClick={handleClear} variant="outline"
                   className={cn("rounded-xl gap-2 border-destructive/30 text-destructive hover:bg-destructive hover:text-white transition-all", confirmClear && "bg-destructive text-white border-destructive")}>
                   <AlertTriangle className="w-4 h-4" />

@@ -143,29 +143,18 @@ function EmotionalLog() {
 
   return (
     <div className="min-h-screen bg-page-gradient pb-20">
-      <motion.div
-        className="container mx-auto px-4 py-5 max-w-4xl"
-        variants={container}
-        initial="hidden"
-        animate="show"
-      >
+      <motion.div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5" variants={container} initial="hidden" animate="show">
+
+        {/* Header */}
         <motion.div className="flex flex-col items-center mb-3" variants={item}>
           <Logo size="small" />
         </motion.div>
-
-        <motion.div className="mb-5 flex justify-between items-center" variants={item}>
-          <div>
-            <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors">
-              <ChevronLeft className="mr-1 h-4 w-4" />
-              Back to Dashboard
-            </Link>
-            <h1 className="text-3xl font-bold text-foreground mt-3 mb-2">Emotional State Log</h1>
-            <p className="text-muted-foreground">Track your emotions and reflect on your emotional patterns</p>
-          </div>
-          <div className="flex items-center">
-            <Clock className="h-4 w-4 text-primary/70 mr-1" />
-            <span className="text-xs text-primary/70">{new Date().toLocaleDateString()}</span>
-          </div>
+        <motion.div className="mb-5" variants={item}>
+          <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors">
+            <ChevronLeft className="mr-1 h-4 w-4" /> Back to Dashboard
+          </Link>
+          <h1 className="text-3xl font-bold text-foreground mt-3 mb-2">Emotional State Log</h1>
+          <p className="text-muted-foreground">Track your emotions and reflect on your emotional patterns</p>
         </motion.div>
 
         {error && (
@@ -178,21 +167,19 @@ function EmotionalLog() {
           </motion.div>
         )}
 
-          <motion.div variants={item}>
-            <Card className="mb-5 border-border/40 bg-card shadow-card">
+        {/* Two-column grid */}
+        <motion.div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 lg:gap-8 items-start" variants={item}>
+
+          {/* ── Main column: logging form + journey ── */}
+          <div className="space-y-5 min-w-0">
+
+            <Card className="border-border/40 bg-card shadow-card">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-primary">How are you feeling?</CardTitle>
                   <CardDescription className="text-muted-foreground">Log your current emotional state</CardDescription>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleRefresh}
-                  disabled={isLoading || isRefreshing}
-                  className="h-8 w-8"
-                  title="Refresh data"
-                >
+                <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={isLoading || isRefreshing} className="h-8 w-8" title="Refresh data">
                   <RefreshCw className={`h-4 w-4 text-primary/70 ${isRefreshing ? "animate-spin" : ""}`} />
                   <span className="sr-only">Refresh</span>
                 </Button>
@@ -200,154 +187,98 @@ function EmotionalLog() {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="emotion" className="text-primary">
-                      Emotion
-                    </Label>
+                    <Label htmlFor="emotion" className="text-primary">Emotion</Label>
                     <div className="flex flex-wrap gap-2">
                       {emotions.map((emotion) => (
-                        <Button
-                          key={emotion}
-                          type="button"
-                          variant={currentEmotion === emotion ? "default" : "outline"}
-                          className={`rounded-full ${
-                            currentEmotion === emotion
-                              ? "bg-primary hover:bg-primary/90 text-primary-foreground"
-                              : "border-border/50 text-muted-foreground hover:bg-primary/8"
-                          }`}
-                          onClick={() => setCurrentEmotion(emotion)}
-                        >
-                          {emotion}
-                        </Button>
+                        <Button key={emotion} type="button" variant={currentEmotion === emotion ? "default" : "outline"}
+                          className={`rounded-full ${currentEmotion === emotion ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "border-border/50 text-muted-foreground hover:bg-primary/8"}`}
+                          onClick={() => setCurrentEmotion(emotion)}>{emotion}</Button>
                       ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="rounded-full border-border/50 text-muted-foreground hover:bg-primary/8"
-                        onClick={() => setCurrentEmotion("")}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Other
+                      <Button type="button" variant="outline" className="rounded-full border-border/50 text-muted-foreground hover:bg-primary/8" onClick={() => setCurrentEmotion("")}>
+                        <Plus className="h-4 w-4 mr-1" /> Other
                       </Button>
                     </div>
                     {currentEmotion === "" && (
-                      <Input
-                        id="custom-emotion"
-                        placeholder="Enter your emotion"
-                        className="mt-2 border-border/40 focus-visible:ring-primary/30"
-                        value={currentEmotion}
-                        onChange={(e) => setCurrentEmotion(e.target.value)}
-                      />
+                      <Input id="custom-emotion" placeholder="Enter your emotion" className="mt-2 border-border/40 focus-visible:ring-primary/30"
+                        value={currentEmotion} onChange={(e) => setCurrentEmotion(e.target.value)} />
                     )}
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="emoji" className="text-primary">
-                      Choose an emoji that represents how you feel
-                    </Label>
-                    <div className="mt-2">
-                      <EmojiPicker selectedEmoji={selectedEmoji} onEmojiSelect={setSelectedEmoji} />
-                    </div>
+                    <Label htmlFor="emoji" className="text-primary">Choose an emoji that represents how you feel</Label>
+                    <div className="mt-2"><EmojiPicker selectedEmoji={selectedEmoji} onEmojiSelect={setSelectedEmoji} /></div>
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="intensity" className="text-primary">
-                      Intensity: {intensity}
-                    </Label>
-                    <Input
-                      id="intensity"
-                      type="range"
-                      min="1"
-                      max="10"
-                      value={intensity}
-                      onChange={(e) => setIntensity(Number.parseInt(e.target.value))}
-                      className="accent-primary"
-                    />
+                    <Label htmlFor="intensity" className="text-primary">Intensity: {intensity}</Label>
+                    <Input id="intensity" type="range" min="1" max="10" value={intensity}
+                      onChange={(e) => setIntensity(Number.parseInt(e.target.value))} className="accent-primary" />
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Mild</span>
-                      <span>Moderate</span>
-                      <span>Intense</span>
+                      <span>Mild</span><span>Moderate</span><span>Intense</span>
                     </div>
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="notes" className="text-primary">
-                      Notes
-                    </Label>
-                    <Textarea
-                      id="notes"
-                      placeholder="What triggered this emotion? How does it feel in your body?"
-                      className="min-h-[100px] border-border/40 focus-visible:ring-primary/30"
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                    />
+                    <Label htmlFor="notes" className="text-primary">Notes</Label>
+                    <Textarea id="notes" placeholder="What triggered this emotion? How does it feel in your body?"
+                      className="min-h-[100px] border-border/40 focus-visible:ring-primary/30" value={notes} onChange={(e) => setNotes(e.target.value)} />
                   </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                    disabled={!currentEmotion.trim()}
-                  >
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Entry
+                  <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={!currentEmotion.trim()}>
+                    <Save className="mr-2 h-4 w-4" /> Save Entry
                   </Button>
                 </form>
               </CardContent>
             </Card>
-          </motion.div>
 
-          {/* Show survey after a successful entry */}
-          {showSurvey && emotionLogs && emotionLogs.length > 0 && (
-            <motion.div
-              variants={item}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <EmotionalSurvey onComplete={() => setShowSurvey(false)} />
-            </motion.div>
-          )}
+            {showSurvey && emotionLogs && emotionLogs.length > 0 && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+                <EmotionalSurvey onComplete={() => setShowSurvey(false)} />
+              </motion.div>
+            )}
 
-          <motion.div className="space-y-4" variants={item}>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center">
-                <Calendar className="h-5 w-5 text-primary mr-2" />
-                <h2 className="text-2xl font-semibold text-foreground">Your Emotional Journey</h2>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <Calendar className="h-5 w-5 text-primary mr-2" />
+                  <h2 className="text-2xl font-semibold text-foreground">Your Emotional Journey</h2>
+                </div>
+                <span className="text-xs text-primary/70">Last updated: {formatRelativeTime(lastUpdated)}</span>
               </div>
-              <span className="text-xs text-primary/70">Last updated: {formatRelativeTime(lastUpdated)}</span>
+              {isLoading ? (
+                <div className="flex justify-center items-center py-8"><LoadingSpinner size="md" /></div>
+              ) : (
+                <AnimatePresence>
+                  {emotionLogs && emotionLogs.length === 0 ? (
+                    <Card className="border-border/40 bg-card p-8 text-center text-muted-foreground">
+                      No entries yet. Start tracking your emotions above.
+                    </Card>
+                  ) : (
+                    <div className="space-y-4">
+                      {sortedDates.map((date) => (
+                        <DailyEmotionFolder key={date} date={date} entries={groupedEntries[date]} onDeleteEntry={handleDelete} />
+                      ))}
+                    </div>
+                  )}
+                </AnimatePresence>
+              )}
             </div>
 
-            {isLoading ? (
-              <div className="flex justify-center items-center py-8">
-                <LoadingSpinner size="md" />
-              </div>
-            ) : (
-              <AnimatePresence>
-                {emotionLogs && emotionLogs.length === 0 ? (
-                  <Card className="border-border/40 bg-card p-8 text-center text-muted-foreground">
-                    No entries yet. Start tracking your emotions above.
-                  </Card>
-                ) : (
-                  <div className="space-y-4">
-                    {sortedDates.map((date) => (
-                      <DailyEmotionFolder
-                        key={date}
-                        date={date}
-                        entries={groupedEntries[date]}
-                        onDeleteEntry={handleDelete}
-                      />
-                    ))}
-                  </div>
-                )}
-              </AnimatePresence>
-            )}
-          </motion.div>
+          </div>
 
+          {/* ── Sidebar: date chip + analytics ── */}
+          <aside className="lg:sticky lg:top-[76px] lg:self-start space-y-4 min-w-0">
 
-        {/* Enhanced Emotional Analytics Section */}
-        <motion.div className="mt-10" variants={item}>
-          <h2 className="text-2xl font-semibold text-foreground mb-4">Emotional Analytics</h2>
-          <EnhancedEmotionalAnalytics emotionLogs={emotionLogs} isLoading={isLoading} error={error} />
+            {/* Date chip */}
+            <div className="glass-card rounded-2xl px-4 py-3 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary/70" />
+              <span className="text-sm font-medium text-foreground">{new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
+            </div>
+
+            {/* Emotional analytics */}
+            <div>
+              <h2 className="text-lg font-semibold text-foreground mb-3">Analytics</h2>
+              <EnhancedEmotionalAnalytics emotionLogs={emotionLogs} isLoading={isLoading} error={error} />
+            </div>
+
+          </aside>
+
         </motion.div>
       </motion.div>
 

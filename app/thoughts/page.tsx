@@ -203,7 +203,7 @@ export default function ThoughtsPage() {
 
   return (
     <div className="min-h-screen bg-page-gradient pb-24">
-      <motion.div className="max-w-2xl mx-auto px-4 py-5" variants={container} initial="hidden" animate="show">
+      <motion.div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
         <motion.div className="flex flex-col items-center mb-3" variants={item}>
@@ -220,267 +220,235 @@ export default function ThoughtsPage() {
         {/* Tab switcher */}
         <motion.div className="flex gap-2 mb-5 p-1 rounded-2xl bg-muted/50 border border-border/40" variants={item}>
           {([["journal", "Journal", BookHeart], ["quiz", "Self-Reflection Quiz", Brain]] as const).map(([value, label, Icon]) => (
-            <button
-              key={value}
-              onClick={() => setTab(value)}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-                tab === value
-                  ? "bg-card shadow-sm text-foreground border border-border/40"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
+            <button key={value} onClick={() => setTab(value)}
+              className={cn("flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+                tab === value ? "bg-card shadow-sm text-foreground border border-border/40" : "text-muted-foreground hover:text-foreground")}>
+              <Icon className="w-4 h-4" />{label}
             </button>
           ))}
         </motion.div>
 
-        <AnimatePresence mode="wait">
+        {/* Two-column grid */}
+        <motion.div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-8 items-start" variants={item}>
 
-          {/* ══════ JOURNAL TAB ══════ */}
-          {tab === "journal" && (
-            <motion.div key="journal" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }} className="space-y-5">
+          {/* ── Main column ── */}
+          <div className="min-w-0">
+            <AnimatePresence mode="wait">
 
-              {/* AI Prompt */}
-              <AiJournalPrompt />
+              {/* ══ JOURNAL TAB ══ */}
+              {tab === "journal" && (
+                <motion.div key="journal" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }} className="space-y-5">
 
-              {/* Prompt picker */}
-              <div className="glass-card rounded-2xl p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-foreground text-sm">Choose a reflection prompt</h2>
-                  {selectedPrompt && (
-                    <button onClick={pickRandomPrompt} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
-                      <RotateCcw className="w-3 h-3" /> New prompt
-                    </button>
-                  )}
-                </div>
+                  <AiJournalPrompt />
 
-                {!selectedPrompt ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    {JOURNAL_PROMPTS.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => { setSelectedPrompt(p); setEntry(""); setSaved(false) }}
-                        className="text-left p-3 rounded-xl border border-border/40 hover:border-primary/30 hover:bg-primary/5 transition-all duration-200 group"
-                      >
-                        <span className="text-[10px] font-semibold text-primary/70 uppercase tracking-wide block mb-1">{p.category}</span>
-                        <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors line-clamp-3">{p.text}</span>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div>
-                    <div className="bg-primary/8 rounded-xl p-4 mb-4 border border-primary/15">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-[10px] font-semibold text-primary uppercase tracking-wide">{selectedPrompt.category}</span>
-                        {contextualCategory === selectedPrompt.category && (
-                          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary/80">
-                            suggested for you
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-foreground leading-relaxed font-serif italic">"{selectedPrompt.text}"</p>
-                    </div>
-                    <Textarea
-                      value={entry}
-                      onChange={(e) => setEntry(e.target.value)}
-                      placeholder="Take your time. Write whatever comes…"
-                      className="min-h-[140px] resize-none rounded-xl border-border/40 text-sm leading-relaxed focus-visible:ring-primary/30 mb-3"
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={saveEntry}
-                        disabled={!entry.trim() || saved}
-                        className={cn("flex-1 rounded-xl gap-2", saved && "bg-emerald-500 hover:bg-emerald-500")}
-                      >
-                        {saved ? <><CheckCircle2 className="w-4 h-4" /> Saved</> : <><Save className="w-4 h-4" /> Save Entry</>}
-                      </Button>
-                      <Button variant="outline" onClick={() => { setSelectedPrompt(null); setEntry("") }} className="rounded-xl">
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Past entries */}
-              {journalEntries.length > 0 && (
-                <div className="glass-card rounded-2xl p-5">
-                  <h2 className="font-semibold text-foreground text-sm mb-4">Past Entries</h2>
-                  <div className="space-y-3">
-                    {journalEntries.slice(0, 5).map((e) => (
-                      <div key={e.id} className="border border-border/40 rounded-xl p-4 group">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <p className="text-[11px] text-primary/70 font-medium font-serif italic line-clamp-1 flex-1">"{e.prompt}"</p>
-                          <button
-                            onClick={() => deleteEntry(e.id)}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                        <p className="text-sm text-foreground/80 leading-relaxed line-clamp-3">{e.entry}</p>
-                        <p className="text-[10px] text-muted-foreground mt-2">
-                          {new Date(e.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* ══════ QUIZ TAB ══════ */}
-          {tab === "quiz" && (
-            <motion.div key="quiz" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}>
-
-              {/* Select quiz */}
-              {quizPhase === "select" && (
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground mb-2">These short reflections help you understand yourself better. There are no right or wrong answers.</p>
-                  {(Object.entries(QUIZ_META) as [QuizType, typeof QUIZ_META["self-compassion"]][]).map(([type, meta]) => (
-                    <button
-                      key={type}
-                      onClick={() => startQuiz(type)}
-                      className={cn(
-                        "w-full text-left glass-card rounded-2xl p-5 border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-                        meta.border
+                  {/* Prompt picker */}
+                  <div className="glass-card rounded-2xl p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="font-semibold text-foreground text-sm">Choose a reflection prompt</h2>
+                      {selectedPrompt && (
+                        <button onClick={pickRandomPrompt} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
+                          <RotateCcw className="w-3 h-3" /> New prompt
+                        </button>
                       )}
-                    >
-                      <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-3 bg-gradient-to-r", meta.color)}>
-                        <span>{meta.emoji}</span> {meta.label}
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed mb-3">{meta.description}</p>
-                      <div className="flex items-center gap-1 text-xs font-semibold text-primary/70">
-                        5 questions <ChevronRight className="w-3.5 h-3.5" />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Questions — one at a time */}
-              {quizPhase === "questions" && questions.length > 0 && (
-                <div>
-                  {/* Progress bar */}
-                  <div className="mb-6">
-                    <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                      <span>{QUIZ_META[quizType].emoji} {QUIZ_META[quizType].label}</span>
-                      <span>{questionIndex + 1} / {questions.length}</span>
                     </div>
-                    <div className="h-1.5 w-full rounded-full bg-muted/60 overflow-hidden">
-                      <motion.div
-                        className="h-full rounded-full bg-primary"
-                        animate={{ width: `${((questionIndex) / questions.length) * 100}%` }}
-                        transition={{ duration: 0.4 }}
-                      />
-                    </div>
-                  </div>
-
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={questionIndex}
-                      initial={{ opacity: 0, x: 30 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -30 }}
-                      transition={{ duration: 0.3 }}
-                      className="glass-card rounded-2xl p-6"
-                    >
-                      <p className="font-serif text-lg text-foreground leading-snug mb-6">
-                        {questions[questionIndex].question}
-                      </p>
-                      <div className="space-y-2.5">
-                        {questions[questionIndex].options.map((option, i) => (
-                          <button
-                            key={i}
-                            onClick={() => answerQuestion(questions[questionIndex].scores[i])}
-                            className={cn(
-                              "w-full text-left px-4 py-3.5 rounded-xl border text-sm transition-all duration-200",
-                              answers[questions[questionIndex].id] !== undefined
-                                ? "opacity-50 cursor-default border-border/30"
-                                : "border-border/50 hover:border-primary/40 hover:bg-primary/5 hover:text-foreground text-muted-foreground"
-                            )}
-                          >
-                            {option}
+                    {!selectedPrompt ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        {JOURNAL_PROMPTS.map((p) => (
+                          <button key={p.id} onClick={() => { setSelectedPrompt(p); setEntry(""); setSaved(false) }}
+                            className="text-left p-3 rounded-xl border border-border/40 hover:border-primary/30 hover:bg-primary/5 transition-all duration-200 group">
+                            <span className="text-[10px] font-semibold text-primary/70 uppercase tracking-wide block mb-1">{p.category}</span>
+                            <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors line-clamp-3">{p.text}</span>
                           </button>
                         ))}
                       </div>
-                    </motion.div>
-                  </AnimatePresence>
-
-                  <button
-                    onClick={() => setQuizPhase("select")}
-                    className="mt-4 text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-                  >
-                    <ChevronLeft className="w-3 h-3" /> Exit quiz
-                  </button>
-                </div>
-              )}
-
-              {/* Results */}
-              {quizPhase === "results" && (
-                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                  {/* Overall score */}
-                  <div className="glass-card rounded-2xl p-6 text-center">
-                    <div className="text-4xl mb-1">{QUIZ_META[quizType].emoji}</div>
-                    <h2 className="font-serif text-xl font-semibold text-foreground mb-1">{QUIZ_META[quizType].label}</h2>
-                    <div className={cn("text-4xl font-bold my-4", getScore(avgScore).color)}>{avgScore}</div>
-                    <div className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-3 bg-primary/10", getScore(avgScore).color)}>
-                      <Sparkles className="w-3 h-3" /> {getScore(avgScore).label}
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{getScore(avgScore).message}</p>
-                  </div>
-
-                  {/* Category breakdown */}
-                  <div className="glass-card rounded-2xl p-5">
-                    <h3 className="font-semibold text-sm text-foreground mb-4">Breakdown</h3>
-                    <div className="space-y-3">
-                      {Object.entries(categoryScores).map(([cat, scores]) => {
-                        const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-                        const { color, label } = getScore(avg)
-                        const displayName = {
-                          "recognition": "Emotion Recognition",
-                          "expression": "Emotion Expression",
-                          "regulation": "Emotion Regulation",
-                          "self-kindness": "Self-Kindness",
-                          "common-humanity": "Common Humanity",
-                          "mindfulness": "Mindfulness",
-                        }[cat] ?? cat
-                        return (
-                          <div key={cat}>
-                            <div className="flex justify-between text-xs mb-1">
-                              <span className="text-muted-foreground font-medium">{displayName}</span>
-                              <span className={cn("font-semibold", color)}>{label}</span>
-                            </div>
-                            <div className="h-2 w-full rounded-full bg-muted/60 overflow-hidden">
-                              <motion.div
-                                className="h-full rounded-full bg-primary"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${avg}%` }}
-                                transition={{ duration: 0.7, delay: 0.2 }}
-                              />
-                            </div>
+                    ) : (
+                      <div>
+                        <div className="bg-primary/8 rounded-xl p-4 mb-4 border border-primary/15">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="text-[10px] font-semibold text-primary uppercase tracking-wide">{selectedPrompt.category}</span>
+                            {contextualCategory === selectedPrompt.category && (
+                              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary/80">suggested for you</span>
+                            )}
                           </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button onClick={() => startQuiz(quizType)} variant="outline" className="flex-1 rounded-xl gap-2">
-                      <RotateCcw className="w-4 h-4" /> Retake
-                    </Button>
-                    <Button onClick={() => setQuizPhase("select")} className="flex-1 rounded-xl gap-2">
-                      Try Other Quiz
-                    </Button>
+                          <p className="text-sm text-foreground leading-relaxed font-serif italic">"{selectedPrompt.text}"</p>
+                        </div>
+                        <Textarea value={entry} onChange={(e) => setEntry(e.target.value)}
+                          placeholder="Take your time. Write whatever comes…"
+                          className="min-h-[140px] resize-none rounded-xl border-border/40 text-sm leading-relaxed focus-visible:ring-primary/30 mb-3" />
+                        <div className="flex gap-2">
+                          <Button onClick={saveEntry} disabled={!entry.trim() || saved}
+                            className={cn("flex-1 rounded-xl gap-2", saved && "bg-emerald-500 hover:bg-emerald-500")}>
+                            {saved ? <><CheckCircle2 className="w-4 h-4" /> Saved</> : <><Save className="w-4 h-4" /> Save Entry</>}
+                          </Button>
+                          <Button variant="outline" onClick={() => { setSelectedPrompt(null); setEntry("") }} className="rounded-xl">Cancel</Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+
+              {/* ══ QUIZ TAB ══ */}
+              {tab === "quiz" && (
+                <motion.div key="quiz" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}>
+
+                  {quizPhase === "select" && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground mb-2">These short reflections help you understand yourself better. There are no right or wrong answers.</p>
+                      {(Object.entries(QUIZ_META) as [QuizType, typeof QUIZ_META["self-compassion"]][]).map(([type, meta]) => (
+                        <button key={type} onClick={() => startQuiz(type)}
+                          className={cn("w-full text-left glass-card rounded-2xl p-5 border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md", meta.border)}>
+                          <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-3 bg-gradient-to-r", meta.color)}>
+                            <span>{meta.emoji}</span> {meta.label}
+                          </div>
+                          <p className="text-sm text-muted-foreground leading-relaxed mb-3">{meta.description}</p>
+                          <div className="flex items-center gap-1 text-xs font-semibold text-primary/70">
+                            5 questions <ChevronRight className="w-3.5 h-3.5" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {quizPhase === "questions" && questions.length > 0 && (
+                    <div>
+                      <div className="mb-6">
+                        <div className="flex justify-between text-xs text-muted-foreground mb-2">
+                          <span>{QUIZ_META[quizType].emoji} {QUIZ_META[quizType].label}</span>
+                          <span>{questionIndex + 1} / {questions.length}</span>
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-muted/60 overflow-hidden">
+                          <motion.div className="h-full rounded-full bg-primary"
+                            animate={{ width: `${((questionIndex) / questions.length) * 100}%` }} transition={{ duration: 0.4 }} />
+                        </div>
+                      </div>
+                      <AnimatePresence mode="wait">
+                        <motion.div key={questionIndex} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}
+                          transition={{ duration: 0.3 }} className="glass-card rounded-2xl p-6">
+                          <p className="font-serif text-lg text-foreground leading-snug mb-6">{questions[questionIndex].question}</p>
+                          <div className="space-y-2.5">
+                            {questions[questionIndex].options.map((option, i) => (
+                              <button key={i} onClick={() => answerQuestion(questions[questionIndex].scores[i])}
+                                className={cn("w-full text-left px-4 py-3.5 rounded-xl border text-sm transition-all duration-200",
+                                  answers[questions[questionIndex].id] !== undefined
+                                    ? "opacity-50 cursor-default border-border/30"
+                                    : "border-border/50 hover:border-primary/40 hover:bg-primary/5 hover:text-foreground text-muted-foreground")}>
+                                {option}
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      </AnimatePresence>
+                      <button onClick={() => setQuizPhase("select")} className="mt-4 text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                        <ChevronLeft className="w-3 h-3" /> Exit quiz
+                      </button>
+                    </div>
+                  )}
+
+                  {quizPhase === "results" && (
+                    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+                      <div className="glass-card rounded-2xl p-6 text-center">
+                        <div className="text-4xl mb-1">{QUIZ_META[quizType].emoji}</div>
+                        <h2 className="font-serif text-xl font-semibold text-foreground mb-1">{QUIZ_META[quizType].label}</h2>
+                        <div className={cn("text-4xl font-bold my-4", getScore(avgScore).color)}>{avgScore}</div>
+                        <div className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-3 bg-primary/10", getScore(avgScore).color)}>
+                          <Sparkles className="w-3 h-3" /> {getScore(avgScore).label}
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{getScore(avgScore).message}</p>
+                      </div>
+                      <div className="flex gap-3 mt-4">
+                        <Button onClick={() => startQuiz(quizType)} variant="outline" className="flex-1 rounded-xl gap-2">
+                          <RotateCcw className="w-4 h-4" /> Retake
+                        </Button>
+                        <Button onClick={() => setQuizPhase("select")} className="flex-1 rounded-xl gap-2">Try Other Quiz</Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* ── Sidebar ── */}
+          <aside className="lg:sticky lg:top-[76px] lg:self-start space-y-4 min-w-0">
+
+            {/* Journal: past entries */}
+            {tab === "journal" && journalEntries.length > 0 && (
+              <div className="glass-card rounded-2xl p-5">
+                <h2 className="font-semibold text-foreground text-sm mb-4">Past Entries</h2>
+                <div className="space-y-3">
+                  {journalEntries.slice(0, 5).map((e) => (
+                    <div key={e.id} className="border border-border/40 rounded-xl p-4 group">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <p className="text-[11px] text-primary/70 font-medium font-serif italic line-clamp-1 flex-1">"{e.prompt}"</p>
+                        <button onClick={() => deleteEntry(e.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-sm text-foreground/80 leading-relaxed line-clamp-3">{e.entry}</p>
+                      <p className="text-[10px] text-muted-foreground mt-2">
+                        {new Date(e.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Journal: empty state tip */}
+            {tab === "journal" && journalEntries.length === 0 && (
+              <div className="glass-card rounded-2xl p-5">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Your saved journal entries will appear here. Choose a prompt and write your first reflection to get started.
+                </p>
+              </div>
+            )}
+
+            {/* Quiz: category breakdown in results */}
+            {tab === "quiz" && quizPhase === "results" && (
+              <div className="glass-card rounded-2xl p-5">
+                <h3 className="font-semibold text-sm text-foreground mb-4">Breakdown</h3>
+                <div className="space-y-3">
+                  {Object.entries(categoryScores).map(([cat, scores]) => {
+                    const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+                    const { color, label } = getScore(avg)
+                    const displayName = ({
+                      "recognition": "Emotion Recognition",
+                      "expression": "Emotion Expression",
+                      "regulation": "Emotion Regulation",
+                      "self-kindness": "Self-Kindness",
+                      "common-humanity": "Common Humanity",
+                      "mindfulness": "Mindfulness",
+                    } as Record<string, string>)[cat] ?? cat
+                    return (
+                      <div key={cat}>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-muted-foreground font-medium">{displayName}</span>
+                          <span className={cn("font-semibold", color)}>{label}</span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-muted/60 overflow-hidden">
+                          <motion.div className="h-full rounded-full bg-primary" initial={{ width: 0 }}
+                            animate={{ width: `${avg}%` }} transition={{ duration: 0.7, delay: 0.2 }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Quiz: tip during select/questions */}
+            {tab === "quiz" && quizPhase !== "results" && (
+              <div className="glass-card rounded-2xl p-5">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  These reflections help you understand yourself better. There are no right or wrong answers — just honest ones.
+                </p>
+              </div>
+            )}
+
+          </aside>
+
+        </motion.div>
       </motion.div>
       <BottomNav />
     </div>

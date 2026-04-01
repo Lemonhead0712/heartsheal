@@ -18,7 +18,6 @@ import { EmojiPicker } from "@/components/emoji-picker"
 import { useEmotionLogs } from "@/hooks/use-emotion-logs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { PageContainer } from "@/components/page-container"
 import { EmotionalSurvey } from "@/components/emotional-survey"
 import { EnhancedEmotionalAnalytics } from "@/components/enhanced-emotional-analytics"
 import { formatRelativeTime } from "@/utils/date-utils"
@@ -26,11 +25,7 @@ import { useRealTimeUpdate } from "@/hooks/use-real-time-update"
 import { DailyEmotionFolder } from "@/components/daily-emotion-folder"
 
 export default function EmotionalLogPage() {
-  return (
-    <PageContainer>
-      <EmotionalLog />
-    </PageContainer>
-  )
+  return <EmotionalLog />
 }
 
 function EmotionalLog() {

@@ -145,7 +145,7 @@ export default function SettingsPage() {
 
         {/* Header */}
         <motion.div className="flex flex-col items-center mb-3" variants={item}>
-          <Logo size="small" />
+          <Logo size="medium" />
         </motion.div>
         <motion.div className="mb-5" variants={item}>
           <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors text-sm">

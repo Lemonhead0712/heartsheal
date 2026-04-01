@@ -112,7 +112,7 @@ export default function Home() {
       >
 
         {/* ── Hero ── */}
-        <motion.section className="text-center max-w-2xl mx-auto mb-6 md:mb-8" variants={item}>
+        <motion.section className="text-center max-w-3xl mx-auto mb-6 md:mb-8" variants={item}>
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wide mb-5">
             <Heart className="w-3.5 h-3.5 fill-primary/30" />
             {greeting.salutation}
@@ -178,7 +178,7 @@ export default function Home() {
               <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
                 Free forever — create an account to keep your logs and journal safe and accessible anywhere.
               </p>
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => openAuth("signup")}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/40 text-primary text-sm font-semibold hover:bg-primary/10 active:scale-[0.98] transition-all"
@@ -198,7 +198,7 @@ export default function Home() {
         )}
 
         {/* ── Welcome Banner (first visit only) ── */}
-        <motion.section className="mb-6 md:mb-8" variants={item}>
+        <motion.section variants={item}>
           <WelcomeBanner />
         </motion.section>
 

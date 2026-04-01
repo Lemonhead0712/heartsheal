@@ -148,18 +148,18 @@ export function useTTS() {
     setIsSpeaking(false)
   }, [])
 
-  const speak = useCallback((text: string, opts?: { rate?: number; pitch?: number }): Promise<void> => {
-    const cleaned = cleanForSpeech(text)
-    if (!voiceEnabled || !cleaned) return Promise.resolve()
-    stopAudio()
-    setIsSpeaking(true)
-
-    return new Promise<void>(async (resolve) => {
-      const done = () => { setIsSpeaking(false); resolve() }
-
-      /* ── Try ElevenLabs (with cache) ── */
+  /**
+   * Shared ElevenLabs fetch → play. Returns true if audio played successfully.
+   * Falls back automatically to browser TTS on failure.
+   */
+  const playViaElevenLabs = useCallback((
+    cleaned: string,
+    useCache: boolean,
+    onDone: () => void,
+  ): Promise<boolean> => {
+    return new Promise<boolean>(async (resolve) => {
       try {
-        let url = audioCache.get(cleaned)
+        let url = useCache ? audioCache.get(cleaned) : undefined
 
         if (!url) {
           const controller = new AbortController()
@@ -175,7 +175,7 @@ export function useTTS() {
           if (res.ok) {
             const blob = await res.blob()
             url = URL.createObjectURL(blob)
-            if (cleaned.length < 120) audioCache.set(cleaned, url)
+            if (useCache && cleaned.length < 120) audioCache.set(cleaned, url)
           }
         }
 
@@ -183,33 +183,47 @@ export function useTTS() {
           const audio = new Audio(url)
           audio.volume = voiceVolumeRef.current
           audioRef.current = audio
-          audio.onended = done
-          audio.onerror = () => {
-            audioCache.delete(cleaned)
-            speakBrowser(cleaned, opts?.rate, opts?.pitch, done)
-          }
+          audio.onended = () => { onDone(); resolve(true) }
+          audio.onerror = () => { audioCache.delete(cleaned); resolve(false) }
           await audio.play()
           return
         }
       } catch (err: any) {
-        if (err?.name === "AbortError") { done(); return }
+        if (err?.name === "AbortError") { onDone(); resolve(true); return }
       }
-
-      /* ── Browser TTS fallback ── */
-      speakBrowser(cleaned, opts?.rate, opts?.pitch, done, voiceVolumeRef.current)
+      resolve(false)
     })
-  }, [voiceEnabled, stopAudio])
+  }, [])
 
-  /* speakFast — browser TTS only, starts in <100ms. Use for voice conversation mode. */
+  const speak = useCallback((text: string, opts?: { rate?: number; pitch?: number }): Promise<void> => {
+    const cleaned = cleanForSpeech(text)
+    if (!voiceEnabled || !cleaned) return Promise.resolve()
+    stopAudio()
+    setIsSpeaking(true)
+
+    return new Promise<void>(async (resolve) => {
+      const done = () => { setIsSpeaking(false); resolve() }
+      const ok = await playViaElevenLabs(cleaned, true, done)
+      if (!ok) speakBrowser(cleaned, opts?.rate, opts?.pitch, done, voiceVolumeRef.current)
+    })
+  }, [voiceEnabled, stopAudio, playViaElevenLabs])
+
+  /**
+   * speakFast — same ElevenLabs quality as speak(), no cache (fresh per sentence).
+   * Used in voice conversation mode. Falls back to browser TTS if ElevenLabs is unavailable.
+   */
   const speakFast = useCallback((text: string): Promise<void> => {
     const cleaned = cleanForSpeech(text)
     if (!voiceEnabled || !cleaned) return Promise.resolve()
     stopAudio()
     setIsSpeaking(true)
-    return new Promise<void>((resolve) => {
-      speakBrowser(cleaned, 0.87, 0.95, () => { setIsSpeaking(false); resolve() }, voiceVolumeRef.current)
+
+    return new Promise<void>(async (resolve) => {
+      const done = () => { setIsSpeaking(false); resolve() }
+      const ok = await playViaElevenLabs(cleaned, false, done)
+      if (!ok) speakBrowser(cleaned, 0.87, 0.95, done, voiceVolumeRef.current)
     })
-  }, [voiceEnabled, stopAudio])
+  }, [voiceEnabled, stopAudio, playViaElevenLabs])
 
   const toggleVoice = useCallback(() => {
     setVoiceEnabled((prev) => {

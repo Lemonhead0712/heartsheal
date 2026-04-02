@@ -18,48 +18,52 @@ const container: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.07, delayChildren: 0.04 },
+    transition: { staggerChildren: 0.08, delayChildren: 0.05 },
   },
 }
 const item: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } },
+  hidden: { opacity: 0, y: 18 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } },
 }
 
 /* ─── Quick-access tool links ─── */
 const tools = [
   {
-    href:    "/companion",
-    icon:    Sparkles,
-    label:   "Haven",
-    sub:     "AI Companion",
-    iconBg:  "bg-rose-100 text-rose-500 dark:bg-rose-900/40 dark:text-rose-400",
-    accent:  "from-rose-50/60 dark:from-rose-900/15",
+    href:   "/companion",
+    icon:   Sparkles,
+    label:  "Haven",
+    sub:    "AI Companion",
+    iconBg: "bg-rose-100 text-rose-500 dark:bg-rose-900/40 dark:text-rose-400",
+    accent: "from-rose-50/60 dark:from-rose-900/15",
   },
   {
-    href:    "/breathe",
-    icon:    Wind,
-    label:   "Breathe",
-    sub:     "Guided session",
-    iconBg:  "bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400",
-    accent:  "from-sky-50/60 dark:from-sky-900/15",
+    href:   "/breathe",
+    icon:   Wind,
+    label:  "Breathe",
+    sub:    "Guided session",
+    iconBg: "bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400",
+    accent: "from-sky-50/60 dark:from-sky-900/15",
   },
   {
-    href:    "/thoughts",
-    icon:    BookHeart,
-    label:   "Thoughts",
-    sub:     "Journal & quizzes",
-    iconBg:  "bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400",
-    accent:  "from-amber-50/60 dark:from-amber-900/15",
+    href:   "/thoughts",
+    icon:   BookHeart,
+    label:  "Thoughts",
+    sub:    "Journal & quizzes",
+    iconBg: "bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400",
+    accent: "from-amber-50/60 dark:from-amber-900/15",
   },
   {
-    href:    "/insights",
-    icon:    TrendingUp,
-    label:   "Insights",
-    sub:     "Healing analytics",
-    iconBg:  "bg-primary/10 text-primary",
-    accent:  "from-primary/6",
+    href:   "/insights",
+    icon:   TrendingUp,
+    label:  "Insights",
+    sub:    "Healing analytics",
+    iconBg: "bg-primary/10 text-primary",
+    accent: "from-primary/6",
   },
+]
+
+const lossTypes = [
+  "Grief & Loss", "Heartbreak", "Divorce", "Job Loss", "Loneliness", "Family Pain", "Identity", "Trauma",
 ]
 
 /* ─── Helpers ─── */
@@ -89,18 +93,18 @@ function computeStreak(logs: any[]): number {
 function computeHealingScore(logs: any[], surveys: any[]): number | null {
   if (logs.length < 2) return null
   const sevenAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
-  const recent = logs.filter((l: any) => new Date(l.timestamp).getTime() > sevenAgo)
+  const recent   = logs.filter((l: any) => new Date(l.timestamp).getTime() > sevenAgo)
   if (!recent.length) return null
 
-  const uniqueDays = new Set(recent.map((l: any) => new Date(l.timestamp).toDateString())).size
-  const consistency = Math.min(uniqueDays / 7, 1)
-  const avgIntensity = recent.reduce((s: number, l: any) => s + (l.intensity ?? 5), 0) / recent.length
-  const intensityScore = 1 - avgIntensity / 10
+  const uniqueDays      = new Set(recent.map((l: any) => new Date(l.timestamp).toDateString())).size
+  const consistency     = Math.min(uniqueDays / 7, 1)
+  const avgIntensity    = recent.reduce((s: number, l: any) => s + (l.intensity ?? 5), 0) / recent.length
+  const intensityScore  = 1 - avgIntensity / 10
 
   let surveyScore = 0.5
   if (surveys.length > 0) {
     const last = surveys.slice(-3)
-    const avg = last.reduce((s: number, sv: any) =>
+    const avg  = last.reduce((s: number, sv: any) =>
       s + ((sv.emotionalState + sv.selfConnection + sv.selfCompassion + sv.selfCare) / 4), 0) / last.length
     surveyScore = avg / 5
   }
@@ -109,40 +113,29 @@ function computeHealingScore(logs: any[], surveys: any[]): number | null {
 }
 
 type LiveStats = {
-  streak: number
+  streak:       number
   healingScore: number | null
-  lastEmotion: { emoji: string; emotion: string; intensity: number } | null
-  totalLogs: number
-  hasData: boolean
-}
-
-/* ─── Stat mini-card ─── */
-function StatPill({ icon, value, label, className }: { icon: React.ReactNode; value: string; label: string; className?: string }) {
-  return (
-    <div className={cn("flex flex-col items-center justify-center gap-0.5 rounded-2xl bg-card/80 border border-border/40 px-4 py-3 min-w-[80px]", className)}>
-      <div className="text-muted-foreground mb-0.5">{icon}</div>
-      <span className="text-lg font-bold text-foreground leading-none">{value}</span>
-      <span className="text-[10px] text-muted-foreground text-center leading-tight whitespace-nowrap">{label}</span>
-    </div>
-  )
+  lastEmotion:  { emoji: string; emotion: string } | null
+  totalLogs:    number
+  hasData:      boolean
 }
 
 /* ─── Score ring (SVG) ─── */
 function ScoreRing({ score }: { score: number }) {
-  const r = 22
-  const circ = 2 * Math.PI * r
+  const r     = 20
+  const circ  = 2 * Math.PI * r
   const offset = circ - (score / 100) * circ
-  const color = score >= 70 ? "#10b981" : score >= 45 ? "#f59e0b" : "#f43f5e"
+  const color  = score >= 70 ? "#10b981" : score >= 45 ? "#f59e0b" : "#f43f5e"
   return (
-    <svg width="56" height="56" viewBox="0 0 56 56" className="shrink-0">
-      <circle cx="28" cy="28" r={r} fill="none" stroke="currentColor" strokeWidth="4" className="text-muted/30" />
+    <svg width="48" height="48" viewBox="0 0 48 48" className="shrink-0">
+      <circle cx="24" cy="24" r={r} fill="none" stroke="currentColor" strokeWidth="3.5" className="text-muted/30" />
       <circle
-        cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth="4"
+        cx="24" cy="24" r={r} fill="none" stroke={color} strokeWidth="3.5"
         strokeDasharray={circ} strokeDashoffset={offset}
-        strokeLinecap="round" transform="rotate(-90 28 28)"
+        strokeLinecap="round" transform="rotate(-90 24 24)"
         style={{ transition: "stroke-dashoffset 0.8s ease" }}
       />
-      <text x="28" y="33" textAnchor="middle" fontSize="13" fontWeight="700" fill={color}>{score}</text>
+      <text x="24" y="29" textAnchor="middle" fontSize="11" fontWeight="700" fill={color}>{score}</text>
     </svg>
   )
 }
@@ -156,22 +149,20 @@ export default function Home() {
   const [stats, setStats]             = useState<LiveStats | null>(null)
 
   useEffect(() => {
-    const name = readStorage<string>(STORAGE_KEYS.userName) ?? undefined
+    const name    = readStorage<string>(STORAGE_KEYS.userName) ?? undefined
     setGreeting(getGreeting(name))
 
-    // Compute live stats
     const logs    = readStorage<any[]>(STORAGE_KEYS.emotionLogs)    ?? []
     const surveys = readStorage<any[]>(STORAGE_KEYS.surveyResponses) ?? []
     const last    = logs[0] ?? null
     setStats({
       streak:       computeStreak(logs),
       healingScore: computeHealingScore(logs, surveys),
-      lastEmotion:  last ? { emoji: last.emoji, emotion: last.emotion, intensity: last.intensity ?? 5 } : null,
+      lastEmotion:  last ? { emoji: last.emoji, emotion: last.emotion } : null,
       totalLogs:    logs.length,
       hasData:      logs.length > 0,
     })
 
-    // Show daily check-in if not done today
     const lastCheckin = readStorage<string>(STORAGE_KEYS.lastCheckin)
     if (lastCheckin !== new Date().toDateString()) {
       const t = setTimeout(() => setCheckinOpen(true), 1800)
@@ -180,8 +171,6 @@ export default function Home() {
   }, [])
 
   const openAuth = (mode: "signin" | "signup") => { setAuthMode(mode); setAuthOpen(true) }
-
-  const hasData  = stats?.hasData ?? false
 
   return (
     <div className="min-h-screen bg-page-gradient">
@@ -192,120 +181,50 @@ export default function Home() {
         animate="show"
       >
 
-        {/* ── Personal Hero ── */}
-        <motion.section className="mb-6 md:mb-8" variants={item}>
-          <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-card/60 to-card border border-border/30 px-5 py-6 md:px-8 md:py-7">
+        {/* ── Hero ── */}
+        <motion.section className="text-center max-w-3xl mx-auto mb-8 md:mb-10" variants={item}>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wide mb-5">
+            <Heart className="w-3.5 h-3.5 fill-primary/30" />
+            {greeting.salutation}
+          </div>
+          <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-foreground mb-5 text-balance leading-[1.1]">
+            Healing begins with{" "}
+            <span className="text-primary">one breath.</span>
+          </h1>
+          <p className="text-muted-foreground text-base sm:text-lg leading-relaxed text-pretty max-w-xl mx-auto mb-8">
+            {greeting.sub}
+          </p>
 
-            {/* Greeting */}
-            <div className="flex items-start justify-between gap-4 mb-5">
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-semibold tracking-wide mb-2">
-                  <Heart className="w-3 h-3 fill-primary/40" />
-                  HeartsHeal
-                </div>
-                <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-foreground leading-snug">
-                  {greeting.salutation}
-                </h1>
-                <p className="text-sm text-muted-foreground mt-1">{greeting.sub}</p>
-              </div>
-            </div>
+          {/* Loss type pills */}
+          <div className="flex flex-wrap justify-center gap-2.5 mb-10">
+            {lossTypes.map((t) => (
+              <span key={t} className="pill-badge bg-secondary text-muted-foreground text-sm px-4 py-1.5">
+                {t}
+              </span>
+            ))}
+          </div>
 
-            {/* Live stats row — only when user has data */}
-            {hasData && stats ? (
-              <div className="flex flex-wrap gap-2 mb-5">
-                {stats.streak > 0 && (
-                  <StatPill
-                    icon={<Flame className="w-3.5 h-3.5 text-orange-400" />}
-                    value={`${stats.streak}`}
-                    label={stats.streak === 1 ? "day streak" : "day streak"}
-                  />
-                )}
-                {stats.healingScore !== null && (
-                  <div className="flex flex-col items-center justify-center gap-0.5 rounded-2xl bg-card/80 border border-border/40 px-3 py-2">
-                    <ScoreRing score={stats.healingScore} />
-                    <span className="text-[10px] text-muted-foreground text-center leading-tight">Healing Score</span>
-                  </div>
-                )}
-                {stats.lastEmotion && (
-                  <StatPill
-                    icon={<span className="text-base leading-none">{stats.lastEmotion.emoji}</span>}
-                    value={stats.lastEmotion.emotion}
-                    label="last logged"
-                  />
-                )}
-                <StatPill
-                  icon={<Activity className="w-3.5 h-3.5 text-primary" />}
-                  value={`${stats.totalLogs}`}
-                  label="total logs"
-                />
-              </div>
-            ) : (
-              /* First-time / no data state */
-              <p className="text-sm text-muted-foreground mb-5 max-w-md">
-                Start your healing journey — log how you feel today and watch your patterns emerge over time.
-              </p>
-            )}
-
-            {/* Primary action buttons */}
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/companion"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-sm hover:bg-primary/90 hover:-translate-y-px transition-all duration-200"
-              >
-                <Sparkles className="w-4 h-4" />
-                Talk to Haven
-              </Link>
-              <Link
-                href="/emotional-log"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border/60 text-foreground text-sm font-semibold hover:bg-muted/60 transition-colors duration-200"
-              >
-                <PenLine className="w-4 h-4 text-primary" />
-                Log Emotion
-              </Link>
-              <Link
-                href="/breathe"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border/60 text-foreground text-sm font-semibold hover:bg-muted/60 transition-colors duration-200"
-              >
-                <Wind className="w-4 h-4 text-sky-500" />
-                Breathe
-              </Link>
-            </div>
+          {/* CTAs */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/companion"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <Heart className="w-4 h-4" />
+              Talk to Haven
+            </Link>
+            <Link
+              href="/emotional-log"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-border/60 text-muted-foreground font-semibold text-sm hover:text-foreground hover:border-border transition-colors duration-200"
+            >
+              <PenLine className="w-4 h-4" />
+              Log Emotion
+            </Link>
           </div>
         </motion.section>
 
-        {/* ── Healing Insights Preview (only with data) ── */}
-        {hasData && stats?.healingScore !== null && (
-          <motion.section className="mb-6 md:mb-8" variants={item}>
-            <Link href="/insights" className="group block">
-              <div className="rounded-2xl bg-gradient-to-br from-emerald-50/70 via-card/50 to-card dark:from-emerald-900/20 border border-emerald-200/50 dark:border-emerald-800/30 px-5 py-5 hover:border-emerald-300/70 dark:hover:border-emerald-700/50 transition-colors duration-200">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                      <span className="text-sm font-semibold text-foreground">Your Healing Insights</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-                      {stats!.streak > 1
-                        ? `You've been showing up for yourself — ${stats!.streak} days in a row. That consistency is your foundation.`
-                        : "Track your wellbeing across emotions, breathing, journaling, and more in one place."}
-                    </p>
-                    <div className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 group-hover:gap-2 transition-all duration-200">
-                      View full insights
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <ScoreRing score={stats!.healingScore!} />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Healing Score</p>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </motion.section>
-        )}
-
         {/* ── Crisis Support Banner ── */}
-        <motion.section variants={item} className="mb-6 md:mb-8">
+        <motion.section variants={item} className="mb-7 md:mb-9">
           <div className="glass-card rounded-2xl px-5 py-4">
             <div className="flex items-start gap-3">
               <span className="text-xl shrink-0">🆘</span>
@@ -324,30 +243,30 @@ export default function Home() {
 
         {/* ── Quick-access Tools ── */}
         <motion.section className="mb-7 md:mb-9" variants={item}>
-          <div className="flex items-center gap-3 mb-4">
-            <h2 className="font-serif text-lg sm:text-xl font-semibold text-foreground">
+          <div className="flex items-center gap-3 mb-5">
+            <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
               Your Healing Tools
             </h2>
-            <div className="flex-1 h-px bg-border/50" />
+            <div className="flex-1 h-px bg-border/60" />
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {tools.map(({ href, icon: Icon, label, sub, iconBg, accent }) => (
               <Link key={href} href={href} className="group">
                 <div className={cn(
-                  "rounded-2xl bg-card border border-border/40 bg-gradient-to-br to-transparent transition-all duration-200",
-                  "hover:border-border/70 hover:shadow-sm hover:-translate-y-0.5",
+                  "rounded-2xl bg-card border border-border/40 bg-gradient-to-br to-transparent h-full",
+                  "hover:border-border/70 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200",
                   accent,
                 )}>
-                  <div className="p-4 flex flex-col gap-3">
-                    <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
-                      <Icon className="w-4.5 h-4.5" aria-hidden="true" />
+                  <div className="p-4 sm:p-5 flex flex-col gap-3 h-full">
+                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
+                      <Icon className="w-5 h-5" aria-hidden="true" />
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground leading-snug">{label}</p>
+                    <div className="flex-1">
+                      <p className="text-[15px] font-semibold text-foreground leading-snug">{label}</p>
                       <p className="text-xs text-muted-foreground leading-snug mt-0.5">{sub}</p>
                     </div>
-                    <div className="flex items-center gap-0.5 text-[11px] font-semibold text-primary/60 group-hover:text-primary transition-colors duration-200 mt-auto">
+                    <div className="flex items-center gap-0.5 text-xs font-semibold text-primary/60 group-hover:text-primary transition-colors duration-200">
                       <span>Open</span>
                       <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform duration-200" />
                     </div>
@@ -358,9 +277,81 @@ export default function Home() {
           </div>
         </motion.section>
 
+        {/* ── Your Progress (live stats) ── */}
+        <motion.section className="mb-7 md:mb-9" variants={item}>
+          <div className="flex items-center gap-3 mb-5">
+            <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
+              Your Progress
+            </h2>
+            <div className="flex-1 h-px bg-border/60" />
+          </div>
+
+          {stats?.hasData ? (
+            <Link href="/insights" className="group block">
+              <div className="rounded-2xl bg-gradient-to-br from-emerald-50/60 via-card/50 to-card dark:from-emerald-900/15 border border-emerald-200/40 dark:border-emerald-800/25 px-5 py-5 hover:border-emerald-300/60 dark:hover:border-emerald-700/40 transition-colors duration-200">
+                <div className="flex items-center gap-5 flex-wrap">
+                  {/* Score ring */}
+                  {stats.healingScore !== null && (
+                    <div className="flex flex-col items-center gap-1 shrink-0">
+                      <ScoreRing score={stats.healingScore} />
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">Healing Score</span>
+                    </div>
+                  )}
+
+                  {/* Stat pills */}
+                  <div className="flex flex-wrap gap-3 flex-1">
+                    {stats.streak > 0 && (
+                      <div className="flex flex-col items-center justify-center gap-0.5 rounded-xl bg-card border border-border/40 px-4 py-2.5 min-w-[72px]">
+                        <div className="flex items-center gap-1">
+                          <Flame className="w-3.5 h-3.5 text-orange-400" />
+                          <span className="text-lg font-bold text-foreground">{stats.streak}</span>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">day streak</span>
+                      </div>
+                    )}
+                    {stats.lastEmotion && (
+                      <div className="flex flex-col items-center justify-center gap-0.5 rounded-xl bg-card border border-border/40 px-4 py-2.5 min-w-[72px]">
+                        <span className="text-lg leading-none">{stats.lastEmotion.emoji}</span>
+                        <span className="text-[11px] font-medium text-foreground">{stats.lastEmotion.emotion}</span>
+                        <span className="text-[10px] text-muted-foreground">last logged</span>
+                      </div>
+                    )}
+                    <div className="flex flex-col items-center justify-center gap-0.5 rounded-xl bg-card border border-border/40 px-4 py-2.5 min-w-[72px]">
+                      <div className="flex items-center gap-1">
+                        <Activity className="w-3.5 h-3.5 text-primary" />
+                        <span className="text-lg font-bold text-foreground">{stats.totalLogs}</span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">total logs</span>
+                    </div>
+                  </div>
+
+                  {/* CTA */}
+                  <div className="ml-auto shrink-0 flex items-center gap-1 text-sm font-semibold text-emerald-600 dark:text-emerald-400 group-hover:gap-2 transition-all duration-200">
+                    View full insights
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ) : (
+            <div className="rounded-2xl bg-card border border-border/40 px-5 py-6 text-center">
+              <p className="text-sm text-muted-foreground mb-3">
+                Start logging your emotions to see your healing progress here.
+              </p>
+              <Link
+                href="/emotional-log"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+              >
+                <PenLine className="w-4 h-4" />
+                Log your first emotion
+              </Link>
+            </div>
+          )}
+        </motion.section>
+
         {/* ── Account & Sync (signed-out only) ── */}
         {!user && (
-          <motion.section className="mb-6 md:mb-8" variants={item}>
+          <motion.section className="mb-7 md:mb-9" variants={item}>
             <div className="rounded-2xl px-5 py-5 bg-primary/5 border border-primary/15">
               <div className="flex items-center gap-2 mb-1">
                 <Cloud className="w-4 h-4 text-primary" />
@@ -399,9 +390,9 @@ export default function Home() {
         </motion.section>
 
         {/* ── Closing affirmation ── */}
-        <motion.section variants={item} className="text-center py-2">
-          <div className="section-divider mb-5" />
-          <p className="font-serif text-base text-muted-foreground italic">
+        <motion.section variants={item} className="text-center py-4">
+          <div className="section-divider mb-6" />
+          <p className="font-serif text-lg text-muted-foreground italic">
             "Healing is not linear. Every moment you're here is an act of courage."
           </p>
         </motion.section>

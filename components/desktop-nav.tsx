@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, BookHeart, Wind, BarChart3, Menu, X, Sparkles, Settings, Cloud, LogOut, User } from "lucide-react"
+import { Home, BookHeart, Wind, TrendingUp, Menu, X, Sparkles, Settings, Cloud, LogOut, User } from "lucide-react"
 import { Logo } from "./logo"
 import { cn } from "@/lib/utils"
 import { useHapticContext } from "@/contexts/haptic-context"
@@ -12,11 +12,11 @@ import { useAuth } from "@/contexts/auth-context"
 import { AuthModal } from "@/components/auth-modal"
 
 const navItems = [
-  { name: "Home",          href: "/",              icon: Home },
-  { name: "Haven",         href: "/companion",     icon: Sparkles },
-  { name: "Emotional Log", href: "/emotional-log", icon: BarChart3 },
-  { name: "Breathe",       href: "/breathe",       icon: Wind },
-  { name: "Thoughts",      href: "/thoughts",      icon: BookHeart },
+  { name: "Home",     href: "/",          icon: Home },
+  { name: "Haven",    href: "/companion", icon: Sparkles },
+  { name: "Breathe",  href: "/breathe",   icon: Wind },
+  { name: "Thoughts", href: "/thoughts",  icon: BookHeart },
+  { name: "Insights", href: "/insights",  icon: TrendingUp },
 ]
 
 export function DesktopNav() {

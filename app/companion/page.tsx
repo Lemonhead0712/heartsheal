@@ -223,14 +223,11 @@ export default function CompanionPage() {
         if (ttsQueue.length > 0) {
           const sentence = ttsQueue.shift()!
           if (myGen === ttsGenRef.current) {
-            // Pre-fetch the next sentence into cache while this one plays — eliminates the gap
-            if (ttsQueue.length > 0) prefetch(ttsQueue[0])
-            // Stop mic before Haven speaks — prevents Haven's voice being captured
             stopListeningRef.current()
             await speak(sentence)
           }
         } else {
-          await new Promise<void>((r) => setTimeout(r, 40))
+          await new Promise<void>((r) => setTimeout(r, 20))
         }
       }
     }
@@ -248,6 +245,9 @@ export default function CompanionPage() {
             ttsQueue.push(m[1].trim())
             ttsConsumed += m[0].length
           }
+          // Prefetch ALL queued sentences in parallel — since onChunk fires once with the
+          // full response, the entire queue is ready here and can all be fetched concurrently
+          ttsQueue.forEach((s) => prefetch(s))
           if (ttsQueue.length >= 1 && !drainStarted) {
             drainStarted = true
             isSpeakingRef.current = true
@@ -265,7 +265,7 @@ export default function CompanionPage() {
         // Flush any remainder not yet queued
         ttsStreamDone = true
         const remainder = reply.slice(ttsConsumed).trim()
-        if (remainder) ttsQueue.push(remainder)
+        if (remainder) { prefetch(remainder); ttsQueue.push(remainder) }
         if (!drainStarted) {
           isSpeakingRef.current = true
           await drainTTS()
@@ -420,29 +420,74 @@ export default function CompanionPage() {
     setIsLoading(true)
     setError(null)
 
-    // Use a streaming call for the opening greeting so it appears word-by-word quickly
     const greetId = Date.now().toString()
     setMessages([{ id: greetId, role: "assistant", content: "…", timestamp: new Date() }])
 
     const openingPrompt = openingPrompts[loss.id] ??
       `Greet the user warmly, acknowledge what brought them here, and ask one gentle opening question. 2-3 spoken sentences.`
 
+    // Sentence-level TTS drain — starts as soon as the first sentence lands from Claude
+    const myGen = ++ttsGenRef.current
+    const ttsQueue: string[] = []
+    let ttsConsumed = 0
+    let streamDone = false
+    let overlayDismissed = false
+
+    const drainOpening = async () => {
+      while (myGen === ttsGenRef.current && (!streamDone || ttsQueue.length > 0)) {
+        if (ttsQueue.length > 0) {
+          const sentence = ttsQueue.shift()!
+          if (myGen === ttsGenRef.current) {
+            // Dismiss the overlay the moment first word is about to play
+            if (!overlayDismissed) {
+              overlayDismissed = true
+              setTimeout(() => setIsStarting(false), 300)
+            }
+            await speak(sentence)
+          }
+        } else {
+          await new Promise<void>((r) => setTimeout(r, 30))
+        }
+      }
+    }
+
     const openingMessage = await callClaudeStreaming(
       [{ id: "prompt", role: "user", content: openingPrompt, timestamp: new Date() }],
       loss.description,
       (partial) => {
         setMessages([{ id: greetId, role: "assistant", content: partial, timestamp: new Date() }])
+        const newText = partial.slice(ttsConsumed)
+        const matches = [...newText.matchAll(/(.{20,}?[.!?…])\s/g)]
+        for (const m of matches) {
+          ttsQueue.push(m[1].trim())
+          ttsConsumed += m[0].length
+        }
+        // Prefetch all sentences in parallel as soon as they're known
+        ttsQueue.forEach((s) => prefetch(s))
+        // Kick off drain on first sentence
+        if (ttsQueue.length >= 1 && myGen === ttsGenRef.current) {
+          drainOpening()
+        }
       },
-      true, // use Haiku — fast for a short greeting
+      true, // Haiku — fast for a short greeting
     )
 
+    streamDone = true
     setIsLoading(false)
+
     if (openingMessage) {
       setMessages([{ id: greetId, role: "assistant", content: openingMessage, timestamp: new Date() }])
-      speak(openingMessage) // fire and forget — audio continues while overlay fades
-      // Dismiss overlay after ~1.5s so user hears a few words before chat is revealed
-      setTimeout(() => setIsStarting(false), 3500)
-    } else {
+      // Flush any remainder not yet queued
+      const remainder = openingMessage.slice(ttsConsumed).trim()
+      if (remainder) { prefetch(remainder); ttsQueue.push(remainder) }
+    }
+
+    // Fallback: if no sentences were extracted (very short message), speak it whole
+    if (!overlayDismissed && openingMessage) {
+      overlayDismissed = true
+      speak(openingMessage)
+      setTimeout(() => setIsStarting(false), 300)
+    } else if (!overlayDismissed) {
       setIsStarting(false)
     }
   }

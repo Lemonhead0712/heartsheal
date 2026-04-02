@@ -5,15 +5,18 @@
  * Import this wherever you read/write user data to keep keys consistent.
  */
 export const STORAGE_KEYS = {
-  emotionLogs:    "heartsHeal_emotionLogs",
-  journalEntries: "heartsHeal_journalEntries",
-  quizResults:    "heartsHeal_quizResults",
-  userName:       "heartsHeal_userName",
-  voice:          "heartsHeal_voice",
-  haptic:         "heartsHeal_haptic",
-  welcomeSeen:    "heartsHeal_welcomeSeen",
-  lastCheckin:    "heartsHeal_lastCheckin",
-  lastSession:    "heartsHeal_lastSession",
+  emotionLogs:      "heartsHeal_emotionLogs",
+  journalEntries:   "heartsHeal_journalEntries",
+  quizResults:      "heartsHeal_quizResults",
+  userName:         "heartsHeal_userName",
+  voice:            "heartsHeal_voice",
+  haptic:           "heartsHeal_haptic",
+  welcomeSeen:      "heartsHeal_welcomeSeen",
+  lastCheckin:      "heartsHeal_lastCheckin",
+  lastSession:      "heartsHeal_lastSession",
+  surveyResponses:  "heartsHeal_surveyResponses",
+  breathingHistory: "heartsHeal_breathingHistory",
+  weeklyNarrative:  "heartsHeal_weeklyNarrative",
 } as const
 
 /** Read and parse a localStorage key safely. Returns null on error. */

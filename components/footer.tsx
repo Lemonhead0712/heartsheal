@@ -6,7 +6,7 @@ const footerLinks = {
     { label: "Haven Companion", href: "/companion" },
     { label: "Breathe",       href: "/breathe" },
     { label: "Thoughts",      href: "/thoughts" },
-    { label: "Emotional Log", href: "/emotional-log" },
+    { label: "Insights",      href: "/insights" },
   ],
   Support: [
     { label: "About",          href: "/about" },
@@ -93,18 +93,14 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-border/50 pt-6 space-y-3">
-          <p className="text-xs text-muted-foreground text-center leading-relaxed max-w-lg mx-auto">
-            <span className="font-medium text-foreground/70">Disclaimer:</span> HeartsHeal is a wellness app and is not a substitute for professional mental health care. If you are in crisis, call or text <a href="tel:988" className="text-primary font-semibold">988</a>.
+        <div className="border-t border-border/50 pt-5 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            <span className="font-medium text-foreground/70">Disclaimer:</span> HeartsHeal is a wellness app and is not a substitute for professional mental health care.{" "}
+            If you are in crisis, call or text <a href="tel:988" className="text-primary font-semibold">988</a>.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p className="text-xs text-muted-foreground">
-              &copy; {new Date().getFullYear()} HeartsHeal. All rights reserved.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Made with care for those on a healing journey. Free forever.
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground shrink-0">
+            &copy; {new Date().getFullYear()} HeartsHeal. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

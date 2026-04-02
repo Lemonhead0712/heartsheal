@@ -126,6 +126,21 @@ export default function BreathePage() {
     clearTimer()
     abortedRef.current = true
     stopSpeech()
+    // Persist completed session before resetting counters
+    if (cyclesRef.current > 0) {
+      try {
+        const record = {
+          id: Date.now().toString(),
+          timestamp: new Date().toISOString(),
+          pattern: selectedPattern.name,
+          cycles: cyclesRef.current,
+        }
+        const prev = JSON.parse(localStorage.getItem("heartsHeal_breathingHistory") || "[]")
+        localStorage.setItem("heartsHeal_breathingHistory", JSON.stringify([...prev, record]))
+        const count = parseInt(localStorage.getItem("heartsHeal_breathingSessions") || "0", 10)
+        localStorage.setItem("heartsHeal_breathingSessions", String(count + 1))
+      } catch { /* silently fail */ }
+    }
     setSessionState("idle")
     setPhase("idle")
     setCountdown(0)

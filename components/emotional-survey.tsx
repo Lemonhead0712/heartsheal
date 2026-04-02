@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { QuizProgressIndicator } from "@/components/quiz-progress-indicator"
+import { readStorage, writeStorage } from "@/lib/storage"
 
 interface Question {
   id: string
@@ -79,6 +80,16 @@ export function EmotionalSurvey({ onComplete, className }: EmotionalSurveyProps)
     setSelected(null)
 
     if (isLast) {
+      const entry = {
+        id: Date.now().toString(),
+        timestamp: new Date().toISOString(),
+        emotionalState: updated.q1,
+        selfConnection:  updated.q2,
+        selfCompassion:  updated.q3,
+        selfCare:        updated.q4,
+      }
+      const prev = readStorage<typeof entry[]>("heartsHeal_surveyResponses") ?? []
+      writeStorage("heartsHeal_surveyResponses", [...prev, entry])
       onComplete()
     } else {
       setStep((s) => s + 1)

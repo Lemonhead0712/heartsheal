@@ -3,17 +3,17 @@
 import type React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, BookHeart, Wind, BarChart3, Sparkles } from "lucide-react"
+import { Home, BookHeart, Wind, TrendingUp, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useHapticContext } from "@/contexts/haptic-context"
 import { motion } from "framer-motion"
 
 const navItems = [
-  { name: "Home",     href: "/",              icon: Home },
-  { name: "Haven",    href: "/companion",     icon: Sparkles },
-  { name: "Breathe",  href: "/breathe",       icon: Wind },
-  { name: "Thoughts", href: "/thoughts",      icon: BookHeart },
-  { name: "Log",      href: "/emotional-log", icon: BarChart3 },
+  { name: "Home",     href: "/",          icon: Home },
+  { name: "Haven",    href: "/companion", icon: Sparkles },
+  { name: "Breathe",  href: "/breathe",   icon: Wind },
+  { name: "Thoughts", href: "/thoughts",  icon: BookHeart },
+  { name: "Insights", href: "/insights",  icon: TrendingUp },
 ]
 
 export function BottomNav() {

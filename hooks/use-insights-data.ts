@@ -7,6 +7,25 @@ import type { JournalEntry } from "@/hooks/use-journal-entries"
 
 export type DateRange = "7d" | "30d" | "all"
 
+// Valence scores: positive = above neutral, negative = below
+const EMOTION_VALENCE: Record<string, number> = {
+  Joy: 3.5, Grateful: 3, Hopeful: 2.5, Trust: 2, Calm: 1.5,
+  Anticipation: 1.5, Okay: 0.5, Surprise: 0.5,
+  Numb: -0.5, Frustrated: -1.5, Frustration: -1.5,
+  Anger: -2, Fear: -2, Sad: -2.5, Sadness: -2.5, Anxious: -2.5,
+  Disgust: -2.5, Grief: -3.5, Overwhelmed: -3.5,
+}
+
+export type MoodPoint = {
+  x: number      // timestamp ms (for XAxis type="number")
+  y: number      // valence -4 to +4
+  z: number      // intensity 1-10 (drives dot size)
+  emotion: string
+  emoji: string
+  dateStr: string
+  intensity: number
+}
+
 export type SurveyResponse = {
   id: string
   timestamp: string
@@ -54,6 +73,7 @@ export type InsightsData = {
   emotionFrequency: { emotion: string; count: number; avgIntensity: number }[]
   breathingImpact: number | null
   quizHistory: { date: string; type: string; score: number; label: string }[]
+  moodTimeline: MoodPoint[]
   havenSession: { date: string; lossType: string; summary: string } | null
   journalActivity: { date: string; count: number }[]
   recentJournalSnippets: { date: string; prompt: string; excerpt: string }[]
@@ -152,7 +172,6 @@ function scoreLabel(score: number): string {
 
 export function useInsightsData(dateRange: DateRange) {
   const [data, setData] = useState<InsightsData | null>(null)
-  const [narrativeLoading, setNarrativeLoading] = useState(false)
 
   const computeData = useCallback(async () => {
     if (typeof window === "undefined") return
@@ -270,6 +289,24 @@ export function useInsightsData(dateRange: DateRange) {
         label: scoreLabel(q.score),
       }))
 
+    // ── Mood timeline — each log plotted as valence + intensity ──
+    const moodTimeline: MoodPoint[] = emotionLogs
+      .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+      .map((e) => {
+        const base = EMOTION_VALENCE[e.emotion] ?? 0
+        // Scale valence by intensity: higher intensity amplifies the signal
+        const y = Math.round((base * (e.intensity / 5)) * 10) / 10
+        return {
+          x: new Date(e.timestamp).getTime(),
+          y,
+          z: e.intensity,
+          emotion: e.emotion,
+          emoji: e.emoji,
+          dateStr: toDateStr(e.timestamp),
+          intensity: e.intensity,
+        }
+      })
+
     // ── Haven session ──
     const havenSession = lastSession
       ? { date: toDateStr(lastSession.date), lossType: lastSession.lossId, summary: lastSession.summary }
@@ -353,6 +390,7 @@ export function useInsightsData(dateRange: DateRange) {
       emotionFrequency,
       breathingImpact,
       quizHistory,
+      moodTimeline,
       havenSession,
       journalActivity,
       recentJournalSnippets,
@@ -372,7 +410,6 @@ export function useInsightsData(dateRange: DateRange) {
         return
       }
 
-      setNarrativeLoading(true)
       setData((prev) => prev ? { ...prev, narrativeLoading: true } : prev)
 
       try {
@@ -412,7 +449,6 @@ Data: emotions logged: ${emotionLogs.length} (top: ${topEmotions || "none"}), av
           }
         }
       } catch { /* silently fail */ } finally {
-        setNarrativeLoading(false)
         setData((prev) => prev ? { ...prev, narrativeLoading: false } : prev)
       }
     }

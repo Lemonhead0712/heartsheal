@@ -6,43 +6,58 @@ import { motion } from "framer-motion"
 import {
   AreaChart, Area,
   LineChart, Line,
-  BarChart, Bar,
+  ScatterChart, Scatter, ReferenceLine,
   XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Legend,
+  ResponsiveContainer,
 } from "recharts"
 import {
-  TrendingUp, TrendingDown, Minus, Flame, Wind, BookHeart,
-  Sparkles, BarChart3, Activity, Heart, PlusCircle, RefreshCw,
+  TrendingUp, TrendingDown, Flame, Wind, BookHeart,
+  Sparkles, BarChart3, Activity, Heart, PlusCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useInsightsData, type DateRange } from "@/hooks/use-insights-data"
+import { useInsightsData, type DateRange, type MoodPoint } from "@/hooks/use-insights-data"
 import { Logo } from "@/components/logo"
 
+/* ── Palette ── */
 const SURVEY_COLORS = {
-  emotionalState: "#f43f5e",   // rose
-  selfConnection:  "#8b5cf6",  // violet
-  selfCompassion:  "#0ea5e9",  // sky
-  selfCare:        "#10b981",  // emerald
+  emotionalState: "#f43f5e",
+  selfConnection:  "#8b5cf6",
+  selfCompassion:  "#0ea5e9",
+  selfCare:        "#10b981",
 }
 
 const LOSS_LABELS: Record<string, string> = {
-  grief:    "Losing Someone",
-  breakup:  "Heartbreak",
-  job:      "Career Loss",
-  family:   "Family Estrangement",
-  identity: "Identity Shift",
-  other:    "Something Else",
+  grief: "Losing Someone", breakup: "Heartbreak", job: "Career Loss",
+  family: "Family Estrangement", identity: "Identity Shift", other: "Something Else",
 }
 
-function StatCard({
-  label, value, sub, icon: Icon, color, delta,
-}: {
-  label: string
-  value: string | number
-  sub: string
-  icon: React.ElementType
-  color: string
-  delta?: number
+/* ── Date range options ── */
+const RANGES: { value: DateRange; label: string }[] = [
+  { value: "7d",  label: "This Week" },
+  { value: "30d", label: "This Month" },
+  { value: "all", label: "All Time" },
+]
+
+/* ── Emotion pill color by intensity bucket ── */
+function emotionPillColor(avgIntensity: number) {
+  if (avgIntensity >= 7.5) return "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800/40"
+  if (avgIntensity >= 5)   return "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800/40"
+  return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800/40"
+}
+
+/* ── Mood dot color by valence ── */
+function moodDotColor(y: number) {
+  if (y >= 2)   return "#10b981"  // emerald — positive
+  if (y >= 0.5) return "#34d399"  // light emerald
+  if (y >= -0.5) return "#94a3b8" // slate — neutral
+  if (y >= -2)  return "#fb923c"  // orange — mild heavy
+  return "#f43f5e"                // rose — heavy
+}
+
+/* ── Reusable shell components ── */
+function StatCard({ label, value, sub, icon: Icon, color, delta }: {
+  label: string; value: string | number; sub: string
+  icon: React.ElementType; color: string; delta?: number
 }) {
   return (
     <div className="glass-card rounded-2xl p-4 flex flex-col gap-2">
@@ -51,10 +66,7 @@ function StatCard({
           <Icon className="w-4 h-4" />
         </div>
         {delta !== undefined && delta !== 0 && (
-          <span className={cn(
-            "text-xs font-semibold flex items-center gap-0.5",
-            delta > 0 ? "text-emerald-500" : "text-rose-400"
-          )}>
+          <span className={cn("text-xs font-semibold flex items-center gap-0.5", delta > 0 ? "text-emerald-500" : "text-rose-400")}>
             {delta > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
             {delta > 0 ? "+" : ""}{delta}
           </span>
@@ -69,10 +81,15 @@ function StatCard({
   )
 }
 
-function SectionCard({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
+function SectionCard({ title, subtitle, children, accent, className }: {
+  title: string; subtitle?: string; children: React.ReactNode; accent?: string; className?: string
+}) {
   return (
-    <div className={cn("glass-card rounded-2xl p-5", className)}>
-      <h3 className="text-sm font-semibold text-foreground mb-4">{title}</h3>
+    <div className={cn("glass-card rounded-2xl p-5", accent, className)}>
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {subtitle && <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>}
+      </div>
       {children}
     </div>
   )
@@ -94,48 +111,61 @@ function EmptyState({ text, action, href }: { text: string; action?: string; hre
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-card border border-border/40 rounded-xl px-3 py-2 shadow-lg text-xs">
+    <div className="bg-card border border-border/40 rounded-xl px-3 py-2 shadow-lg text-xs max-w-[160px]">
       <p className="font-medium text-foreground mb-1">{label}</p>
       {payload.map((p: any) => (
-        <p key={p.name} style={{ color: p.color }}>{p.name}: {p.value}</p>
+        <p key={p.name} style={{ color: p.color ?? "hsl(var(--foreground))" }}>{p.name}: {p.value}</p>
       ))}
     </div>
   )
 }
 
+/* ── Mood Timeline custom dot ── */
+function MoodDot(props: any) {
+  const { cx, cy, payload } = props as { cx: number; cy: number; payload: MoodPoint }
+  if (!payload) return null
+  const r = 4 + payload.z * 0.8   // radius grows with intensity
+  const fill = moodDotColor(payload.y)
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={r} fill={fill} fillOpacity={0.85} stroke="white" strokeWidth={1} />
+    </g>
+  )
+}
+
+const MoodTooltip = ({ active, payload }: any) => {
+  if (!active || !payload?.[0]) return null
+  const p = payload[0].payload as MoodPoint
+  return (
+    <div className="bg-card border border-border/40 rounded-xl px-3 py-2 shadow-lg text-xs">
+      <p className="font-semibold text-foreground">{p.emoji} {p.emotion}</p>
+      <p className="text-muted-foreground">{p.dateStr}</p>
+      <p className="text-muted-foreground">Intensity {p.intensity}/10</p>
+    </div>
+  )
+}
+
+/* ── Main component ── */
 export function InsightsDashboard() {
   const [dateRange, setDateRange] = useState<DateRange>("30d")
   const data = useInsightsData(dateRange)
 
-  const ranges: { value: DateRange; label: string }[] = [
-    { value: "7d",  label: "7D" },
-    { value: "30d", label: "30D" },
-    { value: "all", label: "All" },
-  ]
-
-  const container = {
-    hidden: { opacity: 0 },
-    show:   { opacity: 1, transition: { staggerChildren: 0.06 } },
-  }
-  const item = {
-    hidden: { opacity: 0, y: 16 },
-    show:   { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } },
+  const anim = {
+    container: { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } },
+    item: { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } } },
   }
 
   return (
     <div className="bg-page-gradient min-h-screen">
-      <motion.div
-        className="w-full max-w-4xl mx-auto px-4 md:px-8 py-5 pb-24 md:pb-12"
-        variants={container}
-        initial="hidden"
-        animate="show"
-      >
+      <motion.div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-5 pb-24 md:pb-12"
+        variants={anim.container} initial="hidden" animate="show">
+
         {/* Header */}
-        <motion.div className="flex flex-col items-center mb-4" variants={item}>
+        <motion.div className="flex flex-col items-center mb-4" variants={anim.item}>
           <Logo size="medium" />
         </motion.div>
 
-        <motion.div className="flex items-start justify-between mb-6 gap-4 flex-wrap" variants={item}>
+        <motion.div className="flex items-start justify-between mb-6 gap-4 flex-wrap" variants={anim.item}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400 flex items-center justify-center shrink-0">
               <TrendingUp className="w-5 h-5" />
@@ -146,30 +176,22 @@ export function InsightsDashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Date range */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Human-readable range picker */}
             <div className="flex gap-1 p-1 rounded-xl bg-muted/50 border border-border/30">
-              {ranges.map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => setDateRange(value)}
+              {RANGES.map(({ value, label }) => (
+                <button key={value} onClick={() => setDateRange(value)}
                   className={cn(
-                    "px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-150",
-                    dateRange === value
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
+                    "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap",
+                    dateRange === value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  )}>
                   {label}
                 </button>
               ))}
             </div>
-            {/* Log emotion CTA */}
-            <Link
-              href="/emotional-log"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-sm"
-            >
-              <PlusCircle className="w-3 h-3" /> Log
+            <Link href="/emotional-log"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-sm">
+              <PlusCircle className="w-3 h-3" /> Log Emotion
             </Link>
           </div>
         </motion.div>
@@ -178,92 +200,175 @@ export function InsightsDashboard() {
         {!data && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[0,1,2,3].map((i) => (
-                <div key={i} className="glass-card rounded-2xl p-4 h-28 animate-pulse bg-muted/30" />
-              ))}
+              {[0,1,2,3].map((i) => <div key={i} className="glass-card rounded-2xl p-4 h-28 animate-pulse bg-muted/30" />)}
             </div>
             <div className="glass-card rounded-2xl p-5 h-24 animate-pulse bg-muted/30" />
+            <div className="glass-card rounded-2xl p-5 h-48 animate-pulse bg-muted/30" />
           </div>
         )}
 
         {data && (
-          <motion.div className="space-y-5" variants={container} initial="hidden" animate="show">
+          <motion.div className="space-y-5" variants={anim.container} initial="hidden" animate="show">
 
-            {/* ── Stat cards ── */}
-            <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3" variants={item}>
-              <StatCard
-                label="Healing Score"
+            {/* ── 4 stat cards ── */}
+            <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3" variants={anim.item}>
+              <StatCard label="Healing Score" icon={Heart}
                 value={data.healingScore}
-                sub={data.healingScoreDelta !== 0 ? `${data.healingScoreDelta > 0 ? "+" : ""}${data.healingScoreDelta} vs prev period` : "Based on your activity"}
-                icon={Heart}
+                sub={data.healingScoreDelta !== 0 ? `${data.healingScoreDelta > 0 ? "+" : ""}${data.healingScoreDelta} vs last period` : "Based on your activity"}
                 color="text-rose-500 bg-rose-100 dark:bg-rose-900/30 dark:text-rose-400"
-                delta={data.healingScoreDelta}
-              />
-              <StatCard
-                label="Check-in Streak"
+                delta={data.healingScoreDelta} />
+              <StatCard label="Daily Streak" icon={Flame}
                 value={`${data.currentStreak > 0 ? "🔥 " : ""}${data.currentStreak}`}
-                sub={`${data.longestStreak} day best`}
-                icon={Flame}
-                color="text-orange-500 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400"
-              />
-              <StatCard
-                label="Activities"
+                sub={`Best: ${data.longestStreak} days`}
+                color="text-orange-500 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400" />
+              <StatCard label="Check-ins" icon={Activity}
                 value={data.totalEmotionLogs + data.totalJournalEntries + data.totalBreathingSessions}
                 sub="this period"
-                icon={Activity}
-                color="text-sky-600 bg-sky-100 dark:bg-sky-900/30 dark:text-sky-400"
-              />
-              <StatCard
-                label="Avg Intensity"
-                value={
-                  data.intensityTrend.length > 0
-                    ? `${(data.intensityTrend.reduce((s, p) => s + p.intensity, 0) / data.intensityTrend.length).toFixed(1)}`
-                    : "—"
-                }
+                color="text-sky-600 bg-sky-100 dark:bg-sky-900/30 dark:text-sky-400" />
+              <StatCard label="Avg Intensity" icon={BarChart3}
+                value={data.intensityTrend.length > 0
+                  ? (data.intensityTrend.reduce((s, p) => s + p.intensity, 0) / data.intensityTrend.length).toFixed(1)
+                  : "—"}
                 sub="out of 10"
-                icon={BarChart3}
-                color="text-violet-600 bg-violet-100 dark:bg-violet-900/30 dark:text-violet-400"
-              />
+                color="text-violet-600 bg-violet-100 dark:bg-violet-900/30 dark:text-violet-400" />
             </motion.div>
 
             {/* ── AI Weekly Narrative ── */}
-            <motion.div variants={item}>
+            <motion.div variants={anim.item}>
               {data.totalEmotionLogs >= 3 ? (
-                <div className="glass-card rounded-2xl p-5 bg-gradient-to-br from-violet-50/60 to-rose-50/40 dark:from-violet-900/20 dark:to-rose-900/10 border border-violet-200/40 dark:border-violet-800/30">
+                <div className="glass-card rounded-2xl p-5 bg-gradient-to-br from-violet-50/70 to-rose-50/50 dark:from-violet-900/20 dark:to-rose-900/10 border border-violet-200/40 dark:border-violet-800/30">
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkles className="w-4 h-4 text-violet-500 shrink-0" />
-                    <span className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide">Weekly Insight</span>
+                    <span className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide">Your Weekly Reflection</span>
                   </div>
                   {data.narrativeLoading ? (
                     <div className="space-y-2">
-                      <div className="h-3 bg-muted/50 rounded-full animate-pulse w-full" />
-                      <div className="h-3 bg-muted/50 rounded-full animate-pulse w-4/5" />
-                      <div className="h-3 bg-muted/50 rounded-full animate-pulse w-3/5" />
+                      {[100, 80, 60].map((w) => (
+                        <div key={w} className="h-3 bg-muted/50 rounded-full animate-pulse" style={{ width: `${w}%` }} />
+                      ))}
                     </div>
                   ) : data.weeklyNarrative ? (
                     <p className="text-sm text-foreground/90 leading-relaxed">{data.weeklyNarrative}</p>
                   ) : (
-                    <p className="text-sm text-muted-foreground italic">Generating your personal insight…</p>
+                    <p className="text-sm text-muted-foreground italic">Preparing your personal insight…</p>
                   )}
                 </div>
               ) : (
-                <div className="glass-card rounded-2xl p-5 flex items-center gap-3">
+                <div className="glass-card rounded-2xl p-4 flex items-center gap-3">
                   <Sparkles className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <p className="text-sm text-muted-foreground">Log {3 - data.totalEmotionLogs} more emotion{3 - data.totalEmotionLogs !== 1 ? "s" : ""} to unlock your personalised weekly insight.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Log {Math.max(0, 3 - data.totalEmotionLogs)} more emotion{3 - data.totalEmotionLogs !== 1 ? "s" : ""} to unlock your weekly reflection.
+                  </p>
                 </div>
               )}
             </motion.div>
 
-            {/* ── Two-column: Survey trends + Emotion distribution ── */}
-            <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-5" variants={item}>
+            {/* ── MOOD TIMELINE — the hero chart ── */}
+            <motion.div variants={anim.item}>
+              <SectionCard
+                title="Mood Timeline"
+                subtitle="Each dot is an emotion you logged — above the line feels lighter, below feels heavier. Bigger dots = higher intensity."
+                accent="bg-gradient-to-br from-slate-50/50 to-sky-50/30 dark:from-slate-900/20 dark:to-sky-900/10"
+              >
+                {data.moodTimeline.length >= 2 ? (
+                  <>
+                    {/* Valence legend */}
+                    <div className="flex items-center gap-4 mb-3 flex-wrap">
+                      {[
+                        { color: "#10b981", label: "Lighter feelings" },
+                        { color: "#94a3b8", label: "Neutral" },
+                        { color: "#f43f5e", label: "Heavier feelings" },
+                      ].map(({ color, label }) => (
+                        <span key={label} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                          {label}
+                        </span>
+                      ))}
+                      <span className="text-[11px] text-muted-foreground ml-auto">dot size = intensity</span>
+                    </div>
 
-              {/* Survey dimensions */}
-              <SectionCard title="Wellbeing Dimensions">
+                    <ResponsiveContainer width="100%" height={220}>
+                      <ScatterChart margin={{ top: 16, right: 16, bottom: 0, left: -20 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.25)" />
+                        <XAxis
+                          type="number"
+                          dataKey="x"
+                          domain={["dataMin", "dataMax"]}
+                          tickFormatter={(v) => {
+                            const d = new Date(v)
+                            return d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                          }}
+                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                          tickLine={false} axisLine={false}
+                          tickCount={5}
+                        />
+                        <YAxis
+                          type="number"
+                          dataKey="y"
+                          domain={[-4.5, 4.5]}
+                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                          tickLine={false} axisLine={false}
+                          tickFormatter={(v) => v === 0 ? "neutral" : v > 0 ? `+${v}` : `${v}`}
+                          tickCount={5}
+                        />
+                        {/* Neutral baseline */}
+                        <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.5} strokeWidth={1.5} strokeDasharray="6 3" label={{ value: "neutral", position: "right", fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
+                        <Tooltip content={<MoodTooltip />} cursor={false} />
+                        <Scatter
+                          data={data.moodTimeline}
+                          shape={<MoodDot />}
+                        />
+                      </ScatterChart>
+                    </ResponsiveContainer>
+                  </>
+                ) : (
+                  <EmptyState text="Log a few emotions to see your mood mapped over time." action="Log an emotion" href="/emotional-log" />
+                )}
+              </SectionCard>
+            </motion.div>
+
+            {/* ── Emotion frequency pills + Survey trends (2-col) ── */}
+            <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-5" variants={anim.item}>
+
+              {/* Colorful emotion pills — size by count, color by avg intensity */}
+              <SectionCard title="Emotions This Period" subtitle="Size = how often · Color = how intense">
+                {data.emotionFrequency.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {data.emotionFrequency.map(({ emotion, count, avgIntensity }) => {
+                      // Scale font and padding by count
+                      const max = data.emotionFrequency[0].count
+                      const scale = 0.7 + (count / max) * 0.5
+                      return (
+                        <span
+                          key={emotion}
+                          className={cn("inline-flex items-center gap-1 rounded-full border font-semibold transition-all", emotionPillColor(avgIntensity))}
+                          style={{
+                            fontSize: `${Math.round(10 * scale)}px`,
+                            paddingTop: `${Math.round(3 * scale)}px`,
+                            paddingBottom: `${Math.round(3 * scale)}px`,
+                            paddingLeft: `${Math.round(8 * scale)}px`,
+                            paddingRight: `${Math.round(8 * scale)}px`,
+                          }}
+                          title={`${count} times · avg intensity ${avgIntensity}`}
+                        >
+                          {emotion}
+                          <span className="opacity-60 font-normal text-[10px]">×{count}</span>
+                        </span>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <EmptyState text="No emotions logged this period." action="Log an emotion" href="/emotional-log" />
+                )}
+              </SectionCard>
+
+              {/* Survey dimension trends */}
+              <SectionCard title="Wellbeing Check-ins" subtitle="Emotional state · Self-connection · Compassion · Self-care (scale 1–5)">
                 {data.surveyTrend.length >= 2 ? (
                   <>
-                    <ResponsiveContainer width="100%" height={200}>
+                    <ResponsiveContainer width="100%" height={160}>
                       <LineChart data={data.surveyTrend}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.25)" />
                         <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
                         <YAxis domain={[1, 5]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
                         <Tooltip content={<CustomTooltip />} />
@@ -273,78 +378,52 @@ export function InsightsDashboard() {
                         <Line type="monotone" dataKey="selfCare"        name="Self-Care"        stroke={SURVEY_COLORS.selfCare}        strokeWidth={2} dot={false} />
                       </LineChart>
                     </ResponsiveContainer>
-                    {/* Legend */}
                     <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
-                      {Object.entries(SURVEY_COLORS).map(([key, color]) => (
+                      {(Object.entries(SURVEY_COLORS) as [keyof typeof SURVEY_COLORS, string][]).map(([key, color]) => (
                         <span key={key} className="flex items-center gap-1 text-[10px] text-muted-foreground">
                           <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                          {key === "emotionalState" ? "Emotional State" :
-                           key === "selfConnection"  ? "Self-Connection"  :
-                           key === "selfCompassion"  ? "Self-Compassion"  : "Self-Care"}
+                          {key === "emotionalState" ? "Emotional" : key === "selfConnection" ? "Connected" : key === "selfCompassion" ? "Compassion" : "Self-Care"}
                         </span>
                       ))}
                     </div>
-                    {/* Current averages */}
                     {data.avgSurveyDimensions && (
-                      <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-border/30">
-                        {[
-                          { key: "emotionalState", label: "Emotional",  color: SURVEY_COLORS.emotionalState },
-                          { key: "selfConnection",  label: "Connected",  color: SURVEY_COLORS.selfConnection },
-                          { key: "selfCompassion",  label: "Compassion", color: SURVEY_COLORS.selfCompassion },
-                          { key: "selfCare",        label: "Self-Care",  color: SURVEY_COLORS.selfCare },
-                        ].map(({ key, label, color }) => (
+                      <div className="grid grid-cols-4 gap-1 mt-3 pt-3 border-t border-border/30">
+                        {(["emotionalState","selfConnection","selfCompassion","selfCare"] as const).map((key) => (
                           <div key={key} className="text-center">
-                            <p className="text-base font-bold" style={{ color }}>{(data.avgSurveyDimensions as any)[key]}</p>
-                            <p className="text-[10px] text-muted-foreground leading-tight">{label}</p>
+                            <p className="text-sm font-bold" style={{ color: SURVEY_COLORS[key] }}>
+                              {(data.avgSurveyDimensions as NonNullable<typeof data.avgSurveyDimensions>)[key]}
+                            </p>
+                            <p className="text-[9px] text-muted-foreground leading-tight">
+                              {key === "emotionalState" ? "State" : key === "selfConnection" ? "Connected" : key === "selfCompassion" ? "Compassion" : "Self-Care"}
+                            </p>
                           </div>
                         ))}
                       </div>
                     )}
                   </>
                 ) : (
-                  <EmptyState
-                    text="Complete the post-log survey at least twice to see your wellbeing trends over time."
-                    action="Log an emotion"
-                    href="/emotional-log"
-                  />
-                )}
-              </SectionCard>
-
-              {/* Emotion distribution */}
-              <SectionCard title="Emotion Distribution">
-                {data.emotionFrequency.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <BarChart
-                      data={data.emotionFrequency}
-                      layout="vertical"
-                      margin={{ left: 0, right: 16, top: 0, bottom: 0 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border) / 0.3)" />
-                      <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
-                      <YAxis type="category" dataKey="emotion" tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} tickLine={false} axisLine={false} width={80} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Bar dataKey="count" name="Occurrences" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} fillOpacity={0.8} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <EmptyState text="No emotion data yet for this period." action="Log an emotion" href="/emotional-log" />
+                  <EmptyState text="Complete the post-log survey to track your wellbeing over time." action="Log an emotion" href="/emotional-log" />
                 )}
               </SectionCard>
             </motion.div>
 
-            {/* ── Intensity trend ── */}
-            <motion.div variants={item}>
-              <SectionCard title="Emotion Intensity Over Time">
+            {/* ── Intensity area chart ── */}
+            <motion.div variants={anim.item}>
+              <SectionCard
+                title="Emotion Intensity Over Time"
+                subtitle="Daily average — how strongly you felt each day"
+                accent="bg-gradient-to-br from-primary/5 to-transparent"
+              >
                 {data.intensityTrend.length >= 2 ? (
-                  <ResponsiveContainer width="100%" height={180}>
+                  <ResponsiveContainer width="100%" height={160}>
                     <AreaChart data={data.intensityTrend}>
                       <defs>
                         <linearGradient id="intensityGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%"  stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+                          <stop offset="5%"  stopColor="hsl(var(--primary))" stopOpacity={0.3} />
                           <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.25)" />
                       <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
                       <YAxis domain={[0, 10]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
                       <Tooltip content={<CustomTooltip />} />
@@ -357,51 +436,38 @@ export function InsightsDashboard() {
               </SectionCard>
             </motion.div>
 
-            {/* ── Breathing + Quiz row ── */}
-            <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-5" variants={item}>
+            {/* ── Breathing + Quiz ── */}
+            <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-5" variants={anim.item}>
 
-              {/* Breathing insights */}
-              <SectionCard title="Breathing Practice">
+              <SectionCard title="Breathing Practice" accent="bg-gradient-to-br from-sky-50/50 to-emerald-50/30 dark:from-sky-900/10 dark:to-emerald-900/10">
                 {data.totalBreathingSessions > 0 ? (
                   <div className="space-y-4">
                     {data.breathingImpact !== null ? (
-                      <div className={cn(
-                        "rounded-xl p-4 flex items-start gap-3",
+                      <div className={cn("rounded-xl p-4 flex items-start gap-3",
                         data.breathingImpact > 0
-                          ? "bg-emerald-50/60 dark:bg-emerald-900/20 border border-emerald-200/40 dark:border-emerald-800/30"
-                          : "bg-muted/30 border border-border/30"
-                      )}>
+                          ? "bg-emerald-50/80 dark:bg-emerald-900/20 border border-emerald-200/50 dark:border-emerald-800/30"
+                          : "bg-muted/30 border border-border/30")}>
                         <Wind className={cn("w-4 h-4 mt-0.5 shrink-0", data.breathingImpact > 0 ? "text-emerald-500" : "text-muted-foreground")} />
-                        <div>
-                          {data.breathingImpact > 0 ? (
-                            <p className="text-sm text-foreground/90 leading-relaxed">
-                              On days you practised breathing, your emotion intensity averaged{" "}
-                              <strong className="text-emerald-600 dark:text-emerald-400">{data.breathingImpact} pts lower</strong>. 🌿
-                            </p>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">No intensity difference detected yet — keep going!</p>
-                          )}
-                        </div>
+                        <p className="text-sm text-foreground/90 leading-relaxed">
+                          {data.breathingImpact > 0
+                            ? <>On days you breathed, intensity averaged <strong className="text-emerald-600 dark:text-emerald-400">{data.breathingImpact} pts lower</strong>. 🌿</>
+                            : "Keep going — breathing impact will show once patterns emerge."}
+                        </p>
                       </div>
                     ) : (
                       <p className="text-xs text-muted-foreground">
-                        {5 - Math.min(5, data.totalBreathingSessions)} more session{5 - Math.min(5, data.totalBreathingSessions) !== 1 ? "s" : ""} to unlock breathing impact insight.
+                        {Math.max(0, 5 - data.totalBreathingSessions)} more session{5 - data.totalBreathingSessions !== 1 ? "s" : ""} to unlock your breathing impact.
                       </p>
                     )}
-
-                    {/* Pattern breakdown */}
                     {data.breathingPatternBreakdown.length > 0 && (
                       <div className="space-y-2">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Sessions by pattern</p>
+                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Sessions by pattern</p>
                         {data.breathingPatternBreakdown.map(({ pattern, count }) => (
                           <div key={pattern} className="flex items-center gap-2">
-                            <div className="flex-1 bg-muted/40 rounded-full h-1.5">
-                              <div
-                                className="bg-sky-400 h-1.5 rounded-full"
-                                style={{ width: `${(count / data.totalBreathingSessions) * 100}%` }}
-                              />
+                            <div className="flex-1 bg-muted/40 rounded-full h-1.5 overflow-hidden">
+                              <div className="bg-sky-400 h-1.5 rounded-full transition-all" style={{ width: `${(count / data.totalBreathingSessions) * 100}%` }} />
                             </div>
-                            <span className="text-xs text-muted-foreground w-28 text-right shrink-0">{pattern} ({count})</span>
+                            <span className="text-[11px] text-muted-foreground shrink-0 text-right w-32">{pattern} ({count})</span>
                           </div>
                         ))}
                       </div>
@@ -412,11 +478,9 @@ export function InsightsDashboard() {
                 )}
               </SectionCard>
 
-              {/* Quiz progress */}
-              <SectionCard title="Self-Assessment Progress">
+              <SectionCard title="Self-Assessment Scores" accent="bg-gradient-to-br from-amber-50/50 to-rose-50/30 dark:from-amber-900/10 dark:to-rose-900/10">
                 {data.quizHistory.length > 0 ? (
                   <div className="space-y-3">
-                    {/* Group by quiz type and show latest score */}
                     {["Emotional Awareness", "Self-Compassion"].map((type) => {
                       const entries = data.quizHistory.filter((q) => q.type === type)
                       if (!entries.length) return null
@@ -424,10 +488,10 @@ export function InsightsDashboard() {
                       const prev = entries.length >= 2 ? entries[entries.length - 2] : null
                       const delta = prev ? latest.score - prev.score : null
                       return (
-                        <div key={type} className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/30">
+                        <div key={type} className="flex items-center justify-between p-3 rounded-xl bg-background/60 border border-border/30">
                           <div>
                             <p className="text-sm font-semibold text-foreground">{type}</p>
-                            <p className="text-xs text-muted-foreground">{latest.date} · {latest.label}</p>
+                            <p className="text-[11px] text-muted-foreground">{latest.date} · {latest.label}</p>
                           </div>
                           <div className="flex items-center gap-2">
                             {delta !== null && delta !== 0 && (
@@ -436,22 +500,17 @@ export function InsightsDashboard() {
                                 {delta > 0 ? "+" : ""}{delta}
                               </span>
                             )}
-                            <span className={cn(
-                              "text-base font-bold",
-                              latest.score >= 80 ? "text-emerald-500" :
-                              latest.score >= 60 ? "text-sky-500" :
-                              latest.score >= 40 ? "text-amber-500" : "text-rose-400"
+                            <span className={cn("text-xl font-bold",
+                              latest.score >= 80 ? "text-emerald-500" : latest.score >= 60 ? "text-sky-500" : latest.score >= 40 ? "text-amber-500" : "text-rose-400"
                             )}>{latest.score}</span>
                           </div>
                         </div>
                       )
                     })}
-
-                    {/* Mini score history chart */}
                     {data.quizHistory.length >= 3 && (
-                      <div className="pt-2">
+                      <div className="pt-1">
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">Score history</p>
-                        <ResponsiveContainer width="100%" height={80}>
+                        <ResponsiveContainer width="100%" height={70}>
                           <LineChart data={data.quizHistory}>
                             <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3, fill: "hsl(var(--primary))" }} />
                             <XAxis dataKey="date" hide />
@@ -468,14 +527,13 @@ export function InsightsDashboard() {
               </SectionCard>
             </motion.div>
 
-            {/* ── Activity timeline: journals + Haven ── */}
-            <motion.div variants={item}>
+            {/* ── Recent Activity ── */}
+            <motion.div variants={anim.item}>
               <SectionCard title="Recent Activity">
                 {data.recentJournalSnippets.length === 0 && !data.havenSession ? (
                   <EmptyState text="Your journals and Haven sessions will appear here." />
                 ) : (
                   <div className="space-y-3">
-                    {/* Haven session */}
                     {data.havenSession && (
                       <div className="flex gap-3 p-3 rounded-xl bg-primary/5 border border-primary/15">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/25 to-rose-200 dark:from-primary/20 dark:to-rose-900/40 flex items-center justify-center shrink-0 mt-0.5">
@@ -493,10 +551,8 @@ export function InsightsDashboard() {
                         </div>
                       </div>
                     )}
-
-                    {/* Journal snippets */}
                     {data.recentJournalSnippets.map((j, i) => (
-                      <div key={i} className="flex gap-3 p-3 rounded-xl bg-amber-50/40 dark:bg-amber-900/10 border border-amber-200/30 dark:border-amber-800/20">
+                      <div key={i} className="flex gap-3 p-3 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/30 dark:border-amber-800/20">
                         <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0 mt-0.5">
                           <BookHeart className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                         </div>
@@ -506,7 +562,7 @@ export function InsightsDashboard() {
                             <span className="text-[10px] text-muted-foreground ml-auto">{j.date}</span>
                           </div>
                           {j.prompt && j.prompt !== "Free write" && (
-                            <p className="text-[10px] text-muted-foreground/70 italic mb-1">Prompt: {j.prompt}</p>
+                            <p className="text-[10px] text-muted-foreground/70 italic mb-1">"{j.prompt}"</p>
                           )}
                           <p className="text-xs text-muted-foreground leading-relaxed">"{j.excerpt}"</p>
                         </div>
@@ -517,19 +573,16 @@ export function InsightsDashboard() {
               </SectionCard>
             </motion.div>
 
-            {/* ── Bottom CTA links ── */}
-            <motion.div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2" variants={item}>
+            {/* ── Quick-access footer ── */}
+            <motion.div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1" variants={anim.item}>
               {[
-                { href: "/emotional-log", label: "Log Emotion",  icon: BarChart3,  color: "text-primary" },
-                { href: "/breathe",       label: "Breathe",      icon: Wind,        color: "text-sky-500" },
-                { href: "/thoughts",      label: "Journal",      icon: BookHeart,   color: "text-amber-500" },
-                { href: "/companion",     label: "Talk to Haven",icon: Sparkles,    color: "text-rose-500" },
+                { href: "/emotional-log", label: "Log Emotion",   icon: BarChart3, color: "text-primary" },
+                { href: "/breathe",       label: "Breathe",       icon: Wind,       color: "text-sky-500" },
+                { href: "/thoughts",      label: "Journal",       icon: BookHeart,  color: "text-amber-500" },
+                { href: "/companion",     label: "Talk to Haven", icon: Sparkles,   color: "text-rose-500" },
               ].map(({ href, label, icon: Icon, color }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className="glass-card rounded-2xl p-3 flex flex-col items-center gap-2 hover:border-primary/20 transition-colors group"
-                >
+                <Link key={href} href={href}
+                  className="glass-card rounded-2xl p-3 flex flex-col items-center gap-2 hover:border-primary/20 transition-colors group">
                   <Icon className={cn("w-5 h-5 transition-transform group-hover:scale-110", color)} />
                   <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
                 </Link>

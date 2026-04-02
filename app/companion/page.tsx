@@ -129,7 +129,7 @@ export default function CompanionPage() {
   useEffect(() => { voiceConvRef.current = voiceConversation }, [voiceConversation])
   useEffect(() => { isLoadingRef.current = isLoading }, [isLoading])
 
-  const { speak, speakFast, stop, isSpeaking, voiceEnabled, toggleVoice } = useTTS()
+  const { speak, speakFast, prefetch, stop, isSpeaking, voiceEnabled, toggleVoice } = useTTS()
 
   // ── Core AI caller (non-streaming, used for opening message) ───
   const callClaude = useCallback(async (
@@ -223,9 +223,11 @@ export default function CompanionPage() {
         if (ttsQueue.length > 0) {
           const sentence = ttsQueue.shift()!
           if (myGen === ttsGenRef.current) {
+            // Pre-fetch the next sentence into cache while this one plays — eliminates the gap
+            if (ttsQueue.length > 0) prefetch(ttsQueue[0])
             // Stop mic before Haven speaks — prevents Haven's voice being captured
             stopListeningRef.current()
-            await (isVoiceMode ? speakFast(sentence) : speak(sentence))
+            await speak(sentence)
           }
         } else {
           await new Promise<void>((r) => setTimeout(r, 40))
@@ -368,6 +370,18 @@ export default function CompanionPage() {
       return next
     })
   }, [stopHaven, stopListening])
+
+  // Immediately sends whatever the user has said so far, without waiting for silence timer
+  const handleDoneSpeaking = useCallback(() => {
+    stopListening()
+    if (voiceTimerRef.current) {
+      clearTimeout(voiceTimerRef.current)
+      voiceTimerRef.current = null
+    }
+    const accumulated = voiceBufferRef.current.trim()
+    voiceBufferRef.current = ""
+    if (accumulated) sendContent(accumulated, messagesRef.current, true)
+  }, [stopListening, sendContent])
 
   useEffect(() => {
     const name = localStorage.getItem("heartsHeal_userName")
@@ -941,8 +955,17 @@ export default function CompanionPage() {
                   </p>
                 </div>
 
-                {/* Stop voice mode + stop speech */}
+                {/* Controls */}
                 <div className="flex items-center gap-1.5 shrink-0">
+                  {vcState === "listening" && (
+                    <button
+                      onClick={handleDoneSpeaking}
+                      title="Send message"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-sm"
+                    >
+                      <Send className="w-3 h-3" /> Send
+                    </button>
+                  )}
                   {isSpeaking && (
                     <button onClick={stopHaven} title="Stop speaking"
                       className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary hover:bg-primary/20 transition-colors"

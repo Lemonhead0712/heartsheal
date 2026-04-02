@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
-import { ChevronLeft, BookHeart, Brain, Save, RotateCcw, CheckCircle2, ChevronRight, Sparkles, Trash2 } from "lucide-react"
+import { ChevronLeft, BookHeart, Brain, Save, RotateCcw, CheckCircle2, ChevronRight, Sparkles, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Logo } from "@/components/logo"
@@ -11,7 +11,7 @@ import { AiJournalPrompt } from "@/components/ai-journal-prompt"
 import { cn } from "@/lib/utils"
 import { useJournalEntries } from "@/hooks/use-journal-entries"
 import { supabase } from "@/lib/supabase"
-import { readStorage, STORAGE_KEYS } from "@/lib/storage"
+import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
 import type { EmotionEntry } from "@/hooks/use-emotion-logs"
 
 /* ─── Types ─── */
@@ -91,12 +91,16 @@ export default function ThoughtsPage() {
   const [saved, setSaved] = useState(false)
   const { entries: journalEntries, addEntry: addJournalEntry, deleteEntry: deleteJournalEntry } = useJournalEntries()
 
+  /* Journal modal */
+  const [viewEntry, setViewEntry] = useState<JournalEntry | null>(null)
+
   /* Quiz state */
   const [quizPhase, setQuizPhase] = useState<"select" | "questions" | "results">("select")
   const [quizType, setQuizType] = useState<QuizType>("emotional-awareness")
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
   const [questionIndex, setQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, number>>({}) // questionId → score
+  const [pendingSubmit, setPendingSubmit] = useState(false)
 
   /* ── Pick contextual prompt from most recent emotion log ── */
   useEffect(() => {
@@ -145,6 +149,7 @@ export default function ThoughtsPage() {
     setQuestions(shuffle(QUESTIONS[type]).slice(0, 5))
     setQuestionIndex(0)
     setAnswers({})
+    setPendingSubmit(false)
     setQuizPhase("questions")
   }
 
@@ -152,37 +157,53 @@ export default function ThoughtsPage() {
     const q = questions[questionIndex]
     const newAnswers = { ...answers, [q.id]: score }
     setAnswers(newAnswers)
-    if (questionIndex < questions.length - 1) {
+    const isLast = questionIndex === questions.length - 1
+    if (!isLast) {
       setTimeout(() => setQuestionIndex((i) => i + 1), 300)
     } else {
-      setTimeout(async () => {
-        setQuizPhase("results")
-        // Save quiz result to Supabase
-        try {
-          const { data } = await supabase.auth.getSession()
-          const userId = data.session?.user?.id
-          if (userId) {
-            const allAnswers = { ...newAnswers }
-            const total = Object.values(allAnswers)
-            const avgScore = total.length ? Math.round(total.reduce((a, b) => a + b, 0) / total.length) : 0
-            const catScores = questions.reduce((acc, ques) => {
-              if (allAnswers[ques.id] !== undefined) {
-                if (!acc[ques.category]) acc[ques.category] = []
-                acc[ques.category].push(allAnswers[ques.id])
-              }
-              return acc
-            }, {} as Record<string, number[]>)
-            await supabase.from("quiz_results").insert({
-              user_id: userId,
-              type: quizType,
-              score: avgScore,
-              category_scores: catScores,
-            })
-          }
-        } catch {}
-      }, 300)
+      setPendingSubmit(true) // show Submit button; user confirms before seeing results
     }
   }
+
+  const submitQuiz = useCallback(async () => {
+    setPendingSubmit(false)
+    setQuizPhase("results")
+
+    const total = Object.values(answers)
+    const avgScore = total.length ? Math.round(total.reduce((a, b) => a + b, 0) / total.length) : 0
+    const catScores = questions.reduce((acc, ques) => {
+      if (answers[ques.id] !== undefined) {
+        if (!acc[ques.category]) acc[ques.category] = []
+        acc[ques.category].push(answers[ques.id])
+      }
+      return acc
+    }, {} as Record<string, number[]>)
+
+    // Save to localStorage so Insights Self Assessment Scores populate for all users
+    const result = {
+      id: Date.now().toString(),
+      type: quizType,
+      score: avgScore,
+      category_scores: catScores,
+      created_at: new Date().toISOString(),
+    }
+    const prev = readStorage<typeof result[]>(STORAGE_KEYS.quizResults) ?? []
+    writeStorage(STORAGE_KEYS.quizResults, [...prev, result])
+
+    // Also sync to Supabase if authenticated
+    try {
+      const { data } = await supabase.auth.getSession()
+      const userId = data.session?.user?.id
+      if (userId) {
+        await supabase.from("quiz_results").insert({
+          user_id: userId,
+          type: quizType,
+          score: avgScore,
+          category_scores: catScores,
+        })
+      }
+    } catch {}
+  }, [answers, questions, quizType])
 
   const avgScore = Object.values(answers).length
     ? Math.round(Object.values(answers).reduce((a, b) => a + b, 0) / Object.values(answers).length)
@@ -338,6 +359,21 @@ export default function ThoughtsPage() {
                           </div>
                         </motion.div>
                       </AnimatePresence>
+                      <AnimatePresence>
+                        {pendingSubmit && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
+                            className="mt-5"
+                          >
+                            <Button onClick={submitQuiz} className="w-full rounded-xl gap-2">
+                              <CheckCircle2 className="w-4 h-4" /> Submit Reflection
+                            </Button>
+                            <p className="text-[11px] text-muted-foreground text-center mt-2">
+                              Your results will be saved to your Healing Insights
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                       <button onClick={() => setQuizPhase("select")} className="mt-4 text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
                         <ChevronLeft className="w-3 h-3" /> Exit quiz
                       </button>
@@ -377,17 +413,27 @@ export default function ThoughtsPage() {
                 <h2 className="font-semibold text-foreground text-sm mb-4">Past Entries</h2>
                 <div className="space-y-3">
                   {journalEntries.slice(0, 5).map((e) => (
-                    <div key={e.id} className="border border-border/40 rounded-xl p-4 group">
+                    <div key={e.id} className="border border-border/40 rounded-xl p-4 group relative">
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <p className="text-[11px] text-primary/70 font-medium font-serif italic line-clamp-1 flex-1">"{e.prompt}"</p>
                         <button onClick={() => deleteEntry(e.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                      <p className="text-sm text-foreground/80 leading-relaxed line-clamp-3">{e.entry}</p>
-                      <p className="text-[10px] text-muted-foreground mt-2">
-                        {new Date(e.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                      </p>
+                      <button
+                        onClick={() => setViewEntry(e)}
+                        className="w-full text-left"
+                      >
+                        <p className="text-sm text-foreground/80 leading-relaxed line-clamp-2">{e.entry}</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <p className="text-[10px] text-muted-foreground">
+                            {new Date(e.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </p>
+                          <span className="text-[10px] text-primary/60 flex items-center gap-0.5 font-medium">
+                            Read <ChevronRight className="w-3 h-3" />
+                          </span>
+                        </div>
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -449,6 +495,62 @@ export default function ThoughtsPage() {
 
         </motion.div>
       </motion.div>
+
+      {/* ── Journal Entry Modal ── */}
+      <AnimatePresence>
+        {viewEntry && (
+          <>
+            <motion.div
+              key="entry-backdrop"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm"
+              onClick={() => setViewEntry(null)}
+            />
+            <motion.div
+              key="entry-modal"
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 8 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+            >
+              <div className="bg-card border border-border/50 rounded-3xl shadow-2xl w-full max-w-lg pointer-events-auto max-h-[85vh] flex flex-col">
+                {/* Header */}
+                <div className="px-6 pt-6 pb-4 flex items-start justify-between gap-3 border-b border-border/30">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/60 mb-1.5">
+                      {new Date(viewEntry.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                    </p>
+                    {viewEntry.prompt && (
+                      <p className="font-serif text-base italic text-foreground/80 leading-snug">"{viewEntry.prompt}"</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setViewEntry(null)}
+                    className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors mt-0.5"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                {/* Body */}
+                <div className="px-6 py-5 overflow-y-auto flex-1">
+                  <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">{viewEntry.entry}</p>
+                </div>
+                {/* Footer */}
+                <div className="px-6 pb-5 pt-3 border-t border-border/30 flex justify-end">
+                  <button
+                    onClick={() => setViewEntry(null)}
+                    className="px-4 py-2 rounded-xl bg-muted/60 hover:bg-muted text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

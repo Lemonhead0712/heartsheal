@@ -45,6 +45,9 @@ export function cleanForSpeech(text: string): string {
 ───────────────────────────────────────── */
 const audioCache = new Map<string, string>() // text → object URL
 
+/* In-flight prefetch promises — speak() awaits these instead of firing a duplicate fetch */
+const prefetchPromises = new Map<string, Promise<string | null>>() // text → URL promise
+
 /* ─────────────────────────────────────────
    Best available browser voice (fallback)
 ───────────────────────────────────────── */
@@ -161,6 +164,11 @@ export function useTTS() {
       try {
         let url = useCache ? audioCache.get(cleaned) : undefined
 
+        // If a prefetch for this text is in-flight, await it instead of firing a duplicate fetch
+        if (!url && prefetchPromises.has(cleaned)) {
+          url = (await prefetchPromises.get(cleaned)) ?? undefined
+        }
+
         if (!url) {
           const controller = new AbortController()
           inflight.current = controller
@@ -226,13 +234,14 @@ export function useTTS() {
   }, [voiceEnabled, stopAudio, playViaElevenLabs])
 
   /**
-   * prefetch — fire-and-forget TTS fetch into cache so the next speak() call plays instantly.
-   * Use this while the current sentence is playing to eliminate the gap between sentences.
+   * prefetch — kick off a TTS fetch in the background so speak() can await the same
+   * promise instead of firing a duplicate request. Call for upcoming sentences while
+   * the current one is playing to eliminate inter-sentence gaps.
    */
   const prefetch = useCallback((text: string): void => {
     const cleaned = cleanForSpeech(text)
-    if (!cleaned || audioCache.has(cleaned)) return
-    fetch("/api/tts", {
+    if (!cleaned || audioCache.has(cleaned) || prefetchPromises.has(cleaned)) return
+    const p: Promise<string | null> = fetch("/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: cleaned }),
@@ -241,8 +250,13 @@ export function useTTS() {
         const blob = await res.blob()
         const url = URL.createObjectURL(blob)
         if (cleaned.length < 300) audioCache.set(cleaned, url)
+        prefetchPromises.delete(cleaned)
+        return url
       }
-    }).catch(() => {})
+      prefetchPromises.delete(cleaned)
+      return null
+    }).catch(() => { prefetchPromises.delete(cleaned); return null })
+    prefetchPromises.set(cleaned, p)
   }, [])
 
   const toggleVoice = useCallback(() => {

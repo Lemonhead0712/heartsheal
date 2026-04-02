@@ -175,7 +175,7 @@ export function useTTS() {
           if (res.ok) {
             const blob = await res.blob()
             url = URL.createObjectURL(blob)
-            if (useCache && cleaned.length < 120) audioCache.set(cleaned, url)
+            if (useCache && cleaned.length < 300) audioCache.set(cleaned, url)
           }
         }
 
@@ -225,6 +225,26 @@ export function useTTS() {
     })
   }, [voiceEnabled, stopAudio, playViaElevenLabs])
 
+  /**
+   * prefetch — fire-and-forget TTS fetch into cache so the next speak() call plays instantly.
+   * Use this while the current sentence is playing to eliminate the gap between sentences.
+   */
+  const prefetch = useCallback((text: string): void => {
+    const cleaned = cleanForSpeech(text)
+    if (!cleaned || audioCache.has(cleaned)) return
+    fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: cleaned }),
+    }).then(async (res) => {
+      if (res.ok) {
+        const blob = await res.blob()
+        const url = URL.createObjectURL(blob)
+        if (cleaned.length < 300) audioCache.set(cleaned, url)
+      }
+    }).catch(() => {})
+  }, [])
+
   const toggleVoice = useCallback(() => {
     setVoiceEnabled((prev) => {
       const next = !prev
@@ -240,7 +260,7 @@ export function useTTS() {
     if (audioRef.current) audioRef.current.volume = v
   }, [])
 
-  return { speak, speakFast, stop: stopAudio, isSpeaking, voiceEnabled, toggleVoice, voiceVolume, setVoiceVolume }
+  return { speak, speakFast, prefetch, stop: stopAudio, isSpeaking, voiceEnabled, toggleVoice, voiceVolume, setVoiceVolume }
 }
 
 /* ─────────────────────────────────────────

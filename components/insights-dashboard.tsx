@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   AreaChart, Area,
   LineChart, Line,
@@ -12,7 +12,7 @@ import {
 } from "recharts"
 import {
   TrendingUp, TrendingDown, Flame, Wind, BookHeart,
-  Sparkles, BarChart3, Activity, Heart, PlusCircle,
+  Sparkles, BarChart3, Activity, Heart, PlusCircle, ChevronDown,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useInsightsData, type DateRange, type MoodPoint } from "@/hooks/use-insights-data"
@@ -148,6 +148,7 @@ const MoodTooltip = ({ active, payload }: any) => {
 /* ── Main component ── */
 export function InsightsDashboard() {
   const [dateRange, setDateRange] = useState<DateRange>("30d")
+  const [expandedActivity, setExpandedActivity] = useState<string | null>(null)
   const data = useInsightsData(dateRange)
 
   const anim = {
@@ -533,41 +534,81 @@ export function InsightsDashboard() {
                 {data.recentJournalSnippets.length === 0 && !data.havenSession ? (
                   <EmptyState text="Your journals and Haven sessions will appear here." />
                 ) : (
-                  <div className="space-y-3">
-                    {data.havenSession && (
-                      <div className="flex gap-3 p-3 rounded-xl bg-primary/5 border border-primary/15">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/25 to-rose-200 dark:from-primary/20 dark:to-rose-900/40 flex items-center justify-center shrink-0 mt-0.5">
-                          <Heart className="w-3.5 h-3.5 text-primary fill-primary/30" />
+                  <div className="divide-y divide-border/30">
+                    {/* Haven session row */}
+                    {data.havenSession && (() => {
+                      const key = "haven"
+                      const open = expandedActivity === key
+                      return (
+                        <div key="haven-row">
+                          <button
+                            onClick={() => setExpandedActivity(open ? null : key)}
+                            className="w-full flex items-center justify-between gap-3 py-3 px-2 text-left hover:bg-muted/30 rounded-xl transition-colors"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Heart className="w-3.5 h-3.5 text-primary shrink-0" />
+                              <span className="text-xs font-semibold text-foreground truncate">Haven Session</span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium shrink-0">
+                                {LOSS_LABELS[data.havenSession.lossType] ?? data.havenSession.lossType}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-[10px] text-muted-foreground">{data.havenSession.date}</span>
+                              <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform duration-200", open && "rotate-180")} />
+                            </div>
+                          </button>
+                          <AnimatePresence>
+                            {open && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }}
+                                className="overflow-hidden"
+                              >
+                                <p className="text-xs text-muted-foreground/80 leading-relaxed italic px-2 pb-3">
+                                  "{data.havenSession.summary}"
+                                </p>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <span className="text-xs font-semibold text-foreground">Haven Session</span>
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
-                              {LOSS_LABELS[data.havenSession.lossType] ?? data.havenSession.lossType}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground ml-auto">{data.havenSession.date}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground/80 leading-relaxed italic">"{data.havenSession.summary}"</p>
+                      )
+                    })()}
+                    {/* Journal snippet rows */}
+                    {data.recentJournalSnippets.map((j, i) => {
+                      const key = `j-${i}`
+                      const open = expandedActivity === key
+                      const title = j.prompt && j.prompt !== "Free write"
+                        ? j.prompt.slice(0, 42) + (j.prompt.length > 42 ? "…" : "")
+                        : "Journal Entry"
+                      return (
+                        <div key={i}>
+                          <button
+                            onClick={() => setExpandedActivity(open ? null : key)}
+                            className="w-full flex items-center justify-between gap-3 py-3 px-2 text-left hover:bg-muted/30 rounded-xl transition-colors"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <BookHeart className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                              <span className="text-xs font-semibold text-foreground truncate">{title}</span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-[10px] text-muted-foreground">{j.date}</span>
+                              <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform duration-200", open && "rotate-180")} />
+                            </div>
+                          </button>
+                          <AnimatePresence>
+                            {open && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }}
+                                className="overflow-hidden"
+                              >
+                                <p className="text-xs text-muted-foreground leading-relaxed px-2 pb-3">"{j.excerpt}"</p>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
-                      </div>
-                    )}
-                    {data.recentJournalSnippets.map((j, i) => (
-                      <div key={i} className="flex gap-3 p-3 rounded-xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/30 dark:border-amber-800/20">
-                        <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0 mt-0.5">
-                          <BookHeart className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-semibold text-foreground">Journal Entry</span>
-                            <span className="text-[10px] text-muted-foreground ml-auto">{j.date}</span>
-                          </div>
-                          {j.prompt && j.prompt !== "Free write" && (
-                            <p className="text-[10px] text-muted-foreground/70 italic mb-1">"{j.prompt}"</p>
-                          )}
-                          <p className="text-xs text-muted-foreground leading-relaxed">"{j.excerpt}"</p>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </SectionCard>

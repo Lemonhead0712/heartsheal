@@ -278,9 +278,19 @@ export default function CompanionPage() {
           isSpeakingRef.current = false
         }
       } else {
-        // Text mode — ElevenLabs for quality
+        // Text mode — sentence-level drain so audio starts on sentence 1
+        // while sentences 2+ are already prefetching in parallel
+        const textSentences = reply
+          .split(/(?<=[.!?…])\s+/)
+          .map((s) => s.trim())
+          .filter((s) => s.length > 10)
+        const toSpeak = textSentences.length > 0 ? textSentences : [reply]
+        toSpeak.forEach((s) => prefetch(s))
         isSpeakingRef.current = true
-        await speak(reply)
+        for (const s of toSpeak) {
+          if (myGen !== ttsGenRef.current) break
+          await speak(s)
+        }
         isSpeakingRef.current = false
       }
     } else {
@@ -314,7 +324,7 @@ export default function CompanionPage() {
         voiceBufferRef.current = ""
         voiceTimerRef.current = null
         if (accumulated) sendContent(accumulated, messagesRef.current, true)
-      }, 6000)
+      }, 3000)
     } else {
       setInput((prev) => prev ? prev + " " + transcript : transcript)
       textareaRef.current?.focus()
@@ -441,7 +451,7 @@ export default function CompanionPage() {
             // Dismiss the overlay the moment first word is about to play
             if (!overlayDismissed) {
               overlayDismissed = true
-              setTimeout(() => setIsStarting(false), 300)
+              setIsStarting(false)
             }
             await speak(sentence)
           }

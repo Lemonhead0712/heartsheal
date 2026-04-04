@@ -81,6 +81,7 @@ export type InsightsData = {
   narrativeLoading: boolean
   breathingPatternBreakdown: { pattern: string; count: number }[]
   avgSurveyDimensions: { emotionalState: number; selfConnection: number; selfCompassion: number; selfCare: number } | null
+  avgIntensity: number | null   // mean intensity across all filtered emotion logs
 }
 
 function getDateRange(range: DateRange): Date | null {
@@ -307,9 +308,14 @@ export function useInsightsData(dateRange: DateRange) {
         }
       })
 
-    // ── Haven session ──
-    const havenSession = lastSession
+    // ── Haven session (respect date range) ──
+    const havenSession = lastSession && inRange(lastSession.date)
       ? { date: toDateStr(lastSession.date), lossType: lastSession.lossId, summary: lastSession.summary }
+      : null
+
+    // ── Average intensity (direct from raw logs, not daily averages) ──
+    const avgIntensity = emotionLogs.length
+      ? Math.round((emotionLogs.reduce((s, e) => s + e.intensity, 0) / emotionLogs.length) * 10) / 10
       : null
 
     // ── Journal activity ──
@@ -398,6 +404,7 @@ export function useInsightsData(dateRange: DateRange) {
       narrativeLoading: false,
       breathingPatternBreakdown,
       avgSurveyDimensions,
+      avgIntensity,
     })
 
     // ── AI Weekly Narrative (cached per ISO week) ──

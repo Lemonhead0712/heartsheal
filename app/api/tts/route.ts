@@ -21,7 +21,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "tts-1-hd",       // highest quality OpenAI TTS model
+        model: "tts-1",           // faster generation — lower perceived latency in voice conversation
         input: text,
         voice: VOICE,
         speed: 1.05,             // crisp, natural conversational pace

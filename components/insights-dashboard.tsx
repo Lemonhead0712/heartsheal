@@ -214,22 +214,22 @@ export function InsightsDashboard() {
             {/* ── 4 stat cards ── */}
             <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3" variants={anim.item}>
               <StatCard label="Healing Score" icon={Heart}
-                value={data.healingScore}
-                sub={data.healingScoreDelta !== 0 ? `${data.healingScoreDelta > 0 ? "+" : ""}${data.healingScoreDelta} vs last period` : "Based on your activity"}
+                value={data.totalEmotionLogs >= 3 ? data.healingScore : "—"}
+                sub={data.totalEmotionLogs >= 3
+                  ? (data.healingScoreDelta !== 0 ? `${data.healingScoreDelta > 0 ? "+" : ""}${data.healingScoreDelta} vs last period` : "Based on your activity")
+                  : `Log ${Math.max(0, 3 - data.totalEmotionLogs)} more to unlock`}
                 color="text-rose-500 bg-rose-100 dark:bg-rose-900/30 dark:text-rose-400"
-                delta={data.healingScoreDelta} />
+                delta={data.totalEmotionLogs >= 3 ? data.healingScoreDelta : undefined} />
               <StatCard label="Daily Streak" icon={Flame}
                 value={`${data.currentStreak > 0 ? "🔥 " : ""}${data.currentStreak}`}
                 sub={`Best: ${data.longestStreak} days`}
                 color="text-orange-500 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400" />
-              <StatCard label="Check-ins" icon={Activity}
+              <StatCard label="Activities" icon={Activity}
                 value={data.totalEmotionLogs + data.totalJournalEntries + data.totalBreathingSessions}
-                sub="this period"
+                sub={`${data.totalEmotionLogs} logs · ${data.totalJournalEntries} journals · ${data.totalBreathingSessions} breaths`}
                 color="text-sky-600 bg-sky-100 dark:bg-sky-900/30 dark:text-sky-400" />
               <StatCard label="Avg Intensity" icon={BarChart3}
-                value={data.intensityTrend.length > 0
-                  ? (data.intensityTrend.reduce((s, p) => s + p.intensity, 0) / data.intensityTrend.length).toFixed(1)
-                  : "—"}
+                value={data.avgIntensity !== null ? data.avgIntensity.toFixed(1) : "—"}
                 sub="out of 10"
                 color="text-violet-600 bg-violet-100 dark:bg-violet-900/30 dark:text-violet-400" />
             </motion.div>
@@ -364,7 +364,7 @@ export function InsightsDashboard() {
               </SectionCard>
 
               {/* Survey dimension trends */}
-              <SectionCard title="Wellbeing Check-ins" subtitle="Emotional state · Self-connection · Compassion · Self-care (scale 1–5)">
+              <SectionCard title="Post-Log Survey" subtitle="4-question check-in after each emotion log — Emotional State · Self-Connection · Compassion · Self-Care (scale 1–5)">
                 {data.surveyTrend.length >= 2 ? (
                   <>
                     <ResponsiveContainer width="100%" height={160}>
@@ -403,7 +403,7 @@ export function InsightsDashboard() {
                     )}
                   </>
                 ) : (
-                  <EmptyState text="Complete the post-log survey to track your wellbeing over time." action="Log an emotion" href="/emotional-log" />
+                  <EmptyState text="After logging an emotion, complete the 4-question survey that follows. Your answers will appear here." action="Log an emotion" href="/emotional-log" />
                 )}
               </SectionCard>
             </motion.div>

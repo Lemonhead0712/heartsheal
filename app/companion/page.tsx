@@ -407,7 +407,36 @@ export default function CompanionPage() {
       const recent = logs.slice(-5).map((l) => `${l.emotion} (${l.intensity}/10)`).join(", ")
       recentEmotionsRef.current = recent
     }
-  }, [])
+
+    // ── Auto-cleanup on navigation away ──
+    return () => {
+      ++ttsGenRef.current          // cancel all in-flight drain loops
+      stop()                       // stop audio playback
+      stopListeningRef.current()   // stop microphone
+      if (voiceTimerRef.current) {
+        clearTimeout(voiceTimerRef.current)
+        voiceTimerRef.current = null
+      }
+      voiceBufferRef.current = ""
+
+      // Auto-save minimal session note if user had a conversation
+      const msgs = messagesRef.current
+      const loss = selectedLossRef.current
+      if (msgs.length >= 2 && loss) {
+        const existing = readStorage<{ summary: string; lossId: string; date: string }>(STORAGE_KEYS.lastSession)
+        // Only overwrite if this session had meaningful exchanges and no manual end was done
+        if (!existing || existing.lossId !== loss.id || msgs.length > 4) {
+          const userMessages = msgs.filter((m) => m.role === "user")
+          const note = `${loss.label}: ${userMessages.length} exchange${userMessages.length !== 1 ? "s" : ""}. Left without ending session.`
+          writeStorage(STORAGE_KEYS.lastSession, {
+            lossId: loss.id,
+            summary: note,
+            date: new Date().toISOString(),
+          })
+        }
+      }
+    }
+  }, [stop])
 
   // Scroll window to top whenever the chat phase mounts (prevents page from staying scrolled down)
   useEffect(() => {
@@ -537,7 +566,7 @@ export default function CompanionPage() {
       const summary = await callClaude(
         messagesRef.current,
         selectedLoss.description,
-        `Summarize this conversation in 2-3 sentences from Haven's perspective. Note the loss type, the core emotions expressed, and where the person seemed to land emotionally. Write it as a brief memory note — not a transcript. Keep it under 60 words.`
+        `One or two sentences, max 40 words. Note: loss type, main emotions expressed, where they ended emotionally. Memory note only — no transcript, no filler.`
       )
       if (summary) {
         writeStorage(STORAGE_KEYS.lastSession, { lossId: selectedLoss.id, summary, date: new Date().toISOString() })

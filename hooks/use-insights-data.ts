@@ -74,7 +74,7 @@ export type InsightsData = {
   breathingImpact: number | null
   quizHistory: { date: string; type: string; score: number; label: string }[]
   moodTimeline: MoodPoint[]
-  havenSession: { date: string; lossType: string; summary: string } | null
+  havenSessions: { date: string; lossType: string; summary: string; messageCount?: number }[]
   journalActivity: { date: string; count: number }[]
   recentJournalSnippets: { date: string; prompt: string; excerpt: string }[]
   weeklyNarrative: string | null
@@ -309,10 +309,13 @@ export function useInsightsData(dateRange: DateRange) {
         }
       })
 
-    // ── Haven session (respect date range) ──
-    const havenSession = lastSession && inRange(lastSession.date)
-      ? { date: toDateStr(lastSession.date), lossType: lastSession.lossId, summary: lastSession.summary }
-      : null
+    // ── Haven sessions from history (respect date range, show up to 3) ──
+    type SessionEntry = { lossId: string; summary: string; date: string; messageCount?: number }
+    const sessionHistory = readStorage<SessionEntry[]>(STORAGE_KEYS.sessionHistory) ?? []
+    const havenSessions = sessionHistory
+      .filter((s) => inRange(s.date))
+      .slice(0, 3)
+      .map((s) => ({ date: toDateStr(s.date), lossType: s.lossId, summary: s.summary, messageCount: s.messageCount }))
 
     // ── Average intensity (direct from raw logs, not daily averages) ──
     const avgIntensity = emotionLogs.length
@@ -414,7 +417,7 @@ export function useInsightsData(dateRange: DateRange) {
       breathingImpact,
       quizHistory,
       moodTimeline,
-      havenSession,
+      havenSessions,
       journalActivity,
       recentJournalSnippets,
       weeklyNarrative: null,

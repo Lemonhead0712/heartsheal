@@ -94,10 +94,11 @@ export default function BreathePage() {
   const { play: playSound, stop: stopSound, current: currentSound, volume: ambientVolume, setVolume: setAmbientVolume } = useAmbientSound()
 
   const SOUNDS: { type: SoundType; label: string; emoji: string }[] = [
-    { type: "none",   label: "Off",    emoji: "🔇" },
-    { type: "chimes", label: "Chimes", emoji: "🎐" },
-    { type: "drift",  label: "Drift",  emoji: "✨" },
-    { type: "garden", label: "Garden", emoji: "🌿" },
+    { type: "none",   label: "Off",          emoji: "🔇" },
+    { type: "rain",   label: "Rain",         emoji: "🌧️" },
+    { type: "ocean",  label: "Ocean",        emoji: "🌊" },
+    { type: "bowl",   label: "Singing Bowl", emoji: "🔔" },
+    { type: "forest", label: "Forest",       emoji: "🌲" },
   ]
 
   const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -439,7 +440,7 @@ export default function BreathePage() {
             {/* Ambient sound */}
             <div className="glass-card rounded-2xl px-4 py-3">
               <div className="flex items-center justify-between mb-2.5">
-                <span className="text-xs font-medium text-foreground">Spa music</span>
+                <span className="text-xs font-medium text-foreground">Ambient sound</span>
                 <span className="text-xs text-muted-foreground tabular-nums">{currentSound === "none" ? "Off" : `${Math.round(ambientVolume * 100)}%`}</span>
               </div>
               <div className="flex gap-1.5 mb-3">

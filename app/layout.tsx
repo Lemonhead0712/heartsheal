@@ -9,6 +9,9 @@ import { HapticProvider } from "@/contexts/haptic-context"
 import { AuthProvider } from "@/contexts/auth-context"
 import { DesktopNav } from "@/components/desktop-nav"
 import { Footer } from "@/components/footer"
+import { GuidedSessionProvider } from "@/contexts/guided-session-context"
+import { GuidedSessionOverlay }  from "@/components/guided-session-overlay"
+import { HavenOrb }              from "@/components/haven-orb"
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -83,13 +86,17 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
           <AuthProvider>
           <HapticProvider>
-            <div className="flex flex-1 flex-col">
-              <DesktopNav />
-              <main className="flex-1 pb-[84px] md:pb-0">{children}</main>
-              <Footer />
-            </div>
-            <BottomNav />
-            <Toaster />
+            <GuidedSessionProvider>
+              <div className="flex flex-1 flex-col">
+                <DesktopNav />
+                <main className="flex-1 pb-[84px] md:pb-0">{children}</main>
+                <Footer />
+              </div>
+              <BottomNav />
+              <Toaster />
+              <GuidedSessionOverlay />
+              <HavenOrb />
+            </GuidedSessionProvider>
           </HapticProvider>
           </AuthProvider>
         </ThemeProvider>

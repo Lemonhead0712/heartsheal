@@ -97,10 +97,8 @@ export function GuidedSessionProvider({ children }: { children: React.ReactNode 
       return
     }
 
-    // First-time trigger: delay further if DailyCheckin will also fire today
-    const lastCheckin = readStorage<string>(STORAGE_KEYS.lastCheckin)
-    const checkinWillFire = lastCheckin !== new Date().toDateString()
-    const delay = checkinWillFire ? 5000 : 3000
+    // First-time trigger: short delay so page hydrates before Haven appears
+    const delay = 800
 
     const timer = setTimeout(() => {
       const s: GuidedSessionState = {

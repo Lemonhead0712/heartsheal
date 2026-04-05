@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react"
+import { createContext, useContext, useRef, useState, useCallback } from "react"
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -20,11 +20,11 @@ type GuidedSessionContextValue = {
   // Read
   phase:             Phase
   steps:             GuidedStep[]
-  currentStepIndex:  number         // index of first 'not_started' step; steps.length = all done
-  isVisible:         boolean        // overlay open (intro or guided)
-  isMinimized:       boolean        // orb visible, overlay hidden
+  currentStepIndex:  number
+  isVisible:         boolean
+  isMinimized:       boolean
   isComplete:        boolean
-  hasTriggered:      boolean        // session has ever been triggered (distinguishes null from complete)
+  hasTriggered:      boolean
 
   // Write
   markStepComplete:     (id: StepId) => void
@@ -33,7 +33,7 @@ type GuidedSessionContextValue = {
   restore:              () => void
   dismiss:              () => void
   advancePhaseToGuided: () => void
-  startSession:         () => void  // manually open/restart the guided session
+  startSession:         () => void
 }
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
@@ -68,59 +68,57 @@ export function useGuidedSession(): GuidedSessionContextValue {
   return useContext(GuidedSessionContext)
 }
 
+// ── Build a fresh intro session ───────────────────────────────────────────────
+function buildFreshSession(): GuidedSessionState {
+  return {
+    triggered: true,
+    phase: "intro",
+    steps: DEFAULT_STEPS.map((s) => ({ ...s })),
+  }
+}
+
 // ── Provider ──────────────────────────────────────────────────────────────────
 export function GuidedSessionProvider({ children }: { children: React.ReactNode }) {
-  const [state, setStateRaw] = useState<GuidedSessionState | null>(null)
-  const stateRef = useRef<GuidedSessionState | null>(null)
 
-  // Sync ref so callbacks always close over latest state without stale closures
+  // ── Synchronous init from localStorage ─────────────────────────────────────
+  // Runs in the same render cycle as the first paint — Haven is visible
+  // from frame one for new users, no async delay or flash of the home page.
+  // SSR: `typeof window === "undefined"` → returns null (overlay hidden on server).
+  const [state, setStateRaw] = useState<GuidedSessionState | null>(() => {
+    if (typeof window === "undefined") return null
+
+    const existing = readStorage<GuidedSessionState>(STORAGE_KEYS.guidedSession)
+
+    // Returning visitor — restore whatever state they left off at
+    if (existing?.triggered) return existing
+
+    // First visit — open Haven immediately
+    const fresh = buildFreshSession()
+    writeStorage(STORAGE_KEYS.guidedSession, fresh)
+    return fresh
+  })
+
+  const stateRef = useRef<GuidedSessionState | null>(state)
+
   const setState = useCallback((s: GuidedSessionState) => {
     stateRef.current = s
     setStateRaw(s)
   }, [])
 
-  // Persist + set
   const persist = useCallback((s: GuidedSessionState) => {
     writeStorage(STORAGE_KEYS.guidedSession, s)
     setState(s)
   }, [setState])
 
-  // ── Build fresh session state ─────────────────────────────────────────────
-  const buildFreshSession = (): GuidedSessionState => ({
-    triggered: true,
-    phase: "intro",
-    steps: DEFAULT_STEPS.map((s) => ({ ...s })),
-  })
-
-  // ── Trigger logic (runs once on mount, SSR-safe) ──────────────────────────
-  useEffect(() => {
-    const existing = readStorage<GuidedSessionState>(STORAGE_KEYS.guidedSession)
-
-    // Already triggered before — restore prior state (could be in-progress or complete)
-    if (existing?.triggered) {
-      setState(existing)
-      return
-    }
-
-    // First-time visitor: short delay so page hydrates before Haven appears
-    const timer = setTimeout(() => {
-      persist(buildFreshSession())
-    }, 800)
-
-    return () => clearTimeout(timer)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   // ── Mutation helpers ──────────────────────────────────────────────────────
   const mutate = useCallback((updater: (prev: GuidedSessionState) => GuidedSessionState) => {
     const prev = stateRef.current
     if (!prev) return
-    const next = updater(prev)
-    persist(next)
+    persist(updater(prev))
   }, [persist])
 
-  const checkAllDone = (steps: GuidedStep[]): Phase => {
-    return steps.every((s) => s.status !== "not_started") ? "complete" : stateRef.current?.phase ?? "guided"
-  }
+  const checkAllDone = (steps: GuidedStep[]): Phase =>
+    steps.every((s) => s.status !== "not_started") ? "complete" : stateRef.current?.phase ?? "guided"
 
   const markStepComplete = useCallback((id: StepId) => {
     mutate((prev) => {
@@ -140,11 +138,7 @@ export function GuidedSessionProvider({ children }: { children: React.ReactNode 
   const restore              = useCallback(() => mutate((p) => ({ ...p, phase: "guided" })), [mutate])
   const dismiss              = useCallback(() => mutate((p) => ({ ...p, phase: "complete" })), [mutate])
   const advancePhaseToGuided = useCallback(() => mutate((p) => ({ ...p, phase: "guided" })), [mutate])
-
-  // Manually open (or restart) the guided session — used by "Talk to Haven" CTA
-  const startSession = useCallback(() => {
-    persist(buildFreshSession())
-  }, [persist]) // eslint-disable-line react-hooks/exhaustive-deps
+  const startSession         = useCallback(() => persist(buildFreshSession()), [persist])
 
   // ── Derived values ────────────────────────────────────────────────────────
   const phase            = state?.phase ?? "complete"

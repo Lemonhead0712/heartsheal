@@ -20,6 +20,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Too many messages" }, { status: 400 })
     }
     for (const msg of body.messages) {
+      // Skip length check for vision messages (image content blocks are inherently large)
+      if (Array.isArray(msg.content) && msg.content.some((c: any) => c.type === "image")) continue
       const content = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content)
       if (content.length > MAX_MESSAGE_CHARS) {
         return NextResponse.json({ error: "Message too long" }, { status: 400 })

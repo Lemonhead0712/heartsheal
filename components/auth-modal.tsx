@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Eye, EyeOff, Cloud, CheckCircle2, ArrowLeft } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
@@ -15,7 +15,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ open, onClose, defaultMode = "signup" }: AuthModalProps) {
-  const { signIn, signUp, resetPassword } = useAuth()
+  const { signIn, signUp, resetPassword, user } = useAuth()
   const [mode, setMode]         = useState<"signin" | "signup">(defaultMode)
   const [view, setView]         = useState<View>("auth")
   const [email, setEmail]       = useState("")
@@ -30,6 +30,14 @@ export function AuthModal({ open, onClose, defaultMode = "signup" }: AuthModalPr
   }
 
   const handleClose = () => { reset(); onClose() }
+
+  // Close as soon as Supabase confirms the user is authenticated
+  useEffect(() => {
+    if (user && open) {
+      const t = setTimeout(handleClose, 900)
+      return () => clearTimeout(t)
+    }
+  }, [user, open])
 
   const handleSubmit = async () => {
     if (!email.trim() || !password.trim()) { setError("Please enter your email and password."); return }

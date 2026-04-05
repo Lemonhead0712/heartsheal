@@ -264,6 +264,28 @@ export function InsightsDashboard() {
               )}
             </motion.div>
 
+            {/* ── HEALING JOURNEY MILESTONES ── */}
+            {data.milestones.length > 0 && (
+              <motion.div variants={anim.item}>
+                <SectionCard title="Your Healing Journey" subtitle="Milestones you've reached along the way">
+                  <div className="relative">
+                    <div className="absolute top-5 left-5 right-5 h-px bg-border/40" />
+                    <div className="flex gap-6 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+                      {data.milestones.map((m, i) => (
+                        <div key={i} className="flex flex-col items-center gap-2 min-w-[80px] relative">
+                          <div className="w-10 h-10 rounded-full bg-card border-2 border-border/60 flex items-center justify-center text-lg shrink-0 z-10">
+                            {m.icon}
+                          </div>
+                          <p className="text-[10px] font-semibold text-foreground text-center leading-tight">{m.label}</p>
+                          <p className="text-[9px] text-muted-foreground text-center">{m.date}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </SectionCard>
+              </motion.div>
+            )}
+
             {/* ── MOOD TIMELINE — the hero chart ── */}
             <motion.div variants={anim.item}>
               <SectionCard

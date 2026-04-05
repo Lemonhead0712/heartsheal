@@ -52,13 +52,20 @@ const HAVEN_CHIPS = [
 
 // ── Voice lines per step ──────────────────────────────────────────────────────
 const VOICE_LINES: Record<string, string> = {
-  auth:    "Welcome to HeartsHeal. Sign in to save your healing journey and access it from any device.",
-  intro:   "Hi, I'm Haven. I'll guide you through your first healing session — a check-in, a breath, a reflection, and a look at your progress. Let's go gently.",
+  auth:     "Welcome to HeartsHeal. Sign in to save your healing journey and access it from any device.",
+  intro:    "Hi, I'm Haven. I'll guide you through your first healing session — a check-in, a breath, a reflection, and a look at your progress. Let's go gently.",
   "step-0": "How are you feeling right now? Choose the emotion that feels most true in this moment.",
   "step-1": "Let's breathe together. Just one cycle. Press start and follow the circle.",
   "step-2": "Take a moment to write. Even a few words can bring real clarity.",
   "step-3": "Let's take a look at where you are. Every step you've taken here counts.",
   complete: "You've completed your first session with me. Is there anything else you'd like to explore today?",
+}
+
+// ── Shared slide animation ────────────────────────────────────────────────────
+const SLIDE = {
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } },
+  exit:    { opacity: 0, x: -20, transition: { duration: 0.2 } },
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -100,11 +107,10 @@ export function GuidedSessionOverlay() {
     if (error) { setAuthError(error) }
     else {
       setAuthDone(true)
-      setTimeout(() => setAuthSkipped(true), 1600) // advance past auth step
+      setTimeout(() => setAuthSkipped(true), 1600)
     }
   }
 
-  // When Supabase confirms auth, skip past auth step
   useEffect(() => {
     if (user) setAuthSkipped(true)
   }, [user])
@@ -253,32 +259,156 @@ export function GuidedSessionOverlay() {
     breathePhase === "exhale" ? 0.68 : 1.0
   const breatheDuration = BREATHE_SEQ.find((s) => s.phase === breathePhase)?.dur ?? 4
 
-  const SLIDE = {
-    initial: { opacity: 0, x: 20 },
-    animate: { opacity: 1, x: 0, transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } },
-    exit:    { opacity: 0, x: -20, transition: { duration: 0.2 } },
-  }
-
   return (
     <AnimatePresence>
       {isVisible && (
+
+        // ══════════════════════════════════════════════════════════════════
+        // INTRO / AUTH — full-screen immersive takeover
+        // ══════════════════════════════════════════════════════════════════
+        phase === "intro" ? (
+          <motion.div
+            key="gs-intro-screen"
+            className="fixed inset-0 z-[52] flex flex-col items-center justify-center overflow-y-auto
+                       bg-gradient-to-b from-rose-50 via-background to-background
+                       dark:from-rose-950/30 dark:via-background dark:to-background"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: { duration: 0.5 } }}
+            exit={{ opacity: 0, transition: { duration: 0.35 } }}
+          >
+            <AnimatePresence mode="wait">
+
+              {/* ════ AUTH STEP ════ */}
+              {authStepVisible && (
+                <motion.div key="auth" {...SLIDE}
+                  className="w-full max-w-sm mx-auto px-6 py-8 flex flex-col items-center text-center">
+                  <div className="text-5xl mb-5">🌿</div>
+                  <h2 className="font-serif text-3xl md:text-4xl font-semibold text-foreground mb-3 leading-snug">
+                    Save your journey
+                  </h2>
+                  <p className="text-base text-muted-foreground leading-relaxed mb-8 max-w-xs">
+                    Sign in to keep your progress across all your devices. Your data stays on this device until then.
+                  </p>
+
+                  <div className="w-full bg-card/80 backdrop-blur-sm rounded-2xl border border-border/40 p-5 shadow-lg">
+                    {/* Tabs */}
+                    <div className="flex gap-1 p-1 rounded-xl bg-muted/50 mb-4">
+                      {(["signup", "signin"] as const).map((m) => (
+                        <button key={m} onClick={() => { setAuthMode(m); setAuthError(null) }}
+                          className={cn("flex-1 text-xs py-2 rounded-lg font-semibold transition-all",
+                            authMode === m ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>
+                          {m === "signup" ? "Create Account" : "Sign In"}
+                        </button>
+                      ))}
+                    </div>
+
+                    {authDone ? (
+                      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                        className="flex flex-col items-center py-4 gap-2">
+                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                        <p className="font-semibold text-sm text-foreground">
+                          {authMode === "signup" ? "Account created! Check your email." : "Signed in!"}
+                        </p>
+                      </motion.div>
+                    ) : (
+                      <>
+                        <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)}
+                          placeholder="Email address"
+                          className="w-full rounded-xl border border-border/50 bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 mb-2.5" />
+                        <div className="relative mb-4">
+                          <input type={authShowPw ? "text" : "password"} value={authPassword}
+                            onChange={(e) => setAuthPassword(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleAuthSubmit()}
+                            placeholder="Password"
+                            className="w-full rounded-xl border border-border/50 bg-background px-3.5 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                          <button type="button" onClick={() => setAuthShowPw((v) => !v)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                            {authShowPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                        {authError && <p className="text-xs text-destructive mb-3 text-left">{authError}</p>}
+                        <button onClick={handleAuthSubmit} disabled={authWorking}
+                          className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all disabled:opacity-60 mb-3">
+                          {authWorking ? "Please wait…" : authMode === "signup" ? "Create Account & Save Data" : "Sign In & Sync Data"}
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  <button onClick={() => setAuthSkipped(true)}
+                    className="mt-5 text-sm text-muted-foreground hover:text-foreground transition-colors py-1">
+                    Continue without saving →
+                  </button>
+                </motion.div>
+              )}
+
+              {/* ════ INTRO ════ */}
+              {!authStepVisible && (
+                <motion.div key="intro" {...SLIDE}
+                  className="w-full max-w-md mx-auto px-6 py-8 flex flex-col items-center text-center">
+                  {/* Large orb */}
+                  <div className="relative w-32 h-32 mx-auto mb-8">
+                    <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: "3s" }} />
+                    <span className="relative w-32 h-32 rounded-full bg-gradient-to-br from-rose-300 to-primary block z-10 shadow-2xl" />
+                  </div>
+
+                  <h2 className="font-serif text-3xl md:text-4xl font-semibold text-foreground mb-4 leading-snug">
+                    Hi, I'm Haven.
+                  </h2>
+                  <p className="text-base text-muted-foreground leading-relaxed mb-8 max-w-sm">
+                    I'll guide you through a check-in, a breathing moment, a reflection, and a look at your progress.
+                    You can skip anything — this is your space.
+                  </p>
+
+                  {!user && (
+                    <p className="text-sm text-muted-foreground/70 mb-5">
+                      Continuing as guest ·{" "}
+                      <button onClick={() => { setAuthSkipped(false); setAuthDone(false) }}
+                        className="text-primary hover:underline">
+                        Sign in to save data
+                      </button>
+                    </p>
+                  )}
+
+                  <button onClick={advancePhaseToGuided}
+                    className="w-full max-w-xs py-4 rounded-2xl bg-primary text-primary-foreground text-base font-semibold hover:bg-primary/90 transition-colors shadow-lg mb-3">
+                    Let's begin
+                  </button>
+                  <button onClick={minimize}
+                    className="py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    Explore freely →
+                  </button>
+                </motion.div>
+              )}
+
+            </AnimatePresence>
+          </motion.div>
+
+        ) : (
+
+        // ══════════════════════════════════════════════════════════════════
+        // GUIDED STEPS — large centered panel with strong backdrop
+        // ══════════════════════════════════════════════════════════════════
         <>
           {/* Backdrop */}
           <motion.div
             key="gs-backdrop"
-            className="fixed inset-0 z-[51] bg-foreground/30 backdrop-blur-sm"
+            className="fixed inset-0 z-[51] bg-foreground/50 backdrop-blur-md"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             onClick={minimize}
           />
 
-          {/* Centered container */}
-          <div className="fixed inset-0 z-[52] flex items-center justify-center p-4 pointer-events-none">
+          {/* Panel container — full-screen mobile, centered large card desktop */}
+          <div className="fixed inset-0 z-[52] flex items-center justify-center md:p-6 pointer-events-none">
             <motion.div
               key="gs-panel"
-              className="bg-card border border-border/40 rounded-3xl shadow-2xl w-full max-w-xl pointer-events-auto max-h-[90vh] overflow-y-auto"
+              className="bg-card border-0 md:border md:border-border/40
+                         rounded-none md:rounded-3xl shadow-2xl
+                         w-full h-full md:h-auto md:max-w-2xl md:max-h-[90vh]
+                         overflow-y-auto pointer-events-auto flex flex-col"
               style={{ scrollbarWidth: "none" }}
-              initial={{ opacity: 0, y: 28, scale: 0.95 }}
+              initial={{ opacity: 0, y: 28, scale: 0.96 }}
               animate={{ opacity: 1, y: 0,  scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.97 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
@@ -286,35 +416,34 @@ export function GuidedSessionOverlay() {
             >
 
               {/* ── Header ── */}
-              <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border/20 sticky top-0 bg-card/95 backdrop-blur-sm z-10 rounded-t-3xl">
+              <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-border/20 sticky top-0 bg-card/95 backdrop-blur-sm z-10 md:rounded-t-3xl">
                 <div className="flex items-center gap-3">
-                  {/* Pulsing orb */}
-                  <div className="relative w-8 h-8 shrink-0">
+                  <div className="relative w-9 h-9 shrink-0">
                     <span className="absolute inset-0 rounded-full bg-primary/25 animate-ping" style={{ animationDuration: "2.6s" }} />
-                    <span className="relative w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-primary block z-10" />
+                    <span className="relative w-9 h-9 rounded-full bg-gradient-to-br from-rose-400 to-primary block z-10 shadow-md" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">Haven</p>
-                    <p className="text-[10px] text-muted-foreground">Your healing guide</p>
+                    <p className="text-[11px] text-muted-foreground">Your healing guide</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
                   <button onClick={minimize}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                     aria-label="Minimise">
-                    <Minimize2 className="w-3.5 h-3.5" />
+                    <Minimize2 className="w-4 h-4" />
                   </button>
                   <button onClick={dismiss}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                     aria-label="Close">
-                    <X className="w-3.5 h-3.5" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
               {/* ── Progress dots (guided phase only) ── */}
-              {phase === "guided" && currentStepIndex < STEP_IDS.length && (
-                <div className="flex items-center justify-center gap-2 pt-4 px-6">
+              {currentStepIndex < STEP_IDS.length && (
+                <div className="flex items-center justify-center gap-2.5 pt-5 px-8">
                   {STEP_IDS.map((id, i) => {
                     const step = steps.find((s) => s.id === id)
                     const isCurrent = i === currentStepIndex
@@ -323,9 +452,9 @@ export function GuidedSessionOverlay() {
                     return (
                       <span key={id} className={cn(
                         "h-1.5 rounded-full transition-all duration-400",
-                        isDone    ? "bg-primary w-5" :
+                        isDone    ? "bg-primary w-6" :
                         isSkipped ? "bg-muted-foreground/35 w-3" :
-                        isCurrent ? "bg-primary w-5 animate-pulse" :
+                        isCurrent ? "bg-primary w-6 animate-pulse" :
                                     "bg-border w-3"
                       )} />
                     )
@@ -333,118 +462,24 @@ export function GuidedSessionOverlay() {
                 </div>
               )}
 
-              {/* ── Content ── */}
-              <div className="px-6 pb-6 pt-4">
+              {/* ── Step content ── */}
+              <div className="flex-1 px-8 pb-8 pt-5">
                 <AnimatePresence mode="wait">
 
-                  {/* ════ AUTH STEP ════ */}
-                  {authStepVisible && (
-                    <motion.div key="auth" {...SLIDE}>
-                      <div className="text-center mb-6">
-                        <div className="text-4xl mb-3">🌿</div>
-                        <h2 className="font-serif text-2xl font-semibold text-foreground mb-2 leading-snug">
-                          Save your journey
-                        </h2>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          Sign in to keep your progress across all your devices. Your data stays on this device until then.
-                        </p>
-                      </div>
-
-                      {/* Tabs */}
-                      <div className="flex gap-1 p-1 rounded-xl bg-muted/50 mb-4">
-                        {(["signup", "signin"] as const).map((m) => (
-                          <button key={m} onClick={() => { setAuthMode(m); setAuthError(null) }}
-                            className={cn("flex-1 text-xs py-2 rounded-lg font-semibold transition-all",
-                              authMode === m ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                            {m === "signup" ? "Create Account" : "Sign In"}
-                          </button>
-                        ))}
-                      </div>
-
-                      {authDone ? (
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                          className="flex flex-col items-center py-4 gap-2">
-                          <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                          <p className="font-semibold text-sm text-foreground">
-                            {authMode === "signup" ? "Account created! Check your email." : "Signed in!"}
-                          </p>
-                        </motion.div>
-                      ) : (
-                        <>
-                          <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)}
-                            placeholder="Email address"
-                            className="w-full rounded-xl border border-border/50 bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 mb-2.5" />
-                          <div className="relative mb-4">
-                            <input type={authShowPw ? "text" : "password"} value={authPassword}
-                              onChange={(e) => setAuthPassword(e.target.value)}
-                              onKeyDown={(e) => e.key === "Enter" && handleAuthSubmit()}
-                              placeholder="Password"
-                              className="w-full rounded-xl border border-border/50 bg-background px-3.5 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                            <button type="button" onClick={() => setAuthShowPw((v) => !v)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                              {authShowPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                          </div>
-                          {authError && <p className="text-xs text-destructive mb-3">{authError}</p>}
-                          <button onClick={handleAuthSubmit} disabled={authWorking}
-                            className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all disabled:opacity-60 mb-3">
-                            {authWorking ? "Please wait…" : authMode === "signup" ? "Create Account & Save Data" : "Sign In & Sync Data"}
-                          </button>
-                        </>
-                      )}
-
-                      <button onClick={() => setAuthSkipped(true)}
-                        className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-1">
-                        Continue without saving →
-                      </button>
-                    </motion.div>
-                  )}
-
-                  {/* ════ INTRO ════ */}
-                  {phase === "intro" && !authStepVisible && (
-                    <motion.div key="intro" {...SLIDE} className="text-center py-2">
-                      {/* Large orb */}
-                      <div className="relative w-24 h-24 mx-auto mb-6">
-                        <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: "3s" }} />
-                        <span className="relative w-24 h-24 rounded-full bg-gradient-to-br from-rose-300 to-primary block z-10" />
-                      </div>
-                      <h2 className="font-serif text-2xl font-semibold text-foreground mb-3 leading-snug">
-                        Hi, I'm Haven.
-                      </h2>
-                      <p className="text-sm text-muted-foreground leading-relaxed mb-6 max-w-sm mx-auto">
-                        I'll guide you through a check-in, a breathing moment, a reflection, and a look at your progress.
-                        You can skip anything — this is your space.
-                      </p>
-                      {!user && (
-                        <p className="text-[11px] text-muted-foreground/70 mb-4">
-                          Continuing as guest · <button onClick={() => { setAuthSkipped(false); setAuthDone(false) }} className="text-primary hover:underline">Sign in to save data</button>
-                        </p>
-                      )}
-                      <button onClick={advancePhaseToGuided}
-                        className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors mb-2.5">
-                        Let's begin
-                      </button>
-                      <button onClick={minimize}
-                        className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                        Explore freely →
-                      </button>
-                    </motion.div>
-                  )}
-
                   {/* ════ STEP 1 — Emotion ════ */}
-                  {phase === "guided" && currentStepIndex === 0 && (
+                  {currentStepIndex === 0 && (
                     <motion.div key="step-emotion" {...SLIDE}>
                       <StepLabel n={1} />
-                      <h2 className="font-serif text-xl font-semibold text-foreground mb-1 leading-snug">
+                      <h2 className="font-serif text-2xl font-semibold text-foreground mb-1 leading-snug">
                         How are you feeling right now?
                       </h2>
-                      <p className="text-sm text-muted-foreground mb-5">Choose the emotion that feels most true in this moment.</p>
-                      <div className="grid grid-cols-4 gap-2.5 mb-5">
+                      <p className="text-sm text-muted-foreground mb-6">Choose the emotion that feels most true in this moment.</p>
+                      <div className="grid grid-cols-4 gap-3 mb-6">
                         {EMOTIONS.map(({ label, emoji, intensity }) => (
                           <button key={label} disabled={!!pickedEmotion}
                             onClick={() => handleEmotionPick(label, emoji, intensity)}
                             className={cn(
-                              "flex flex-col items-center gap-1.5 py-3 rounded-2xl border text-center transition-all duration-200",
+                              "flex flex-col items-center gap-2 py-4 rounded-2xl border text-center transition-all duration-200",
                               pickedEmotion === label
                                 ? "border-primary/60 bg-primary/10 scale-95"
                                 : pickedEmotion
@@ -461,22 +496,22 @@ export function GuidedSessionOverlay() {
                   )}
 
                   {/* ════ STEP 2 — Breathing ════ */}
-                  {phase === "guided" && currentStepIndex === 1 && (
+                  {currentStepIndex === 1 && (
                     <motion.div key="step-breathe" {...SLIDE}>
                       <StepLabel n={2} />
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-9 h-9 rounded-xl bg-sky-100 dark:bg-sky-900/40 flex items-center justify-center shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-900/40 flex items-center justify-center shrink-0">
                           <Wind className="w-5 h-5 text-sky-600 dark:text-sky-400" />
                         </div>
-                        <h2 className="font-serif text-xl font-semibold text-foreground leading-snug">Breathing for calm</h2>
+                        <h2 className="font-serif text-2xl font-semibold text-foreground leading-snug">Breathing for calm</h2>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+                      <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
                         One cycle of box breathing. Press start and follow the circle — breathe with me.
                       </p>
 
                       {/* Breathing circle */}
                       <div className="flex flex-col items-center my-4">
-                        <div className="relative w-36 h-36 flex items-center justify-center mb-4">
+                        <div className="relative w-44 h-44 flex items-center justify-center mb-5">
                           <motion.div
                             className="absolute rounded-full bg-sky-100 dark:bg-sky-900/30"
                             style={{ width: "100%", height: "100%" }}
@@ -485,7 +520,7 @@ export function GuidedSessionOverlay() {
                           />
                           <motion.div
                             className="rounded-full bg-gradient-to-br from-sky-300 to-sky-500 shadow-lg z-10"
-                            style={{ width: "64px", height: "64px" }}
+                            style={{ width: "80px", height: "80px" }}
                             animate={{ scale: breathePhase !== "idle" && breathePhase !== "done" ? breatheCircleScale : 1 }}
                             transition={{ duration: breatheDuration, ease: breathePhase === "inhale" ? "easeIn" : breathePhase === "exhale" ? "easeOut" : "linear" }}
                           />
@@ -495,7 +530,7 @@ export function GuidedSessionOverlay() {
                                 <p className="text-white text-xs font-semibold drop-shadow">
                                   {BREATHE_SEQ.find((s) => s.phase === breathePhase)?.label}
                                 </p>
-                                <p className="text-white/80 text-lg font-bold drop-shadow">{breatheCount}</p>
+                                <p className="text-white/80 text-2xl font-bold drop-shadow">{breatheCount}</p>
                               </>
                             )}
                           </div>
@@ -503,15 +538,15 @@ export function GuidedSessionOverlay() {
 
                         {breathePhase === "idle" && (
                           <button onClick={startMiniBreathing}
-                            className="px-6 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition-colors">
+                            className="px-8 py-3 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition-colors">
                             Start breathing
                           </button>
                         )}
                         {breathePhase === "done" && (
                           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-                            <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-2">✓ Well done.</p>
+                            <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-3">✓ Well done.</p>
                             <button onClick={() => markStepComplete("breathe")}
-                              className="px-6 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
+                              className="px-8 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
                               Continue →
                             </button>
                           </motion.div>
@@ -523,24 +558,24 @@ export function GuidedSessionOverlay() {
                   )}
 
                   {/* ════ STEP 3 — Journal ════ */}
-                  {phase === "guided" && currentStepIndex === 2 && (
+                  {currentStepIndex === 2 && (
                     <motion.div key="step-journal" {...SLIDE}>
                       <StepLabel n={3} />
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
                           <BookHeart className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                         </div>
-                        <h2 className="font-serif text-xl font-semibold text-foreground leading-snug">Write it out</h2>
+                        <h2 className="font-serif text-2xl font-semibold text-foreground leading-snug">Write it out</h2>
                       </div>
-                      <div className="bg-primary/6 rounded-xl px-4 py-3 mb-3 border border-primary/15">
+                      <div className="bg-primary/6 rounded-xl px-4 py-3 mb-4 border border-primary/15">
                         <p className="text-sm text-foreground/80 font-serif italic">"{journalPrompt}"</p>
                       </div>
                       <textarea
                         value={journalText}
                         onChange={(e) => setJournalText(e.target.value)}
                         placeholder="Take your time. Write whatever comes…"
-                        rows={4}
-                        className="w-full rounded-xl border border-border/40 bg-background px-3.5 py-2.5 text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3"
+                        rows={5}
+                        className="w-full rounded-xl border border-border/40 bg-background px-4 py-3 text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3"
                       />
                       {journalSaved ? (
                         <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 mb-3">
@@ -548,7 +583,7 @@ export function GuidedSessionOverlay() {
                         </p>
                       ) : (
                         <button onClick={saveJournal} disabled={!journalText.trim()}
-                          className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors mb-3">
+                          className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors mb-3">
                           Save reflection
                         </button>
                       )}
@@ -557,42 +592,41 @@ export function GuidedSessionOverlay() {
                   )}
 
                   {/* ════ STEP 4 — Insights preview ════ */}
-                  {phase === "guided" && currentStepIndex === 3 && (
+                  {currentStepIndex === 3 && (
                     <motion.div key="step-insights" {...SLIDE}>
                       <StepLabel n={4} />
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center shrink-0">
                           <TrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400" />
                         </div>
-                        <h2 className="font-serif text-xl font-semibold text-foreground leading-snug">Your progress</h2>
+                        <h2 className="font-serif text-2xl font-semibold text-foreground leading-snug">Your progress</h2>
                       </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                      <p className="text-sm text-muted-foreground leading-relaxed mb-5">
                         Every action you take here contributes to your healing journey. Here's where you are today.
                       </p>
 
-                      {/* Mini stats */}
-                      <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="grid grid-cols-3 gap-4 mb-5">
                         {[
-                          { label: "Emotions logged",   value: quickStats?.logs      ?? 0, icon: "💜" },
-                          { label: "Journal entries",   value: quickStats?.journals   ?? 0, icon: "📖" },
+                          { label: "Emotions logged",    value: quickStats?.logs      ?? 0, icon: "💜" },
+                          { label: "Journal entries",    value: quickStats?.journals   ?? 0, icon: "📖" },
                           { label: "Breathing sessions", value: quickStats?.breathing ?? 0, icon: "🌬️" },
                         ].map(({ label, value, icon }) => (
-                          <div key={label} className="glass-card rounded-2xl p-3 text-center">
-                            <p className="text-2xl mb-1">{icon}</p>
-                            <p className="text-xl font-bold text-foreground">{value}</p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{label}</p>
+                          <div key={label} className="glass-card rounded-2xl p-4 text-center">
+                            <p className="text-3xl mb-1">{icon}</p>
+                            <p className="text-2xl font-bold text-foreground">{value}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1 leading-tight">{label}</p>
                           </div>
                         ))}
                       </div>
 
                       {quickStats?.recent && (
-                        <p className="text-xs text-muted-foreground mb-4 text-center">
+                        <p className="text-xs text-muted-foreground mb-5 text-center">
                           Last emotion logged: <span className="text-foreground font-medium">{quickStats.recent}</span>
                         </p>
                       )}
 
                       <button onClick={() => { markStepComplete("insights"); minimize(); router.push("/insights") }}
-                        className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors mb-3">
+                        className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors mb-3">
                         View full insights →
                       </button>
                       <StepFooter onSkip={() => markStepSkipped("insights")} onMinimize={minimize} />
@@ -600,10 +634,10 @@ export function GuidedSessionOverlay() {
                   )}
 
                   {/* ════ COMPLETION ════ */}
-                  {phase === "guided" && currentStepIndex >= STEP_IDS.length && (
+                  {currentStepIndex >= STEP_IDS.length && (
                     <motion.div key="complete" {...SLIDE} className="py-2">
                       <div className="text-center mb-6">
-                        <div className="text-5xl mb-3">💜</div>
+                        <div className="text-6xl mb-4">💜</div>
                         <h2 className="font-serif text-2xl font-semibold text-foreground mb-2 leading-snug">
                           You've done your first session.
                         </h2>
@@ -613,11 +647,11 @@ export function GuidedSessionOverlay() {
                       </div>
 
                       {!completionReply && !completionLoading && !completionDone && (
-                        <div className="grid grid-cols-2 gap-2.5 mb-4">
+                        <div className="grid grid-cols-2 gap-3 mb-5">
                           {HAVEN_CHIPS.map((chip) => (
                             <button key={chip} onClick={() => askHaven(chip)}
                               className={cn(
-                                "text-left px-3.5 py-2.5 rounded-xl border text-xs font-medium transition-all duration-200",
+                                "text-left px-4 py-3 rounded-xl border text-xs font-medium transition-all duration-200",
                                 chip === "I'm good for now"
                                   ? "border-border/50 text-muted-foreground hover:bg-muted/40"
                                   : "border-primary/25 bg-primary/5 text-foreground hover:bg-primary/10 hover:border-primary/40"
@@ -649,7 +683,6 @@ export function GuidedSessionOverlay() {
                         </motion.div>
                       )}
 
-                      {/* Free-text question */}
                       {!completionLoading && (
                         <div className="flex gap-2 mt-2">
                           <input
@@ -657,12 +690,12 @@ export function GuidedSessionOverlay() {
                             onChange={(e) => setCompletionInput(e.target.value)}
                             onKeyDown={(e) => { if (e.key === "Enter" && completionInput.trim()) { askHaven(completionInput.trim()); setCompletionInput("") } }}
                             placeholder="Ask Haven anything…"
-                            className="flex-1 rounded-xl border border-border/50 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            className="flex-1 rounded-xl border border-border/50 bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                           />
                           <button
                             onClick={() => { if (completionInput.trim()) { askHaven(completionInput.trim()); setCompletionInput("") } }}
                             disabled={!completionInput.trim()}
-                            className="px-3 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50 hover:bg-primary/90 transition-colors shrink-0">
+                            className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50 hover:bg-primary/90 transition-colors shrink-0">
                             Ask
                           </button>
                         </div>
@@ -677,9 +710,11 @@ export function GuidedSessionOverlay() {
 
                 </AnimatePresence>
               </div>
+
             </motion.div>
           </div>
         </>
+        )
       )}
     </AnimatePresence>
   )
@@ -688,7 +723,7 @@ export function GuidedSessionOverlay() {
 // ── Shared step sub-components ────────────────────────────────────────────────
 function StepLabel({ n }: { n: number }) {
   return (
-    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">
       Step {n} of 4
     </p>
   )
@@ -696,7 +731,7 @@ function StepLabel({ n }: { n: number }) {
 
 function StepFooter({ onSkip, onMinimize }: { onSkip: () => void; onMinimize: () => void }) {
   return (
-    <div className="flex items-center justify-between pt-1">
+    <div className="flex items-center justify-between pt-2 mt-1">
       <button onClick={onSkip}
         className="text-xs text-muted-foreground hover:text-foreground transition-colors py-1">
         Skip for now

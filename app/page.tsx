@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, type Variants } from "framer-motion"
 import { BookHeart, Wind, ArrowRight, Sparkles, Heart, Cloud, TrendingUp, Flame, Activity, ChevronRight, PenLine } from "lucide-react"
-import { WelcomeBanner } from "@/components/welcome-banner"
+import { OnboardingModal } from "@/components/onboarding-modal"
 import { InspirationalQuote } from "@/components/inspirational-quote"
 import { AuthModal } from "@/components/auth-modal"
 import { DailyCheckinModal } from "@/components/daily-checkin-modal"
@@ -163,8 +163,9 @@ export default function Home() {
       hasData:      logs.length > 0,
     })
 
+    const welcomeSeen = readStorage<boolean>(STORAGE_KEYS.welcomeSeen)
     const lastCheckin = readStorage<string>(STORAGE_KEYS.lastCheckin)
-    if (lastCheckin !== new Date().toDateString()) {
+    if (welcomeSeen && lastCheckin !== new Date().toDateString()) {
       const t = setTimeout(() => setCheckinOpen(true), 1800)
       return () => clearTimeout(t)
     }
@@ -379,11 +380,6 @@ export default function Home() {
           </motion.section>
         )}
 
-        {/* ── Welcome Banner (first visit only) ── */}
-        <motion.section variants={item}>
-          <WelcomeBanner />
-        </motion.section>
-
         {/* ── Inspirational Quote ── */}
         <motion.section className="mb-6 md:mb-8" variants={item}>
           <InspirationalQuote />
@@ -399,6 +395,7 @@ export default function Home() {
 
       </motion.div>
 
+      <OnboardingModal />
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} defaultMode={authMode} />
       <DailyCheckinModal open={checkinOpen} onClose={() => setCheckinOpen(false)} />
       <CrisisNudge />

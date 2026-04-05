@@ -553,16 +553,16 @@ export function InsightsDashboard() {
             {/* ── Recent Activity ── */}
             <motion.div variants={anim.item}>
               <SectionCard title="Recent Activity">
-                {data.recentJournalSnippets.length === 0 && !data.havenSession ? (
+                {data.recentJournalSnippets.length === 0 && data.havenSessions.length === 0 ? (
                   <EmptyState text="Your journals and Haven sessions will appear here." />
                 ) : (
                   <div className="divide-y divide-border/30">
-                    {/* Haven session row */}
-                    {data.havenSession && (() => {
-                      const key = "haven"
+                    {/* Haven session rows */}
+                    {data.havenSessions.map((session, idx) => {
+                      const key = `haven-${idx}`
                       const open = expandedActivity === key
                       return (
-                        <div key="haven-row">
+                        <div key={key}>
                           <button
                             onClick={() => setExpandedActivity(open ? null : key)}
                             className="w-full flex items-center justify-between gap-3 py-3 px-2 text-left hover:bg-muted/30 rounded-xl transition-colors"
@@ -571,11 +571,14 @@ export function InsightsDashboard() {
                               <Heart className="w-3.5 h-3.5 text-primary shrink-0" />
                               <span className="text-xs font-semibold text-foreground truncate">Haven Session</span>
                               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium shrink-0">
-                                {LOSS_LABELS[data.havenSession.lossType] ?? data.havenSession.lossType}
+                                {LOSS_LABELS[session.lossType] ?? session.lossType}
                               </span>
+                              {session.messageCount !== undefined && (
+                                <span className="text-[10px] text-muted-foreground shrink-0">{session.messageCount} exchanges</span>
+                              )}
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-[10px] text-muted-foreground">{data.havenSession.date}</span>
+                              <span className="text-[10px] text-muted-foreground">{session.date}</span>
                               <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform duration-200", open && "rotate-180")} />
                             </div>
                           </button>
@@ -587,14 +590,14 @@ export function InsightsDashboard() {
                                 className="overflow-hidden"
                               >
                                 <p className="text-xs text-muted-foreground/80 leading-relaxed italic px-2 pb-3">
-                                  "{data.havenSession.summary}"
+                                  "{session.summary}"
                                 </p>
                               </motion.div>
                             )}
                           </AnimatePresence>
                         </div>
                       )
-                    })()}
+                    })}
                     {/* Journal snippet rows */}
                     {data.recentJournalSnippets.map((j, i) => {
                       const key = `j-${i}`

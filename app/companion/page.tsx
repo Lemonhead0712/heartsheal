@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, Send, Heart, Sparkles, RefreshCw, AlertCircle, Mic, MicOff, Volume2, VolumeX, Square, Download } from "lucide-react"
+import { ChevronLeft, Send, Heart, Sparkles, RefreshCw, AlertCircle, Mic, MicOff, Volume2, VolumeX, Square, Download, ImageIcon, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { PageContainer } from "@/components/page-container"
@@ -17,6 +17,7 @@ type Message = {
   role: "user" | "assistant"
   content: string
   timestamp: Date
+  image?: { base64: string; mimeType: string; dataUrl: string }
 }
 
 type LossType = {
@@ -73,7 +74,15 @@ function buildMessages(messages: Message[], lossContext: string, sessionMemory?:
 
   return [
     ...(contextMsg ? [{ role: "user" as const, content: contextMsg }, { role: "assistant" as const, content: "Thank you for sharing that with me. I'm here, and I'm listening. Take whatever space you need." }] : []),
-    ...recent.map((m) => ({ role: m.role, content: m.content })),
+    ...recent.map((m) => ({
+      role: m.role,
+      content: m.image
+        ? [
+            { type: "image" as const, source: { type: "base64" as const, media_type: m.image.mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp", data: m.image.base64 } },
+            { type: "text" as const, text: m.content || "Please look at this image and share what you notice with warmth and compassionate support." },
+          ]
+        : m.content,
+    })),
   ]
 }
 
@@ -106,6 +115,8 @@ export default function CompanionPage() {
   const [voiceConversation, setVoiceConversation] = useState(false)
   const [showEndModal, setShowEndModal]   = useState(false)
   const [isSavingSession, setIsSavingSession] = useState(false)
+  const [pendingImage, setPendingImage]   = useState<{ base64: string; mimeType: string; dataUrl: string } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const sessionMemoryRef  = useRef<string>("")   // summary from last session
   const recentEmotionsRef = useRef<string>("")   // recent emotion log context string
@@ -191,7 +202,7 @@ export default function CompanionPage() {
   }, [])
 
   // ── Shared send logic (used by both text and voice paths) ───────
-  const sendContent = useCallback(async (text: string, currentMessages: Message[], isVoiceMode = false) => {
+  const sendContent = useCallback(async (text: string, currentMessages: Message[], isVoiceMode = false, image?: { base64: string; mimeType: string; dataUrl: string }) => {
     // 1. Hard stop: silence mic AND any current speech BEFORE doing anything
     stopListeningRef.current()
     stop()
@@ -202,6 +213,7 @@ export default function CompanionPage() {
       role: "user",
       content: text.trim(),
       timestamp: new Date(),
+      ...(image ? { image } : {}),
     }
     const newMessages = [...currentMessages, userMsg]
     setMessages(newMessages)
@@ -531,11 +543,27 @@ export default function CompanionPage() {
     }
   }
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) { setError("Image must be under 5MB."); return }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      setPendingImage({ base64: dataUrl.split(",")[1], mimeType: file.type, dataUrl })
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ""
+  }
+
   const sendMessage = async () => {
-    if (!input.trim() || isLoading) return
-    const text = input.trim()
+    if (!input.trim() && !pendingImage) return
+    if (isLoading) return
+    const text = input.trim() || "Please look at this image and share what you notice with warmth and compassionate support."
+    const image = pendingImage ?? undefined
     setInput("")
-    await sendContent(text, messagesRef.current)
+    setPendingImage(null)
+    await sendContent(text, messagesRef.current, false, image)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -560,17 +588,20 @@ export default function CompanionPage() {
   }
 
   const confirmEndSession = async () => {
-    // Save a session summary for Haven's memory on next visit
     if (messages.length >= 2 && selectedLoss) {
       setIsSavingSession(true)
+      const messageCount = messages.filter((m) => m.role === "user").length
       const summary = await callClaude(
         messagesRef.current,
         selectedLoss.description,
-        `One or two sentences, max 40 words. Note: loss type, main emotions expressed, where they ended emotionally. Memory note only — no transcript, no filler.`
+        `Two sentences, max 50 words. Describe: the main emotions expressed, key themes discussed, and where they ended emotionally. Plain prose only — no transcript, no filler.`
       )
       if (summary) {
-        writeStorage(STORAGE_KEYS.lastSession, { lossId: selectedLoss.id, summary, date: new Date().toISOString() })
+        const entry = { lossId: selectedLoss.id, summary, date: new Date().toISOString(), messageCount }
+        writeStorage(STORAGE_KEYS.lastSession, entry)
         sessionMemoryRef.current = summary
+        const history = readStorage<typeof entry[]>(STORAGE_KEYS.sessionHistory) ?? []
+        writeStorage(STORAGE_KEYS.sessionHistory, [entry, ...history].slice(0, 10))
       }
       setIsSavingSession(false)
     }
@@ -924,6 +955,9 @@ export default function CompanionPage() {
                   ? "bg-primary text-primary-foreground rounded-br-sm"
                   : "glass-card rounded-bl-sm text-foreground/90"
               )}>
+                {msg.image && (
+                  <img src={msg.image.dataUrl} alt="Shared image" className="rounded-xl mb-2 max-h-48 w-auto object-contain" />
+                )}
                 {msg.content.split("\n").map((line, i) => (
                   <p key={i} className={i > 0 ? "mt-2" : ""}>{line}</p>
                 ))}
@@ -1121,8 +1155,34 @@ export default function CompanionPage() {
             <motion.div
               initial={{ opacity: 1 }}
               exit={{ opacity: 0, height: 0 }}
-              className="max-w-2xl mx-auto flex gap-2 items-end"
+              className="max-w-2xl mx-auto"
             >
+              {/* Image preview */}
+              {pendingImage && (
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="relative shrink-0">
+                    <img src={pendingImage.dataUrl} alt="Pending" className="h-14 w-auto rounded-xl border border-border/40 object-contain" />
+                    <button
+                      onClick={() => setPendingImage(null)}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-foreground/70 text-background flex items-center justify-center hover:bg-foreground transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <span className="text-xs text-muted-foreground">Haven will analyze this image</span>
+                </div>
+              )}
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                className="hidden"
+                onChange={handleImageSelect}
+              />
+
+              <div className="flex gap-2 items-end">
               {/* Single mic → starts plain STT fill */}
               {sttStatus !== "unsupported" && (
                 <button
@@ -1152,15 +1212,32 @@ export default function CompanionPage() {
                 className="min-h-[44px] max-h-36 resize-none rounded-2xl bg-card border-border/60 text-sm leading-relaxed focus-visible:ring-primary/30 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 rows={1}
               />
+              {/* Image upload button */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isStarting || isLoading}
+                title="Attach image for Haven to analyze"
+                className={cn(
+                  "w-11 h-11 rounded-xl shrink-0 flex items-center justify-center border transition-all duration-200",
+                  pendingImage
+                    ? "bg-primary/10 border-primary/40 text-primary"
+                    : "bg-card border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/30",
+                  (isStarting || isLoading) && "opacity-40 cursor-not-allowed"
+                )}
+              >
+                <ImageIcon className="w-4 h-4" />
+              </button>
+
               <Button
                 onClick={sendMessage}
-                disabled={!input.trim() || isLoading || isStarting}
+                disabled={(!input.trim() && !pendingImage) || isLoading || isStarting}
                 size="icon"
                 className="w-11 h-11 rounded-xl shrink-0 shadow-sm"
                 aria-label="Send message"
               >
                 <Send className="w-4 h-4" />
               </Button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

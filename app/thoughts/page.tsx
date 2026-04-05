@@ -104,6 +104,8 @@ export default function ThoughtsPage() {
   const [questionIndex, setQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, number>>({})
   const [pendingSubmit, setPendingSubmit] = useState(false)
+  const [aiInterpretation, setAiInterpretation] = useState<string | null>(null)
+  const [interpretationLoading, setInterpretationLoading] = useState(false)
 
   /* ── Generate AI prompt ── */
   const generateAiPrompt = async () => {
@@ -152,6 +154,8 @@ export default function ThoughtsPage() {
     setQuestionIndex(0)
     setAnswers({})
     setPendingSubmit(false)
+    setAiInterpretation(null)
+    setInterpretationLoading(false)
     setQuizPhase("questions")
   }
 
@@ -170,6 +174,8 @@ export default function ThoughtsPage() {
   const submitQuiz = useCallback(async () => {
     setPendingSubmit(false)
     setQuizPhase("results")
+    setAiInterpretation(null)
+    setInterpretationLoading(true)
 
     const total = Object.values(answers)
     const avgScore = total.length ? Math.round(total.reduce((a, b) => a + b, 0) / total.length) : 0
@@ -181,7 +187,7 @@ export default function ThoughtsPage() {
       return acc
     }, {} as Record<string, number[]>)
 
-    // Save to localStorage so Insights Self Assessment Scores populate for all users
+    // Save to localStorage
     const result = {
       id: Date.now().toString(),
       type: quizType,
@@ -192,19 +198,50 @@ export default function ThoughtsPage() {
     const prev = readStorage<typeof result[]>(STORAGE_KEYS.quizResults) ?? []
     writeStorage(STORAGE_KEYS.quizResults, [...prev, result])
 
-    // Also sync to Supabase if authenticated
+    // Sync to Supabase if authenticated
     try {
       const { data } = await supabase.auth.getSession()
       const userId = data.session?.user?.id
       if (userId) {
         await supabase.from("quiz_results").insert({
-          user_id: userId,
-          type: quizType,
-          score: avgScore,
-          category_scores: catScores,
+          user_id: userId, type: quizType, score: avgScore, category_scores: catScores,
         })
       }
     } catch {}
+
+    // Build category context for AI
+    const catSummary = Object.entries(catScores)
+      .map(([cat, scores]) => {
+        const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+        const display = ({ recognition: "Emotion Recognition", expression: "Emotion Expression", regulation: "Emotion Regulation", "self-kindness": "Self-Kindness", "common-humanity": "Common Humanity", mindfulness: "Mindfulness" } as Record<string, string>)[cat] ?? cat
+        return `${display}: ${avg}/100`
+      }).join(", ")
+
+    const logs = readStorage<EmotionEntry[]>(STORAGE_KEYS.emotionLogs) ?? []
+    const recentEmotions = logs.slice(0, 5).map((l) => l.emotion).join(", ") || "not logged yet"
+    const quizLabel = QUIZ_META[quizType].label
+
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 150,
+          system: "You write warm, specific, compassionate 2-3 sentence reflections for people healing emotionally. Speak directly to the person using 'you'. Reference their actual scores and recent emotions. No generic praise — be honest and caring. Plain prose only.",
+          messages: [{
+            role: "user",
+            content: `Quiz: ${quizLabel}. Overall score: ${avgScore}/100. Category breakdown: ${catSummary}. Recent emotions logged: ${recentEmotions}. Write a personalised 2-3 sentence reflection on what this score reveals about where they are right now and one gentle thing to focus on.`,
+          }],
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const text = data.content?.[0]?.text?.trim()
+        if (text) setAiInterpretation(text)
+      }
+    } catch {}
+    setInterpretationLoading(false)
   }, [answers, questions, quizType])
 
   const avgScore = Object.values(answers).length

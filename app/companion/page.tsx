@@ -693,6 +693,15 @@ export default function CompanionPage() {
             </button>
 
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+              <div className="text-center mb-7 max-w-sm mx-auto">
+                <p className="font-serif text-xl sm:text-2xl text-foreground mb-2 leading-snug">
+                  Haven is here to listen.
+                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  No judgment. No rushing. Just a quiet space to say exactly what's on your heart.
+                </p>
+              </div>
+
               <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-foreground mb-2">
                 What brought you here today{hasName ? `, ${hasName}` : ""}?
               </h2>

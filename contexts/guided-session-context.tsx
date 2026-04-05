@@ -24,6 +24,7 @@ type GuidedSessionContextValue = {
   isVisible:         boolean        // overlay open (intro or guided)
   isMinimized:       boolean        // orb visible, overlay hidden
   isComplete:        boolean
+  hasTriggered:      boolean        // session has ever been triggered (distinguishes null from complete)
 
   // Write
   markStepComplete:     (id: StepId) => void
@@ -49,6 +50,7 @@ const DEFAULT_CTX: GuidedSessionContextValue = {
   isVisible:         false,
   isMinimized:       false,
   isComplete:        true,
+  hasTriggered:      false,
   markStepComplete:  () => {},
   markStepSkipped:   () => {},
   minimize:          () => {},
@@ -150,6 +152,7 @@ export function GuidedSessionProvider({ children }: { children: React.ReactNode 
   const isVisible        = phase === "intro" || phase === "guided"
   const isMinimized      = phase === "minimized"
   const isComplete       = phase === "complete" || state === null
+  const hasTriggered     = state?.triggered ?? false
 
   const value: GuidedSessionContextValue = {
     phase,
@@ -158,6 +161,7 @@ export function GuidedSessionProvider({ children }: { children: React.ReactNode 
     isVisible,
     isMinimized,
     isComplete,
+    hasTriggered,
     markStepComplete,
     markStepSkipped,
     minimize,

@@ -19,6 +19,7 @@ export const STORAGE_KEYS = {
   weeklyNarrative:  "heartsHeal_weeklyNarrative",
   lossContext:      "heartsHeal_lossContext",
   sessionHistory:   "heartsHeal_sessionHistory",
+  guidedSession:    "heartsHeal_guidedSession",
 } as const
 
 /** Read and parse a localStorage key safely. Returns null on error. */

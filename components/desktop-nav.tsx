@@ -58,6 +58,11 @@ export function DesktopNav() {
             <Logo size="small" />
           </Link>
 
+          {/* Free forever badge */}
+          <span className="hidden lg:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold tracking-wide">
+            ✓ Free forever
+          </span>
+
           {/* Nav links */}
           <nav className="flex items-center gap-0.5" aria-label="Primary navigation">
             {navItems.map(({ name, href, icon: Icon }) => {

@@ -200,8 +200,8 @@ function EmotionalLog() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="intensity" className="text-primary">Intensity: {intensity}</Label>
-                    <Input id="intensity" type="range" min="1" max="10" value={intensity}
-                      onChange={(e) => setIntensity(Number.parseInt(e.target.value))} className="accent-primary" />
+                    <input id="intensity" type="range" min="1" max="10" value={intensity}
+                      onChange={(e) => setIntensity(Number.parseInt(e.target.value))} className="w-full accent-primary" />
                     <div className="flex justify-between text-xs text-muted-foreground">
                       <span>Mild</span><span>Moderate</span><span>Intense</span>
                     </div>

@@ -33,6 +33,7 @@ type GuidedSessionContextValue = {
   restore:              () => void
   dismiss:              () => void
   advancePhaseToGuided: () => void
+  startSession:         () => void  // manually open/restart the guided session
 }
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
@@ -57,6 +58,7 @@ const DEFAULT_CTX: GuidedSessionContextValue = {
   restore:           () => {},
   dismiss:           () => {},
   advancePhaseToGuided: () => {},
+  startSession:      () => {},
 }
 
 // ── Context ───────────────────────────────────────────────────────────────────
@@ -83,31 +85,27 @@ export function GuidedSessionProvider({ children }: { children: React.ReactNode 
     setState(s)
   }, [setState])
 
+  // ── Build fresh session state ─────────────────────────────────────────────
+  const buildFreshSession = (): GuidedSessionState => ({
+    triggered: true,
+    phase: "intro",
+    steps: DEFAULT_STEPS.map((s) => ({ ...s })),
+  })
+
   // ── Trigger logic (runs once on mount, SSR-safe) ──────────────────────────
   useEffect(() => {
-    const welcomeSeen = readStorage<boolean>(STORAGE_KEYS.welcomeSeen)
-    const existing    = readStorage<GuidedSessionState>(STORAGE_KEYS.guidedSession)
+    const existing = readStorage<GuidedSessionState>(STORAGE_KEYS.guidedSession)
 
-    // Onboarding hasn't finished — do nothing this visit
-    if (!welcomeSeen) return
-
-    // Already triggered before — restore prior state
+    // Already triggered before — restore prior state (could be in-progress or complete)
     if (existing?.triggered) {
       setState(existing)
       return
     }
 
-    // First-time trigger: short delay so page hydrates before Haven appears
-    const delay = 800
-
+    // First-time visitor: short delay so page hydrates before Haven appears
     const timer = setTimeout(() => {
-      const s: GuidedSessionState = {
-        triggered: true,
-        phase: "intro",
-        steps: DEFAULT_STEPS.map((s) => ({ ...s })),
-      }
-      persist(s)
-    }, delay)
+      persist(buildFreshSession())
+    }, 800)
 
     return () => clearTimeout(timer)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -143,6 +141,11 @@ export function GuidedSessionProvider({ children }: { children: React.ReactNode 
   const dismiss              = useCallback(() => mutate((p) => ({ ...p, phase: "complete" })), [mutate])
   const advancePhaseToGuided = useCallback(() => mutate((p) => ({ ...p, phase: "guided" })), [mutate])
 
+  // Manually open (or restart) the guided session — used by "Talk to Haven" CTA
+  const startSession = useCallback(() => {
+    persist(buildFreshSession())
+  }, [persist]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Derived values ────────────────────────────────────────────────────────
   const phase            = state?.phase ?? "complete"
   const steps            = state?.steps ?? []
@@ -166,6 +169,7 @@ export function GuidedSessionProvider({ children }: { children: React.ReactNode 
     restore,
     dismiss,
     advancePhaseToGuided,
+    startSession,
   }
 
   return (

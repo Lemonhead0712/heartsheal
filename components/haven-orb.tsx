@@ -2,17 +2,20 @@
 
 import { motion, AnimatePresence } from "framer-motion"
 import { Heart } from "lucide-react"
-import { useGuidedSession } from "@/contexts/guided-session-context"
 
-export function HavenOrb() {
-  const { isMinimized, restore } = useGuidedSession()
+interface HavenOrbProps {
+  visible: boolean
+  onClick: () => void
+  label?: string
+}
 
+export function HavenOrb({ visible, onClick, label = "Open Haven guide" }: HavenOrbProps) {
   return (
     <AnimatePresence>
-      {isMinimized && (
+      {visible && (
         <motion.button
           key="haven-orb"
-          onClick={restore}
+          onClick={onClick}
           className="fixed bottom-24 md:bottom-8 right-4 md:right-6 z-[51]
                      w-11 h-11 rounded-full shadow-lg overflow-visible
                      bg-gradient-to-br from-rose-400 to-primary
@@ -31,7 +34,7 @@ export function HavenOrb() {
           }}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.93 }}
-          aria-label="Open Haven guide"
+          aria-label={label}
         >
           {/* Pulsing ring */}
           <span

@@ -34,6 +34,30 @@ const JOURNAL_PROMPTS = [
   "If your current emotion had a colour, shape, and texture — what would it look like?",
 ]
 
+// Emotion-specific journal prompts — used when user picks an emotion in step 1
+const EMOTION_JOURNAL_PROMPTS: Record<string, string> = {
+  "Sad":      "What does this sadness feel like in your body right now? What does it most need from you?",
+  "Anxious":  "What is your anxiety trying to protect you from? What would you say to it with kindness?",
+  "Numb":     "When did you last feel something clearly? What were you doing, and who were you with?",
+  "Hopeful":  "What sparked this sense of hope today? How can you honour it and let it grow?",
+  "Grateful": "What are you most grateful for right now? Who or what has held you recently?",
+  "Angry":    "What is your anger telling you about what matters to you? What boundary needs honouring?",
+  "Calm":     "What brought you to this calm? How can you return here when things feel harder?",
+  "Grief":    "What are you grieving? If you could say one thing to what you've lost, what would it be?",
+}
+
+// Personalised breathing voice lines keyed by emotion label
+const EMOTION_BREATH_LINES: Record<string, string> = {
+  "Sad":      "Sadness holds a lot of weight. Let's use this breath to ease some of that heaviness, gently.",
+  "Anxious":  "Anxiety lives in the breath. One cycle of box breathing can soften it — let's try together.",
+  "Numb":     "When we feel numb, breath is an anchor. Let's use it to reconnect with yourself.",
+  "Hopeful":  "You're feeling hopeful — let's breathe in and let that feeling settle even deeper in your body.",
+  "Grateful": "Let's breathe in and let that gratitude really land. You deserve to feel this fully.",
+  "Angry":    "Anger holds a lot of energy. Breathing helps you move through it rather than stay stuck in it.",
+  "Calm":     "You're already calm — this breath will anchor that feeling so you can carry it with you.",
+  "Grief":    "Grief is love with nowhere to go. Let's breathe gently and give it some space to move.",
+}
+
 const STEP_IDS: StepId[] = ["emotion-checkin", "breathe", "journal", "insights"]
 
 const BREATHE_SEQ = [
@@ -116,11 +140,13 @@ export function GuidedSessionOverlay() {
   }, [user])
 
   // ── Step 1 — emotion ───────────────────────────────────────────────────────
-  const [pickedEmotion, setPickedEmotion] = useState<string | null>(null)
+  const [pickedEmotion,   setPickedEmotion]   = useState<string | null>(null)
+  const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null)
 
   const handleEmotionPick = useCallback(async (label: string, emoji: string, intensity: number) => {
     if (pickedEmotion) return
     setPickedEmotion(label)
+    setSelectedEmotion(label)
     await addEntry({ emotion: label, emoji, intensity, notes: "" })
     setTimeout(() => {
       setPickedEmotion(null)
@@ -172,7 +198,11 @@ export function GuidedSessionOverlay() {
   useEffect(() => () => { if (breatheInterval.current) clearInterval(breatheInterval.current) }, [])
 
   // ── Step 3 — journal ───────────────────────────────────────────────────────
-  const [journalPrompt] = useState(() => JOURNAL_PROMPTS[Math.floor(Math.random() * JOURNAL_PROMPTS.length)])
+  const [journalFallback] = useState(() => JOURNAL_PROMPTS[Math.floor(Math.random() * JOURNAL_PROMPTS.length)])
+  // Uses emotion-specific prompt if user picked an emotion in step 1, else random fallback
+  const journalPrompt = selectedEmotion
+    ? (EMOTION_JOURNAL_PROMPTS[selectedEmotion] ?? journalFallback)
+    : journalFallback
   const [journalText,   setJournalText]   = useState("")
   const [journalSaved,  setJournalSaved]  = useState(false)
 
@@ -240,11 +270,17 @@ export function GuidedSessionOverlay() {
     if (lastSpokenKey.current === key) return
     lastSpokenKey.current = key
 
-    const line = VOICE_LINES[key]
+    // Use emotion-personalised breathing line if the user picked an emotion
+    let line: string | undefined
+    if (key === "step-1" && selectedEmotion && EMOTION_BREATH_LINES[selectedEmotion]) {
+      line = EMOTION_BREATH_LINES[selectedEmotion]
+    } else {
+      line = VOICE_LINES[key]
+    }
     if (!line) return
-    const t = setTimeout(() => speak(line), 500)
+    const t = setTimeout(() => speak(line!), 500)
     return () => clearTimeout(t)
-  }, [phase, currentStepIndex, isVisible, authStepVisible, speak])
+  }, [phase, currentStepIndex, isVisible, authStepVisible, selectedEmotion, speak])
 
   // Prefetch breathing cues whenever overlay becomes visible (step 1 prep)
   useEffect(() => {
@@ -503,10 +539,15 @@ export function GuidedSessionOverlay() {
                         <div className="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-900/40 flex items-center justify-center shrink-0">
                           <Wind className="w-5 h-5 text-sky-600 dark:text-sky-400" />
                         </div>
-                        <h2 className="font-serif text-2xl font-semibold text-foreground leading-snug">Breathing for calm</h2>
+                        <h2 className="font-serif text-2xl font-semibold text-foreground leading-snug">
+                          {selectedEmotion ? `Breathing through ${selectedEmotion.toLowerCase()}` : "Breathing for calm"}
+                        </h2>
                       </div>
                       <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-                        One cycle of box breathing. Press start and follow the circle — breathe with me.
+                        {selectedEmotion && EMOTION_BREATH_LINES[selectedEmotion]
+                          ? EMOTION_BREATH_LINES[selectedEmotion]
+                          : "One cycle of box breathing. Press start and follow the circle — breathe with me."
+                        }
                       </p>
 
                       {/* Breathing circle */}
@@ -565,7 +606,9 @@ export function GuidedSessionOverlay() {
                         <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
                           <BookHeart className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                         </div>
-                        <h2 className="font-serif text-2xl font-semibold text-foreground leading-snug">Write it out</h2>
+                        <h2 className="font-serif text-2xl font-semibold text-foreground leading-snug">
+                          {selectedEmotion ? `Reflecting on your ${selectedEmotion.toLowerCase()}` : "Write it out"}
+                        </h2>
                       </div>
                       <div className="bg-primary/6 rounded-xl px-4 py-3 mb-4 border border-primary/15">
                         <p className="text-sm text-foreground/80 font-serif italic">"{journalPrompt}"</p>

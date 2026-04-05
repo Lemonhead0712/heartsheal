@@ -10,6 +10,7 @@ import { AuthModal } from "@/components/auth-modal"
 import { DailyCheckinModal } from "@/components/daily-checkin-modal"
 import { CrisisNudge } from "@/components/crisis-nudge"
 import { useAuth } from "@/contexts/auth-context"
+import { useGuidedSession } from "@/contexts/guided-session-context"
 import { readStorage, STORAGE_KEYS } from "@/lib/storage"
 import { cn } from "@/lib/utils"
 
@@ -142,6 +143,7 @@ function ScoreRing({ score }: { score: number }) {
 
 export default function Home() {
   const { user } = useAuth()
+  const { startSession } = useGuidedSession()
   const [authOpen, setAuthOpen]       = useState(false)
   const [authMode, setAuthMode]       = useState<"signin" | "signup">("signup")
   const [greeting, setGreeting]       = useState({ salutation: "Welcome back", sub: "Your safe space for healing." })
@@ -207,13 +209,13 @@ export default function Home() {
 
           {/* CTAs */}
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="/companion"
+            <button
+              onClick={startSession}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
             >
               <Heart className="w-4 h-4" />
               Talk to Haven
-            </Link>
+            </button>
             <Link
               href="/emotional-log"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-border/60 text-muted-foreground font-semibold text-sm hover:text-foreground hover:border-border transition-colors duration-200"

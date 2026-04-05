@@ -420,6 +420,31 @@ export default function ThoughtsPage() {
                         </div>
                         <p className="text-sm text-muted-foreground leading-relaxed">{getScore(avgScore).message}</p>
                       </div>
+
+                      {/* AI personalised interpretation */}
+                      <AnimatePresence>
+                        {(interpretationLoading || aiInterpretation) && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                            className="mt-4 rounded-2xl p-4 border border-primary/20 bg-primary/5"
+                          >
+                            {interpretationLoading ? (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <RotateCcw className="w-3.5 h-3.5 animate-spin shrink-0" />
+                                Personalising your reflection…
+                              </div>
+                            ) : (
+                              <>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-primary/60 mb-2 flex items-center gap-1.5">
+                                  <Sparkles className="w-3 h-3" /> Haven's Reflection
+                                </p>
+                                <p className="text-sm text-foreground/90 leading-relaxed font-serif italic">"{aiInterpretation}"</p>
+                              </>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
                       <div className="flex gap-3 mt-4">
                         <Button onClick={() => startQuiz(quizType)} variant="outline" className="flex-1 rounded-xl gap-2">
                           <RotateCcw className="w-4 h-4" /> Retake

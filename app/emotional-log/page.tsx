@@ -2,14 +2,13 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { ChevronLeft, Plus, Save, AlertCircle, RefreshCw, Clock, Calendar } from "lucide-react"
+import { ChevronLeft, Save, AlertCircle, RefreshCw, Clock, Calendar } from "lucide-react"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 import { Logo } from "@/components/logo"
 import { EmojiPicker } from "@/components/emoji-picker"
@@ -45,17 +44,13 @@ function EmotionalLog() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
 
   const emotions = [
-    "Joy",
-    "Sadness",
-    "Anger",
-    "Fear",
-    "Surprise",
-    "Disgust",
-    "Trust",
-    "Anticipation",
-    "Calm",
-    "Anxious",
+    "Joy", "Sadness", "Anger", "Fear", "Anxious", "Calm",
+    "Grief", "Hopeful", "Frustrated", "Numb", "Overwhelmed", "Grateful",
   ]
+
+  const [showNudge, setShowNudge] = useState(false)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Group entries by date
   const groupedEntries = emotionLogs.reduce((groups: Record<string, any[]>, entry) => {
@@ -100,13 +95,22 @@ function EmotionalLog() {
       setIntensity(5)
       setNotes("")
       setShowSurvey(true)
+      setShowNudge(false)
       setLastUpdated(new Date())
     }
   }
 
   const handleDelete = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this entry?")) {
-      deleteEntry(id)
+    if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current)
+    setPendingDeleteId(id)
+    deleteTimerRef.current = setTimeout(() => setPendingDeleteId(null), 3000)
+  }
+
+  const confirmDelete = () => {
+    if (pendingDeleteId) {
+      deleteEntry(pendingDeleteId)
+      setPendingDeleteId(null)
+      if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current)
       setLastUpdated(new Date())
     }
   }
@@ -147,8 +151,8 @@ function EmotionalLog() {
           <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors">
             <ChevronLeft className="mr-1 h-4 w-4" /> Back to Dashboard
           </Link>
-          <h1 className="text-3xl font-bold text-foreground mt-3 mb-2">Emotional State Log</h1>
-          <p className="text-muted-foreground">Track your emotions and reflect on your emotional patterns</p>
+          <h1 className="text-3xl font-bold text-foreground mt-3 mb-2">How are you feeling?</h1>
+          <p className="text-muted-foreground">There's no right answer — just what's true for you right now.</p>
         </motion.div>
 
         {error && (
@@ -188,14 +192,7 @@ function EmotionalLog() {
                           className={`rounded-full ${currentEmotion === emotion ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "border-border/50 text-muted-foreground hover:bg-primary/8"}`}
                           onClick={() => setCurrentEmotion(emotion)}>{emotion}</Button>
                       ))}
-                      <Button type="button" variant="outline" className="rounded-full border-border/50 text-muted-foreground hover:bg-primary/8" onClick={() => setCurrentEmotion("")}>
-                        <Plus className="h-4 w-4 mr-1" /> Other
-                      </Button>
                     </div>
-                    {currentEmotion === "" && (
-                      <Input id="custom-emotion" placeholder="Enter your emotion" className="mt-2 border-border/40 focus-visible:ring-primary/30"
-                        value={currentEmotion} onChange={(e) => setCurrentEmotion(e.target.value)} />
-                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="emoji" className="text-primary">Choose an emoji that represents how you feel</Label>
@@ -223,9 +220,43 @@ function EmotionalLog() {
 
             {showSurvey && emotionLogs && emotionLogs.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
-                <EmotionalSurvey onComplete={() => setShowSurvey(false)} />
+                <EmotionalSurvey onComplete={() => { setShowSurvey(false); setShowNudge(true) }} />
               </motion.div>
             )}
+
+            <AnimatePresence>
+              {showNudge && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.35 }}
+                >
+                  <div className="glass-card rounded-2xl p-5 border border-emerald-200/40 bg-gradient-to-br from-emerald-50/60 to-card dark:from-emerald-900/15 relative">
+                    <button
+                      onClick={() => setShowNudge(false)}
+                      className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                      aria-label="Dismiss"
+                    >
+                      ×
+                    </button>
+                    <p className="font-serif text-base text-foreground mb-1">You showed up for yourself today.</p>
+                    <p className="text-sm text-muted-foreground mb-4">That matters. What would feel good next?</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Link href="/breathe" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 text-sm font-medium hover:bg-sky-200 dark:hover:bg-sky-900/50 transition-colors">
+                        🌬️ Breathe for a moment
+                      </Link>
+                      <Link href="/thoughts" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors">
+                        📖 Write in your journal
+                      </Link>
+                      <Link href="/companion" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-sm font-medium hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors">
+                        💜 Talk to Haven
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div className="space-y-4">
               <div className="flex justify-between items-center">
@@ -276,6 +307,26 @@ function EmotionalLog() {
         </motion.div>
       </motion.div>
 
+      {/* Inline delete confirmation */}
+      <AnimatePresence>
+        {pendingDeleteId && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-50 bg-card border border-border/60 rounded-2xl shadow-lg px-5 py-3 flex items-center gap-4 whitespace-nowrap"
+          >
+            <span className="text-sm text-foreground">Delete this entry?</span>
+            <button onClick={confirmDelete} className="text-sm font-semibold text-rose-500 hover:text-rose-600 transition-colors">
+              Yes, delete
+            </button>
+            <button onClick={() => setPendingDeleteId(null)} className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
+              Cancel
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

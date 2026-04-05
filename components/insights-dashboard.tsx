@@ -211,6 +211,48 @@ export function InsightsDashboard() {
         {data && (
           <motion.div className="space-y-5" variants={anim.container} initial="hidden" animate="show">
 
+            {/* ── Completeness hints ── */}
+            {(() => {
+              const hints = [
+                data.totalEmotionLogs < 3 && {
+                  text: `${3 - data.totalEmotionLogs} more emotion log${(3 - data.totalEmotionLogs) !== 1 ? "s" : ""} needed to unlock your weekly reflection`,
+                  href: "/emotional-log", label: "Log now",
+                },
+                data.totalJournalEntries === 0 && {
+                  text: "No journal entries yet — journal insights are limited",
+                  href: "/thoughts", label: "Write",
+                },
+                data.totalBreathingSessions === 0 && {
+                  text: "No breathing sessions yet — try one to see its impact on your mood",
+                  href: "/breathe", label: "Breathe",
+                },
+              ].filter(Boolean) as { text: string; href: string; label: string }[]
+
+              return hints.length > 0 ? (
+                <motion.div variants={anim.item}>
+                  <div className="rounded-2xl border border-amber-200/60 bg-amber-50/50 dark:border-amber-800/30 dark:bg-amber-900/10 px-4 py-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                      <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
+                        Data limited
+                      </p>
+                    </div>
+                    <ul className="space-y-1.5">
+                      {hints.map((h, i) => (
+                        <li key={i} className="flex items-center justify-between gap-3">
+                          <p className="text-xs text-amber-800/80 dark:text-amber-300/80 leading-relaxed">{h.text}</p>
+                          <Link href={h.href}
+                            className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:underline whitespace-nowrap shrink-0">
+                            {h.label} →
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </motion.div>
+              ) : null
+            })()}
+
             {/* ── 4 stat cards ── */}
             <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3" variants={anim.item}>
               <StatCard label="Healing Score" icon={Heart}

@@ -90,7 +90,7 @@ export default function BreathePage() {
   const [countdown, setCountdown] = useState(0)
   const [cycles, setCycles]     = useState(0)
 
-  const { speak, stop: stopSpeech, voiceEnabled, toggleVoice, voiceVolume, setVoiceVolume } = useTTS()
+  const { speak, prefetch, stop: stopSpeech, voiceEnabled, toggleVoice, voiceVolume, setVoiceVolume } = useTTS()
   const { play: playSound, stop: stopSound, current: currentSound, volume: ambientVolume, setVolume: setAmbientVolume } = useAmbientSound()
 
   const SOUNDS: { type: SoundType; label: string; emoji: string }[] = [
@@ -195,9 +195,9 @@ export default function BreathePage() {
 
       phaseRef.current = next.phase
       countRef.current = next.duration
+      speakPhase(next.phase)
       setPhase(next.phase)
       setCountdown(next.duration)
-      speakPhase(next.phase)
     } else {
       setCountdown(countRef.current)
     }
@@ -211,10 +211,10 @@ export default function BreathePage() {
     const first = sequenceRef.current[0]
     phaseRef.current = first.phase
     countRef.current = first.duration
+    speakPhase(first.phase)
     setPhase(first.phase)
     setCountdown(first.duration)
     setSessionState("running")
-    speakPhase(first.phase)
     timerRef.current = setTimeout(tick, 1000)
   }
 
@@ -226,6 +226,11 @@ export default function BreathePage() {
     setPhase("idle")
 
     if (voiceEnabledRef.current) {
+      // Warm ElevenLabs cache for all phase cues while intro plays so
+      // audio starts in <50ms when each phase begins — no perceptible lag.
+      prefetch("Breathe in")
+      prefetch("Hold")
+      prefetch("Breathe out")
       await speak(selectedPattern.intro, { rate: 0.82, pitch: 0.9 })
       // Small pause after intro before breathing begins
       await new Promise<void>((res) => setTimeout(res, 300))

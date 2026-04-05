@@ -82,6 +82,7 @@ export type InsightsData = {
   breathingPatternBreakdown: { pattern: string; count: number }[]
   avgSurveyDimensions: { emotionalState: number; selfConnection: number; selfCompassion: number; selfCare: number } | null
   avgIntensity: number | null   // mean intensity across all filtered emotion logs
+  milestones: { date: string; label: string; icon: string }[]
 }
 
 function getDateRange(range: DateRange): Date | null {
@@ -318,6 +319,22 @@ export function useInsightsData(dateRange: DateRange) {
       ? Math.round((emotionLogs.reduce((s, e) => s + e.intensity, 0) / emotionLogs.length) * 10) / 10
       : null
 
+    // ── All-time milestone data ──
+    const allQuizAll = readStorage<QuizResult[]>(STORAGE_KEYS.quizResults) ?? []
+    const milestones: { date: string; label: string; icon: string }[] = []
+    const firstLog     = allEmotionLogs[allEmotionLogs.length - 1]
+    const firstJ       = allJournalEntries[allJournalEntries.length - 1]
+    const firstBreath  = allBreathing[allBreathing.length - 1]
+    const firstQuiz    = allQuizAll[allQuizAll.length - 1]
+    if (firstLog)    milestones.push({ date: toDateStr(firstLog.timestamp),                                  label: "First emotion logged",         icon: "💜" })
+    if (firstJ)      milestones.push({ date: toDateStr(firstJ.date),                                         label: "First journal entry",          icon: "📖" })
+    if (firstBreath) milestones.push({ date: toDateStr(firstBreath.timestamp),                               label: "First breathing session",      icon: "🌬️" })
+    if (firstQuiz)   milestones.push({ date: toDateStr(firstQuiz.created_at ?? firstQuiz.timestamp ?? new Date().toISOString()), label: "First self-reflection quiz", icon: "🧠" })
+    if (longestStreak >= 3) milestones.push({ date: "Record", label: `${longestStreak}-day streak`,         icon: "🔥" })
+    if (allEmotionLogs.length >= 10) milestones.push({ date: toDateStr(allEmotionLogs[allEmotionLogs.length - 10].timestamp), label: "10 emotions logged", icon: "⭐" })
+    if (allEmotionLogs.length >= 25) milestones.push({ date: toDateStr(allEmotionLogs[allEmotionLogs.length - 25].timestamp), label: "25 emotions logged", icon: "🌟" })
+    milestones.sort((a, b) => (a.date === "Record" ? 1 : b.date === "Record" ? -1 : a.date.localeCompare(b.date)))
+
     // ── Journal activity ──
     const journalByDay = new Map<string, number>()
     for (const e of journalEntries) {
@@ -405,6 +422,7 @@ export function useInsightsData(dateRange: DateRange) {
       breathingPatternBreakdown,
       avgSurveyDimensions,
       avgIntensity,
+      milestones,
     })
 
     // ── AI Weekly Narrative (cached per ISO week) ──

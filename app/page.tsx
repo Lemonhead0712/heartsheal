@@ -1,406 +1,687 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
-import { motion, type Variants } from "framer-motion"
-import { BookHeart, Wind, ArrowRight, Sparkles, Heart, Cloud, TrendingUp, Flame, Activity, ChevronRight, PenLine } from "lucide-react"
-import { OnboardingModal } from "@/components/onboarding-modal"
-import { InspirationalQuote } from "@/components/inspirational-quote"
-import { AuthModal } from "@/components/auth-modal"
-import { DailyCheckinModal } from "@/components/daily-checkin-modal"
-import { CrisisNudge } from "@/components/crisis-nudge"
+import { motion, AnimatePresence } from "framer-motion"
+import { Mic, MicOff, Send, TrendingUp, Volume2, VolumeX, ChevronRight } from "lucide-react"
+import { useTTS, useSTT } from "@/hooks/use-speech"
+import { useEmotionLogs } from "@/hooks/use-emotion-logs"
+import { useJournalEntries } from "@/hooks/use-journal-entries"
 import { useAuth } from "@/contexts/auth-context"
-import { useGuidedSession } from "@/contexts/guided-session-context"
-import { readStorage, STORAGE_KEYS } from "@/lib/storage"
+import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
 import { cn } from "@/lib/utils"
 
-/* ─── Animation variants ─── */
-const container: Variants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.05 },
-  },
-}
-const item: Variants = {
-  hidden: { opacity: 0, y: 18 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } },
+// ── Types ─────────────────────────────────────────────────────────────────────
+type HavenMode =
+  | "greeting"
+  | "chatting"
+  | "emotion-widget"
+  | "breathe-widget"
+  | "journal-widget"
+  | "survey-widget"
+  | "insights-widget"
+
+type HavenAction = "emotion" | "breathe" | "journal" | "survey" | "insights" | null
+
+type HavenResponse = {
+  message: string
+  action: HavenAction
+  chips: string[]
 }
 
-/* ─── Quick-access tool links ─── */
-const tools = [
-  {
-    href:   "/companion",
-    icon:   Sparkles,
-    label:  "Haven",
-    sub:    "AI Companion",
-    iconBg: "bg-rose-100 text-rose-500 dark:bg-rose-900/40 dark:text-rose-400",
-    accent: "from-rose-50/60 dark:from-rose-900/15",
-  },
-  {
-    href:   "/breathe",
-    icon:   Wind,
-    label:  "Breathe",
-    sub:    "Guided session",
-    iconBg: "bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400",
-    accent: "from-sky-50/60 dark:from-sky-900/15",
-  },
-  {
-    href:   "/thoughts",
-    icon:   BookHeart,
-    label:  "Thoughts",
-    sub:    "Journal & quizzes",
-    iconBg: "bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400",
-    accent: "from-amber-50/60 dark:from-amber-900/15",
-  },
-  {
-    href:   "/insights",
-    icon:   TrendingUp,
-    label:  "Insights",
-    sub:    "Healing analytics",
-    iconBg: "bg-primary/10 text-primary",
-    accent: "from-primary/6",
-  },
+type ApiMessage = { role: "user" | "assistant"; content: string }
+
+// ── Static data ───────────────────────────────────────────────────────────────
+const EMOTIONS = [
+  { label: "Sad",      emoji: "😔", intensity: 3 },
+  { label: "Anxious",  emoji: "😰", intensity: 4 },
+  { label: "Numb",     emoji: "😶", intensity: 3 },
+  { label: "Hopeful",  emoji: "🌱", intensity: 6 },
+  { label: "Grateful", emoji: "🙏", intensity: 7 },
+  { label: "Angry",    emoji: "😤", intensity: 5 },
+  { label: "Calm",     emoji: "😌", intensity: 6 },
+  { label: "Grief",    emoji: "💔", intensity: 2 },
 ]
 
-const lossTypes = [
-  "Grief & Loss", "Heartbreak", "Divorce", "Job Loss", "Loneliness", "Family Pain", "Identity", "Trauma",
+const BREATHE_SEQ = [
+  { phase: "inhale" as const, label: "Breathe In",  cue: "Breathe in",  dur: 4 },
+  { phase: "hold1"  as const, label: "Hold",        cue: "Hold",        dur: 4 },
+  { phase: "exhale" as const, label: "Breathe Out", cue: "Breathe out", dur: 4 },
+  { phase: "hold2"  as const, label: "Hold",        cue: "Hold",        dur: 2 },
 ]
 
-/* ─── Helpers ─── */
-function getGreeting(name?: string): { salutation: string; sub: string } {
-  const h = new Date().getHours()
-  const who = name ? `, ${name}` : ""
-  if (h >= 5  && h < 12) return { salutation: `Good morning${who}`, sub: "How are you feeling as your day begins?" }
-  if (h >= 12 && h < 17) return { salutation: `Good afternoon${who}`, sub: "Taking a moment for yourself today." }
-  if (h >= 17 && h < 21) return { salutation: `Good evening${who}`, sub: "How has today been for you?" }
-  return { salutation: `You're up late${who}`, sub: "This is a safe space, whenever you need it." }
+const EMOTION_JOURNAL_PROMPTS: Record<string, string> = {
+  "Sad":      "What does this sadness feel like in your body right now? What does it most need from you?",
+  "Anxious":  "What is your anxiety trying to protect you from? What would you say to it with kindness?",
+  "Numb":     "When did you last feel something clearly? What were you doing, and who were you with?",
+  "Hopeful":  "What sparked this sense of hope today? How can you honour it and let it grow?",
+  "Grateful": "What are you most grateful for right now? Who or what has held you recently?",
+  "Angry":    "What is your anger telling you about what matters to you? What boundary needs honouring?",
+  "Calm":     "What brought you to this calm? How can you return here when things feel harder?",
+  "Grief":    "What are you grieving? If you could say one thing to what you've lost, what would it be?",
 }
 
-function computeStreak(logs: any[]): number {
-  if (!logs.length) return 0
-  const days = new Set(logs.map((l: any) => new Date(l.timestamp).toDateString()))
-  let streak = 0
-  const today = new Date()
-  for (let i = 0; i < 365; i++) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - i)
-    if (!days.has(d.toDateString())) break
-    streak++
-  }
-  return streak
-}
+const HAVEN_SYSTEM = `You are Haven, the heart of HeartsHeal — a compassionate AI healing companion.
+You speak warmly, gently, and briefly (2-3 sentences max).
+You guide the user through their healing by proactively suggesting embedded activities.
 
-function computeHealingScore(logs: any[], surveys: any[]): number | null {
-  if (logs.length < 2) return null
-  const sevenAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
-  const recent   = logs.filter((l: any) => new Date(l.timestamp).getTime() > sevenAgo)
-  if (!recent.length) return null
+Your response MUST always be valid JSON in this exact shape:
+{"message":"What you say to the user (plain conversational text, no markdown)","action":null,"chips":["chip 1","chip 2","chip 3"]}
 
-  const uniqueDays      = new Set(recent.map((l: any) => new Date(l.timestamp).toDateString())).size
-  const consistency     = Math.min(uniqueDays / 7, 1)
-  const avgIntensity    = recent.reduce((s: number, l: any) => s + (l.intensity ?? 5), 0) / recent.length
-  const intensityScore  = 1 - avgIntensity / 10
+action must be one of: null | "emotion" | "breathe" | "journal" | "survey" | "insights"
 
-  let surveyScore = 0.5
-  if (surveys.length > 0) {
-    const last = surveys.slice(-3)
-    const avg  = last.reduce((s: number, sv: any) =>
-      s + ((sv.emotionalState + sv.selfConnection + sv.selfCompassion + sv.selfCare) / 4), 0) / last.length
-    surveyScore = avg / 5
-  }
+Rules for action:
+- "emotion" — when user needs to check in with how they feel right now
+- "breathe" — when user mentions anxiety, stress, or overwhelm, or after emotion check-in
+- "journal" — when user needs to process or reflect; after breathing or on request
+- "survey" — for a holistic wellbeing check; suggest at most once per session
+- "insights" — after 2+ activities completed, to show their progress
+- null — for pure conversation; no activity needed right now
 
-  return Math.round((surveyScore * 0.40 + intensityScore * 0.35 + consistency * 0.25) * 100)
-}
+chips must be 3-4 short (under 6 words) response options the user can tap.
+Always lead with empathy. Never rush. One question or suggestion at a time.
+If the user just completed an activity, acknowledge it warmly before moving on.
+If self-harm is mentioned, gently include the 988 Lifeline in your message.`
 
-type LiveStats = {
-  streak:       number
-  healingScore: number | null
-  lastEmotion:  { emoji: string; emotion: string } | null
-  totalLogs:    number
-  hasData:      boolean
-}
-
-/* ─── Score ring (SVG) ─── */
+// ── Score ring ────────────────────────────────────────────────────────────────
 function ScoreRing({ score }: { score: number }) {
-  const r     = 20
-  const circ  = 2 * Math.PI * r
+  const r    = 22
+  const circ = 2 * Math.PI * r
   const offset = circ - (score / 100) * circ
   const color  = score >= 70 ? "#10b981" : score >= 45 ? "#f59e0b" : "#f43f5e"
   return (
-    <svg width="48" height="48" viewBox="0 0 48 48" className="shrink-0">
-      <circle cx="24" cy="24" r={r} fill="none" stroke="currentColor" strokeWidth="3.5" className="text-muted/30" />
-      <circle
-        cx="24" cy="24" r={r} fill="none" stroke={color} strokeWidth="3.5"
+    <svg width="56" height="56" viewBox="0 0 56 56">
+      <circle cx="28" cy="28" r={r} fill="none" stroke="currentColor" strokeWidth="4" className="text-border/30" />
+      <circle cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth="4"
         strokeDasharray={circ} strokeDashoffset={offset}
-        strokeLinecap="round" transform="rotate(-90 24 24)"
-        style={{ transition: "stroke-dashoffset 0.8s ease" }}
-      />
-      <text x="24" y="29" textAnchor="middle" fontSize="11" fontWeight="700" fill={color}>{score}</text>
+        strokeLinecap="round" transform="rotate(-90 28 28)" />
+      <text x="28" y="33" textAnchor="middle" fontSize="11" fontWeight="700" fill={color}>{score}</text>
     </svg>
   )
 }
 
-export default function Home() {
+// ── Main component ────────────────────────────────────────────────────────────
+export default function HavenHome() {
   const { user } = useAuth()
-  const { startSession } = useGuidedSession()
-  const [authOpen, setAuthOpen]       = useState(false)
-  const [authMode, setAuthMode]       = useState<"signin" | "signup">("signup")
-  const [greeting, setGreeting]       = useState({ salutation: "Welcome back", sub: "Your safe space for healing." })
-  const [checkinOpen, setCheckinOpen] = useState(false)
-  const [stats, setStats]             = useState<LiveStats | null>(null)
+  const { addEntry: addEmotion } = useEmotionLogs()
+  const { addEntry: addJournal } = useJournalEntries()
+  const { speak, stop: stopSpeech, prefetch, voiceEnabled, toggleVoice } = useTTS()
 
+  // ── Conversation state ────────────────────────────────────────────────────
+  const [mode,          setMode]          = useState<HavenMode>("greeting")
+  const [havenMessage,  setHavenMessage]  = useState("")
+  const [displayText,   setDisplayText]   = useState("")
+  const [chips,         setChips]         = useState<string[]>([])
+  const [activeAction,  setActiveAction]  = useState<HavenAction>(null)
+  const [apiMessages,   setApiMessages]   = useState<ApiMessage[]>([])
+  const [loading,       setLoading]       = useState(false)
+  const [input,         setInput]         = useState("")
+
+  // ── Session tracking ──────────────────────────────────────────────────────
+  const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null)
+  const [completedToday,  setCompletedToday]  = useState<Set<string>>(new Set())
+
+  // ── Breathing widget state ────────────────────────────────────────────────
+  const [breathePhase, setBreathePhase] = useState<"idle" | "inhale" | "hold1" | "exhale" | "hold2" | "done">("idle")
+  const [breatheCount, setBreatheCount] = useState(0)
+  const breatheInterval = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // ── Journal widget state ──────────────────────────────────────────────────
+  const [journalText,  setJournalText]  = useState("")
+  const [journalSaved, setJournalSaved] = useState(false)
+
+  // ── Survey widget state ───────────────────────────────────────────────────
+  const [survey, setSurvey] = useState({ emotionalState: 3, selfConnection: 3, selfCompassion: 3, selfCare: 3 })
+  const [surveySaved, setSurveySaved] = useState(false)
+
+  // ── Typewriter effect ─────────────────────────────────────────────────────
+  const typewriterRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const showMessage = useCallback((msg: string) => {
+    setHavenMessage(msg)
+    setDisplayText("")
+    if (typewriterRef.current) clearInterval(typewriterRef.current)
+    let i = 0
+    typewriterRef.current = setInterval(() => {
+      setDisplayText(msg.slice(0, ++i))
+      if (i >= msg.length) clearInterval(typewriterRef.current!)
+    }, 16)
+    speak(msg)
+  }, [speak])
+
+  // ── Initial greeting (synchronous, no API call) ──────────────────────────
   useEffect(() => {
-    const name    = readStorage<string>(STORAGE_KEYS.userName) ?? undefined
-    setGreeting(getGreeting(name))
-
-    const logs    = readStorage<any[]>(STORAGE_KEYS.emotionLogs)    ?? []
-    const surveys = readStorage<any[]>(STORAGE_KEYS.surveyResponses) ?? []
-    const last    = logs[0] ?? null
-    setStats({
-      streak:       computeStreak(logs),
-      healingScore: computeHealingScore(logs, surveys),
-      lastEmotion:  last ? { emoji: last.emoji, emotion: last.emotion } : null,
-      totalLogs:    logs.length,
-      hasData:      logs.length > 0,
-    })
-
-    const welcomeSeen = readStorage<boolean>(STORAGE_KEYS.welcomeSeen)
+    const name        = readStorage<string>(STORAGE_KEYS.userName)
     const lastCheckin = readStorage<string>(STORAGE_KEYS.lastCheckin)
-    if (welcomeSeen && lastCheckin !== new Date().toDateString()) {
-      const t = setTimeout(() => setCheckinOpen(true), 1800)
-      return () => clearTimeout(t)
-    }
-  }, [])
+    const logs        = readStorage<any[]>(STORAGE_KEYS.emotionLogs) ?? []
+    const checkedIn   = lastCheckin === new Date().toDateString()
+    const isNew       = logs.length === 0 && !checkedIn
 
-  const openAuth = (mode: "signin" | "signup") => { setAuthMode(mode); setAuthOpen(true) }
+    let message: string
+    let initChips: string[]
+    let initAction: HavenAction
+
+    if (isNew) {
+      message    = "I'm here for you. Let's take this one step at a time."
+      initChips  = ["I went through a breakup", "I'm feeling anxious", "I need clarity", "I just want to talk"]
+      initAction = "emotion"
+    } else if (checkedIn) {
+      message    = `Welcome back${name ? ", " + name : ""}. How are you feeling since we last spoke?`
+      initChips  = ["Better", "About the same", "Harder today", "I want to try something"]
+      initAction = null
+    } else {
+      message    = `Good to see you${name ? ", " + name : ""}. How has today been?`
+      initChips  = ["It's been hard", "I'm managing", "I actually feel okay", "I want to breathe"]
+      initAction = null
+    }
+
+    setChips(initChips)
+    setActiveAction(initAction)
+    if (initAction) setMode(`${initAction}-widget` as HavenMode)
+
+    // Slight delay so page paints before voice + typewriter begin
+    const t = setTimeout(() => showMessage(message), 400)
+
+    // Prefetch breathing cues while greeting plays
+    prefetch("Breathe in"); prefetch("Hold"); prefetch("Breathe out")
+
+    return () => { clearTimeout(t); if (typewriterRef.current) clearInterval(typewriterRef.current) }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Send a message to Haven AI ────────────────────────────────────────────
+  const sendToHaven = useCallback(async (userText: string) => {
+    if (!userText.trim() || loading) return
+    setInput("")
+    setLoading(true)
+    setMode("chatting")
+    stopSpeech()
+
+    const logs       = readStorage<any[]>(STORAGE_KEYS.emotionLogs) ?? []
+    const lossCtx    = readStorage<string[]>(STORAGE_KEYS.lossContext) ?? []
+    const recentLogs = logs.slice(0, 3).map((l: any) => `${l.emoji} ${l.emotion}`).join(", ")
+    const doneList   = Array.from(completedToday).join(", ")
+
+    const contextNote = [
+      lossCtx.length   ? `User's loss context: ${lossCtx.join(", ")}.` : "",
+      recentLogs        ? `Recent emotions logged: ${recentLogs}.` : "",
+      doneList          ? `Completed this session: ${doneList}.` : "",
+      selectedEmotion   ? `Current emotion picked today: ${selectedEmotion}.` : "",
+    ].filter(Boolean).join(" ")
+
+    const nextMessages: ApiMessage[] = [
+      ...apiMessages,
+      { role: "user", content: userText },
+    ]
+    setApiMessages(nextMessages)
+
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model:      "claude-haiku-4-5-20251001",
+          max_tokens: 300,
+          system:     HAVEN_SYSTEM + (contextNote ? `\n\nContext: ${contextNote}` : ""),
+          messages:   nextMessages.slice(-20),
+        }),
+      })
+
+      const data = await res.json()
+      const raw  = data.content?.[0]?.text ?? ""
+
+      let parsed: HavenResponse = { message: "I'm here with you.", action: null, chips: ["Tell me more", "I'm okay", "What's next?"] }
+      try {
+        parsed = JSON.parse(raw)
+      } catch {
+        // Claude occasionally wraps JSON in markdown — strip fences
+        const match = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
+        if (match) {
+          try { parsed = JSON.parse(match[1]) } catch {}
+        } else {
+          parsed.message = raw.replace(/[{}"]/g, "").slice(0, 200) || parsed.message
+        }
+      }
+
+      setApiMessages([...nextMessages, { role: "assistant", content: raw }])
+      setChips(parsed.chips ?? [])
+      setActiveAction(parsed.action)
+      if (parsed.action) setMode(`${parsed.action}-widget` as HavenMode)
+      showMessage(parsed.message)
+    } catch {
+      showMessage("I'm here with you — something went quiet on my end. Take a breath and try again.")
+      setChips(["Try again", "I'll come back", "Just breathe"])
+    } finally {
+      setLoading(false)
+    }
+  }, [loading, apiMessages, completedToday, selectedEmotion, stopSpeech, showMessage])
+
+  // ── After widget completes: tell Haven what happened ──────────────────────
+  const reportToHaven = useCallback((msg: string, key: string) => {
+    setCompletedToday((prev) => new Set([...prev, key]))
+    setMode("chatting")
+    setActiveAction(null)
+    sendToHaven(msg)
+  }, [sendToHaven])
+
+  // ── Emotion widget ────────────────────────────────────────────────────────
+  const [pickedEmotion, setPickedEmotion] = useState<string | null>(null)
+
+  const handleEmotionPick = useCallback(async (label: string, emoji: string, intensity: number) => {
+    if (pickedEmotion) return
+    setPickedEmotion(label)
+    setSelectedEmotion(label)
+    writeStorage(STORAGE_KEYS.lastCheckin, new Date().toDateString())
+    await addEmotion({ emotion: label, emoji, intensity, notes: "" })
+    setTimeout(() => {
+      setPickedEmotion(null)
+      reportToHaven(`I just logged that I'm feeling ${label} ${emoji}.`, "emotion")
+    }, 500)
+  }, [pickedEmotion, addEmotion, reportToHaven])
+
+  // ── Breathing widget ──────────────────────────────────────────────────────
+  const startBreathing = useCallback(() => {
+    let seqIdx = 0; let count = BREATHE_SEQ[0].dur
+    setBreathePhase(BREATHE_SEQ[0].phase); setBreatheCount(count)
+    speak(BREATHE_SEQ[0].cue, { rate: 0.82, pitch: 0.9 })
+    breatheInterval.current = setInterval(() => {
+      count -= 1; setBreatheCount(count)
+      if (count <= 0) {
+        seqIdx += 1
+        if (seqIdx >= BREATHE_SEQ.length) {
+          clearInterval(breatheInterval.current!); breatheInterval.current = null
+          setBreathePhase("done")
+          // Save breathing session
+          try {
+            const record = { id: Date.now().toString(), timestamp: new Date().toISOString(), pattern: "Box Breathing (4-4-4-2)", cycles: 1 }
+            const prev = readStorage<any[]>(STORAGE_KEYS.breathingHistory) ?? []
+            writeStorage(STORAGE_KEYS.breathingHistory, [...prev, record])
+          } catch {}
+          return
+        }
+        const next = BREATHE_SEQ[seqIdx]; count = next.dur
+        setBreathePhase(next.phase); setBreatheCount(count)
+        speak(next.cue, { rate: 0.82, pitch: 0.9 })
+      }
+    }, 1000)
+  }, [speak])
+
+  useEffect(() => () => { if (breatheInterval.current) clearInterval(breatheInterval.current) }, [])
+
+  const breatheCircleScale = breathePhase === "inhale" ? 1.5 : breathePhase === "exhale" ? 0.68 : 1.0
+  const breatheDuration    = BREATHE_SEQ.find((s) => s.phase === breathePhase)?.dur ?? 4
+
+  // ── Journal widget ────────────────────────────────────────────────────────
+  const journalPrompt = selectedEmotion
+    ? (EMOTION_JOURNAL_PROMPTS[selectedEmotion] ?? "What feeling is taking up the most space in you right now?")
+    : "What feeling is taking up the most space in you right now?"
+
+  const saveJournal = useCallback(async () => {
+    if (!journalText.trim()) return
+    await addJournal({ prompt: journalPrompt, entry: journalText.trim() })
+    setJournalSaved(true)
+    setTimeout(() => {
+      reportToHaven(`I just wrote a reflection in my journal.`, "journal")
+    }, 600)
+  }, [journalText, journalPrompt, addJournal, reportToHaven])
+
+  // ── Survey widget ─────────────────────────────────────────────────────────
+  const saveSurvey = useCallback(() => {
+    const record = { id: Date.now().toString(), timestamp: new Date().toISOString(), ...survey }
+    const prev = readStorage<any[]>(STORAGE_KEYS.surveyResponses) ?? []
+    writeStorage(STORAGE_KEYS.surveyResponses, [...prev, record])
+    setSurveySaved(true)
+    const avg = ((survey.emotionalState + survey.selfConnection + survey.selfCompassion + survey.selfCare) / 4).toFixed(1)
+    setTimeout(() => {
+      reportToHaven(`I completed the wellbeing check. My average score was ${avg} out of 5.`, "survey")
+    }, 600)
+  }, [survey, reportToHaven])
+
+  // ── Insights widget data ──────────────────────────────────────────────────
+  const insightsData = (() => {
+    if (typeof window === "undefined") return null
+    const logs      = readStorage<any[]>(STORAGE_KEYS.emotionLogs)      ?? []
+    const journals  = readStorage<any[]>(STORAGE_KEYS.journalEntries)   ?? []
+    const breathing = readStorage<any[]>(STORAGE_KEYS.breathingHistory) ?? []
+    const surveys   = readStorage<any[]>(STORAGE_KEYS.surveyResponses)  ?? []
+    // Simple healing score
+    const recent = logs.slice(0, 7)
+    const days   = new Set(recent.map((l: any) => new Date(l.timestamp).toDateString())).size
+    const cons   = Math.min(days / 7, 1)
+    const avgI   = recent.length ? recent.reduce((s: number, l: any) => s + (l.intensity ?? 5), 0) / recent.length : 5
+    const intS   = 1 - avgI / 10
+    let survS    = 0.5
+    if (surveys.length) {
+      const last3 = surveys.slice(-3)
+      const avg   = last3.reduce((s: number, sv: any) => s + ((sv.emotionalState + sv.selfConnection + sv.selfCompassion + sv.selfCare) / 4), 0) / last3.length
+      survS = avg / 5
+    }
+    const score = Math.round((survS * 0.4 + intS * 0.35 + cons * 0.25) * 100)
+    return { logs: logs.length, journals: journals.length, breathing: breathing.length, score }
+  })()
+
+  // ── STT ───────────────────────────────────────────────────────────────────
+  const onSTTResult = useCallback((t: string) => setInput(t), [])
+  const onSTTEnd    = useCallback((had: boolean) => {
+    if (had) setTimeout(() => setInput((cur) => { if (cur.trim()) sendToHaven(cur); return "" }), 300)
+  }, [sendToHaven])
+  const { status: sttStatus, startListening, stopListening } = useSTT(onSTTResult, onSTTEnd)
+
+  // ── Orb animation config per mode ────────────────────────────────────────
+  const orbPing = mode === "chatting" || loading
+    ? "1.6s"
+    : mode === "greeting"
+    ? "3s"
+    : "2s"
 
   return (
-    <div className="min-h-screen bg-page-gradient">
-      <motion.div
-        className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 md:pt-6 md:pb-12"
-        variants={container}
-        initial="hidden"
-        animate="show"
-      >
+    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-rose-50 via-background to-background dark:from-rose-950/20 dark:via-background dark:to-background">
 
-        {/* ── Hero ── */}
-        <motion.section className="text-center max-w-3xl mx-auto mb-8 md:mb-10" variants={item}>
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wide mb-5">
-            <Heart className="w-3.5 h-3.5 fill-primary/30" />
-            {greeting.salutation}
+      {/* ── Thin header ── */}
+      <header className="flex items-center justify-between px-5 pt-4 pb-2 shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="text-primary">♥</span>
+          <span className="font-serif font-semibold text-foreground tracking-tight">HeartsHeal</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={voiceEnabled ? stopSpeech : toggleVoice}
+            className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={voiceEnabled ? "Mute Haven" : "Unmute Haven"}>
+            {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
+          <Link href="/insights"
+            className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="View insights">
+            <TrendingUp className="w-4 h-4" />
+          </Link>
+        </div>
+      </header>
+
+      {/* ── Scrollable content ── */}
+      <div className="flex-1 flex flex-col items-center px-5 pt-6 pb-2 overflow-y-auto">
+
+        {/* Orb */}
+        <div className="relative w-28 h-28 flex items-center justify-center mb-6 shrink-0">
+          <motion.span
+            className="absolute inset-0 rounded-full bg-primary/20"
+            animate={{ scale: [1, 1.18, 1], opacity: [0.5, 0.15, 0.5] }}
+            transition={{ duration: parseFloat(orbPing), repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.span
+            className="absolute inset-0 rounded-full bg-primary/10"
+            animate={{ scale: [1, 1.35, 1], opacity: [0.3, 0, 0.3] }}
+            transition={{ duration: parseFloat(orbPing) * 1.4, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+          />
+          <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-rose-300 via-primary to-rose-500 shadow-2xl z-10 flex items-center justify-center">
+            <span className="text-white text-2xl select-none">✦</span>
           </div>
-          <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-foreground mb-5 text-balance leading-[1.1]">
-            Healing begins with{" "}
-            <span className="text-primary">one breath.</span>
-          </h1>
-          <p className="text-muted-foreground text-base sm:text-lg leading-relaxed text-pretty max-w-xl mx-auto mb-8">
-            {greeting.sub}
-          </p>
+        </div>
 
-          {/* Loss type pills */}
-          <div className="flex flex-wrap justify-center gap-2.5 mb-10">
-            {lossTypes.map((t) => (
-              <span key={t} className="pill-badge bg-secondary text-muted-foreground text-sm px-4 py-1.5">
-                {t}
-              </span>
-            ))}
-          </div>
-
-          {/* CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button
-              onClick={startSession}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-            >
-              <Heart className="w-4 h-4" />
-              Talk to Haven
-            </button>
-            <Link
-              href="/emotional-log"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-border/60 text-muted-foreground font-semibold text-sm hover:text-foreground hover:border-border transition-colors duration-200"
-            >
-              <PenLine className="w-4 h-4" />
-              Log Emotion
-            </Link>
-          </div>
-        </motion.section>
-
-        {/* ── Crisis Support Banner ── */}
-        <motion.section variants={item} className="mb-7 md:mb-9">
-          <div className="glass-card rounded-2xl px-5 py-4">
-            <div className="flex items-start gap-3">
-              <span className="text-xl shrink-0">🆘</span>
-              <div>
-                <p className="text-sm font-semibold text-foreground mb-1">If you're in crisis right now</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  You are not alone. Call or text{" "}
-                  <a href="tel:988" className="text-primary font-semibold underline underline-offset-2">988</a>{" "}
-                  (Suicide &amp; Crisis Lifeline) anytime. Text <span className="font-semibold text-primary">HOME</span> to{" "}
-                  <span className="font-semibold text-primary">741741</span> for the Crisis Text Line.
-                </p>
+        {/* Haven's message bubble */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={havenMessage}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="w-full max-w-sm text-center mb-5"
+          >
+            {loading ? (
+              <div className="flex justify-center gap-1.5">
+                {[0,1,2].map((i) => (
+                  <motion.span key={i} className="w-2 h-2 rounded-full bg-primary/50"
+                    animate={{ opacity: [0.3,1,0.3], y: [0,-4,0] }}
+                    transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.16 }} />
+                ))}
               </div>
-            </div>
-          </div>
-        </motion.section>
+            ) : (
+              <p className="font-serif text-lg text-foreground leading-relaxed">{displayText}</p>
+            )}
+          </motion.div>
+        </AnimatePresence>
 
-        {/* ── Quick-access Tools ── */}
-        <motion.section className="mb-7 md:mb-9" variants={item}>
-          <div className="flex items-center gap-3 mb-5">
-            <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
-              Your Healing Tools
-            </h2>
-            <div className="flex-1 h-px bg-border/60" />
-          </div>
+        {/* ── Embedded Widget ── */}
+        <AnimatePresence mode="wait">
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {tools.map(({ href, icon: Icon, label, sub, iconBg, accent }) => (
-              <Link key={href} href={href} className="group">
-                <div className={cn(
-                  "rounded-2xl bg-card border border-border/40 bg-gradient-to-br to-transparent h-full",
-                  "hover:border-border/70 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200",
-                  accent,
-                )}>
-                  <div className="p-4 sm:p-5 flex flex-col gap-3 h-full">
-                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
-                      <Icon className="w-5 h-5" aria-hidden="true" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-[15px] font-semibold text-foreground leading-snug">{label}</p>
-                      <p className="text-xs text-muted-foreground leading-snug mt-0.5">{sub}</p>
-                    </div>
-                    <div className="flex items-center gap-0.5 text-xs font-semibold text-primary/60 group-hover:text-primary transition-colors duration-200">
-                      <span>Open</span>
-                      <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform duration-200" />
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </motion.section>
-
-        {/* ── Your Progress (live stats) ── */}
-        <motion.section className="mb-7 md:mb-9" variants={item}>
-          <div className="flex items-center gap-3 mb-5">
-            <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
-              Your Progress
-            </h2>
-            <div className="flex-1 h-px bg-border/60" />
-          </div>
-
-          {stats?.hasData ? (
-            <Link href="/insights" className="group block">
-              <div className="rounded-2xl bg-gradient-to-br from-emerald-50/60 via-card/50 to-card dark:from-emerald-900/15 border border-emerald-200/40 dark:border-emerald-800/25 px-5 py-5 hover:border-emerald-300/60 dark:hover:border-emerald-700/40 transition-colors duration-200">
-                <div className="flex items-center gap-5 flex-wrap">
-                  {/* Score ring */}
-                  {stats.healingScore !== null && (
-                    <div className="flex flex-col items-center gap-1 shrink-0">
-                      <ScoreRing score={stats.healingScore} />
-                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">Healing Score</span>
-                    </div>
-                  )}
-
-                  {/* Stat pills */}
-                  <div className="flex flex-wrap gap-3 flex-1">
-                    {stats.streak > 0 && (
-                      <div className="flex flex-col items-center justify-center gap-0.5 rounded-xl bg-card border border-border/40 px-4 py-2.5 min-w-[72px]">
-                        <div className="flex items-center gap-1">
-                          <Flame className="w-3.5 h-3.5 text-orange-400" />
-                          <span className="text-lg font-bold text-foreground">{stats.streak}</span>
-                        </div>
-                        <span className="text-[10px] text-muted-foreground">day streak</span>
-                      </div>
-                    )}
-                    {stats.lastEmotion && (
-                      <div className="flex flex-col items-center justify-center gap-0.5 rounded-xl bg-card border border-border/40 px-4 py-2.5 min-w-[72px]">
-                        <span className="text-lg leading-none">{stats.lastEmotion.emoji}</span>
-                        <span className="text-[11px] font-medium text-foreground">{stats.lastEmotion.emotion}</span>
-                        <span className="text-[10px] text-muted-foreground">last logged</span>
-                      </div>
-                    )}
-                    <div className="flex flex-col items-center justify-center gap-0.5 rounded-xl bg-card border border-border/40 px-4 py-2.5 min-w-[72px]">
-                      <div className="flex items-center gap-1">
-                        <Activity className="w-3.5 h-3.5 text-primary" />
-                        <span className="text-lg font-bold text-foreground">{stats.totalLogs}</span>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground">total logs</span>
-                    </div>
-                  </div>
-
-                  {/* CTA */}
-                  <div className="ml-auto shrink-0 flex items-center gap-1 text-sm font-semibold text-emerald-600 dark:text-emerald-400 group-hover:gap-2 transition-all duration-200">
-                    View full insights
-                    <ChevronRight className="w-4 h-4" />
-                  </div>
-                </div>
+          {/* EMOTION WIDGET */}
+          {mode === "emotion-widget" && !completedToday.has("emotion") && (
+            <motion.div key="emotion-widget"
+              initial={{ opacity: 0, y: 16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              transition={{ type: "spring", stiffness: 300, damping: 26 }}
+              className="w-full max-w-sm mb-5 rounded-2xl border border-primary/40 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/15"
+            >
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-3 text-center">How are you feeling right now?</p>
+              <div className="grid grid-cols-4 gap-2">
+                {EMOTIONS.map(({ label, emoji, intensity }) => (
+                  <button key={label} disabled={!!pickedEmotion}
+                    onClick={() => handleEmotionPick(label, emoji, intensity)}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 py-3 rounded-xl border text-center transition-all",
+                      pickedEmotion === label
+                        ? "border-primary bg-primary/10 scale-95"
+                        : pickedEmotion
+                        ? "border-border/20 opacity-30 cursor-default"
+                        : "border-border/40 hover:border-primary/50 hover:bg-primary/5 active:scale-95"
+                    )}>
+                    <span className="text-xl leading-none">{emoji}</span>
+                    <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
+                  </button>
+                ))}
               </div>
-            </Link>
-          ) : (
-            <div className="rounded-2xl bg-card border border-border/40 px-5 py-6 text-center">
-              <p className="text-sm text-muted-foreground mb-3">
-                Start logging your emotions to see your healing progress here.
-              </p>
-              <Link
-                href="/emotional-log"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
-              >
-                <PenLine className="w-4 h-4" />
-                Log your first emotion
-              </Link>
-            </div>
+            </motion.div>
           )}
-        </motion.section>
 
-        {/* ── Account & Sync (signed-out only) ── */}
-        {!user && (
-          <motion.section className="mb-7 md:mb-9" variants={item}>
-            <div className="rounded-2xl px-5 py-5 bg-primary/5 border border-primary/15">
-              <div className="flex items-center gap-2 mb-1">
-                <Cloud className="w-4 h-4 text-primary" />
-                <h3 className="font-semibold text-sm text-foreground">Your progress, safe across devices</h3>
-              </div>
-              <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-                Free forever — create an account to keep your logs and journal safe and accessible anywhere.
+          {/* BREATHE WIDGET */}
+          {mode === "breathe-widget" && !completedToday.has("breathe") && (
+            <motion.div key="breathe-widget"
+              initial={{ opacity: 0, y: 16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              transition={{ type: "spring", stiffness: 300, damping: 26 }}
+              className="w-full max-w-sm mb-5 rounded-2xl border border-sky-300/60 bg-card/80 backdrop-blur-sm p-5 shadow-[0_0_20px_2px] shadow-sky-400/15 flex flex-col items-center"
+            >
+              <p className="text-xs font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wide mb-4">
+                {selectedEmotion ? `Breathing through ${selectedEmotion.toLowerCase()}` : "Box breathing · 4-4-4-2"}
               </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={() => openAuth("signup")}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/40 text-primary text-sm font-semibold hover:bg-primary/10 active:scale-[0.98] transition-all"
-                >
-                  <Cloud className="w-4 h-4" />
-                  Create Free Account
-                </button>
-                <button
-                  onClick={() => openAuth("signin")}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/60 text-muted-foreground text-sm font-semibold hover:bg-muted/50 active:scale-[0.98] transition-all"
-                >
-                  Sign In
-                </button>
+              <div className="relative w-36 h-36 flex items-center justify-center mb-4">
+                <motion.div className="absolute rounded-full bg-sky-100 dark:bg-sky-900/30"
+                  style={{ width: "100%", height: "100%" }}
+                  animate={{ scale: breathePhase !== "idle" && breathePhase !== "done" ? breatheCircleScale : 1 }}
+                  transition={{ duration: breatheDuration, ease: breathePhase === "inhale" ? "easeIn" : breathePhase === "exhale" ? "easeOut" : "linear" }}
+                />
+                <motion.div className="rounded-full bg-gradient-to-br from-sky-300 to-sky-500 shadow-lg z-10"
+                  style={{ width: "72px", height: "72px" }}
+                  animate={{ scale: breathePhase !== "idle" && breathePhase !== "done" ? breatheCircleScale : 1 }}
+                  transition={{ duration: breatheDuration, ease: breathePhase === "inhale" ? "easeIn" : breathePhase === "exhale" ? "easeOut" : "linear" }}
+                />
+                <div className="absolute z-20 flex flex-col items-center">
+                  {breathePhase !== "idle" && breathePhase !== "done" && (
+                    <>
+                      <p className="text-white text-xs font-semibold drop-shadow">
+                        {BREATHE_SEQ.find((s) => s.phase === breathePhase)?.label}
+                      </p>
+                      <p className="text-white/80 text-xl font-bold drop-shadow">{breatheCount}</p>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          </motion.section>
+              {breathePhase === "idle" && (
+                <button onClick={startBreathing}
+                  className="px-7 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition-colors animate-pulse">
+                  Start breathing
+                </button>
+              )}
+              {breathePhase === "done" && (
+                <motion.button initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                  onClick={() => reportToHaven("I just completed a breathing exercise.", "breathe")}
+                  className="px-7 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
+                  Continue →
+                </motion.button>
+              )}
+            </motion.div>
+          )}
+
+          {/* JOURNAL WIDGET */}
+          {mode === "journal-widget" && !completedToday.has("journal") && (
+            <motion.div key="journal-widget"
+              initial={{ opacity: 0, y: 16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              transition={{ type: "spring", stiffness: 300, damping: 26 }}
+              className="w-full max-w-sm mb-5 rounded-2xl border border-amber-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-amber-400/15"
+            >
+              <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-3">
+                {selectedEmotion ? `Reflecting on your ${selectedEmotion.toLowerCase()}` : "Write it out"}
+              </p>
+              <div className="bg-amber-50/60 dark:bg-amber-900/20 rounded-xl px-3.5 py-2.5 mb-3 border border-amber-200/40">
+                <p className="text-sm text-foreground/80 font-serif italic leading-relaxed">"{journalPrompt}"</p>
+              </div>
+              <textarea
+                value={journalText}
+                onChange={(e) => setJournalText(e.target.value)}
+                placeholder="Take your time. Write whatever comes…"
+                rows={4}
+                className="w-full rounded-xl border border-border/40 bg-background px-3.5 py-2.5 text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3"
+              />
+              {journalSaved ? (
+                <p className="text-xs text-emerald-600 text-center py-1">✓ Saved to your journal</p>
+              ) : (
+                <button onClick={saveJournal} disabled={!journalText.trim()}
+                  className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-40 transition-colors">
+                  Save reflection
+                </button>
+              )}
+            </motion.div>
+          )}
+
+          {/* SURVEY WIDGET */}
+          {mode === "survey-widget" && !completedToday.has("survey") && (
+            <motion.div key="survey-widget"
+              initial={{ opacity: 0, y: 16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              transition={{ type: "spring", stiffness: 300, damping: 26 }}
+              className="w-full max-w-sm mb-5 rounded-2xl border border-violet-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-violet-400/15"
+            >
+              <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide mb-4">Wellbeing check-in</p>
+              {[
+                { key: "emotionalState",  label: "Emotional state" },
+                { key: "selfConnection",  label: "Connected to yourself" },
+                { key: "selfCompassion",  label: "Self-compassion" },
+                { key: "selfCare",        label: "Caring for your needs" },
+              ].map(({ key, label }) => (
+                <div key={key} className="mb-3">
+                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                    <span>{label}</span>
+                    <span className="font-semibold text-foreground">{survey[key as keyof typeof survey]}/5</span>
+                  </div>
+                  <input type="range" min={1} max={5} step={1}
+                    value={survey[key as keyof typeof survey]}
+                    onChange={(e) => setSurvey((s) => ({ ...s, [key]: Number(e.target.value) }))}
+                    className="w-full accent-violet-500" />
+                </div>
+              ))}
+              {surveySaved ? (
+                <p className="text-xs text-emerald-600 text-center py-1">✓ Check-in saved</p>
+              ) : (
+                <button onClick={saveSurvey}
+                  className="w-full mt-2 py-2.5 rounded-xl bg-violet-500 text-white text-sm font-semibold hover:bg-violet-600 transition-colors">
+                  Submit
+                </button>
+              )}
+            </motion.div>
+          )}
+
+          {/* INSIGHTS WIDGET */}
+          {mode === "insights-widget" && (
+            <motion.div key="insights-widget"
+              initial={{ opacity: 0, y: 16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              transition={{ type: "spring", stiffness: 300, damping: 26 }}
+              className="w-full max-w-sm mb-5 rounded-2xl border border-emerald-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-emerald-400/15"
+            >
+              <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-4">Your progress</p>
+              <div className="flex items-center gap-4 mb-4">
+                {insightsData && <ScoreRing score={insightsData.score} />}
+                <div className="flex-1 grid grid-cols-3 gap-2">
+                  {[
+                    { icon: "💜", val: insightsData?.logs      ?? 0, label: "Emotions" },
+                    { icon: "🌬️", val: insightsData?.breathing ?? 0, label: "Breathing" },
+                    { icon: "📖", val: insightsData?.journals  ?? 0, label: "Journal" },
+                  ].map(({ icon, val, label }) => (
+                    <div key={label} className="text-center">
+                      <p className="text-lg">{icon}</p>
+                      <p className="text-base font-bold text-foreground">{val}</p>
+                      <p className="text-[9px] text-muted-foreground leading-tight">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <Link href="/insights"
+                className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 transition-colors">
+                See full insights <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+
+        {/* ── Chips ── */}
+        {!loading && chips.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-wrap justify-center gap-2 mb-4 w-full max-w-sm"
+          >
+            {chips.map((chip) => (
+              <button key={chip} onClick={() => sendToHaven(chip)}
+                className="px-4 py-2 rounded-full border border-border/50 bg-card/60 text-sm text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all active:scale-95">
+                {chip}
+              </button>
+            ))}
+          </motion.div>
         )}
 
-        {/* ── Inspirational Quote ── */}
-        <motion.section className="mb-6 md:mb-8" variants={item}>
-          <InspirationalQuote />
-        </motion.section>
+      </div>
 
-        {/* ── Closing affirmation ── */}
-        <motion.section variants={item} className="text-center py-4">
-          <div className="section-divider mb-6" />
-          <p className="font-serif text-lg text-muted-foreground italic">
-            "Healing is not linear. Every moment you're here is an act of courage."
-          </p>
-        </motion.section>
+      {/* ── Input bar ── */}
+      <div className="shrink-0 px-4 pb-4 pt-2 border-t border-border/20 bg-background/60 backdrop-blur-sm">
+        <div className="flex gap-2 items-center max-w-sm mx-auto">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendToHaven(input) } }}
+            placeholder="Type or speak to Haven…"
+            rows={1}
+            className="flex-1 resize-none bg-card border border-border/40 rounded-2xl px-4 py-2.5 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30 leading-relaxed"
+            style={{ minHeight: "42px", maxHeight: "80px" }}
+          />
+          {sttStatus !== "unsupported" && (
+            <button
+              onClick={sttStatus === "listening" ? stopListening : startListening}
+              className={cn(
+                "p-2.5 rounded-2xl border transition-all shrink-0",
+                sttStatus === "listening"
+                  ? "bg-rose-100 dark:bg-rose-900/30 border-rose-300 text-rose-600 animate-pulse"
+                  : "bg-card border-border/40 text-muted-foreground hover:text-foreground"
+              )}
+              aria-label={sttStatus === "listening" ? "Stop" : "Speak"}>
+              {sttStatus === "listening" ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
+          )}
+          <button
+            onClick={() => sendToHaven(input)}
+            disabled={!input.trim() || loading}
+            className="p-2.5 rounded-2xl bg-primary text-primary-foreground disabled:opacity-40 hover:opacity-90 transition-opacity shrink-0"
+            aria-label="Send">
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
 
-      </motion.div>
-
-      <OnboardingModal />
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} defaultMode={authMode} />
-      <DailyCheckinModal open={checkinOpen} onClose={() => setCheckinOpen(false)} />
-      <CrisisNudge />
     </div>
   )
 }

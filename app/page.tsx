@@ -50,7 +50,8 @@ const BREATHE_SEQ = [
   { phase: "inhale" as const, label: "Breathe In",  cue: "Breathe in",  dur: 4 },
   { phase: "hold1"  as const, label: "Hold",        cue: "Hold",        dur: 4 },
   { phase: "exhale" as const, label: "Breathe Out", cue: "Breathe out", dur: 4 },
-  { phase: "hold2"  as const, label: "Hold",        cue: "Hold",        dur: 2 },
+  { phase: "hold2"  as const, label: "Hold",        cue: "Hold",        dur: 3 },
+  { phase: "rest"   as const, label: "Rest",        cue: "Rest",        dur: 3 },
 ]
 
 // ── Quiz data (5-question embedded version, saves to same key as /thoughts) ───
@@ -163,7 +164,7 @@ export default function HavenHome() {
   const [completedToday,  setCompletedToday]  = useState<Set<string>>(new Set())
 
   // ── Breathing widget state ────────────────────────────────────────────────
-  const [breathePhase,          setBreathePhase]          = useState<"idle" | "inhale" | "hold1" | "exhale" | "hold2" | "done">("idle")
+  const [breathePhase,          setBreathePhase]          = useState<"idle" | "inhale" | "hold1" | "exhale" | "hold2" | "rest" | "done">("idle")
   const [breatheCount,          setBreatheCount]          = useState(0)
   const [breatheTargetRounds,   setBreatheTargetRounds]   = useState(3)
   const [breatheCyclesDone,     setBreatheCyclesDone]     = useState(0)
@@ -392,21 +393,27 @@ export default function HavenHome() {
       count -= 1; setBreatheCount(count)
       if (count <= 0) {
         seqIdx += 1
-        if (seqIdx >= BREATHE_SEQ.length) {
-          // One full cycle complete
+
+        // Cycle completes when hold2 (index 3) ends and we enter rest (index 4)
+        if (seqIdx === BREATHE_SEQ.length - 1) {
           breatheCyclesRef.current += 1
           setBreatheCyclesDone(breatheCyclesRef.current)
           if (breatheCyclesRef.current >= breatheTargetRef.current) {
+            // Final round — skip rest, end session
             clearInterval(breatheInterval.current!); breatheInterval.current = null
             saveBreatheSession(breatheCyclesRef.current)
             setBreathePhase("done")
             return
           }
+          // More rounds — fall through to show rest phase
+        } else if (seqIdx >= BREATHE_SEQ.length) {
+          // Rest phase finished — loop back to inhale for next round
           seqIdx = 0
         }
+
         const next = BREATHE_SEQ[seqIdx]; count = next.dur
         setBreathePhase(next.phase); setBreatheCount(count)
-        speak(next.cue, { rate: 0.82, pitch: 0.9 })
+        if (next.cue) speak(next.cue, { rate: 0.82, pitch: 0.9 })
       }
     }, 1000)
   }, [speak, saveBreatheSession])
@@ -703,13 +710,16 @@ export default function HavenHome() {
                   transition={{ duration: breatheDuration, ease: breathePhase === "inhale" ? "easeIn" : breathePhase === "exhale" ? "easeOut" : "linear" }}
                 />
                 <div className="absolute z-20 flex flex-col items-center">
-                  {breathePhase !== "idle" && breathePhase !== "done" && (
+                  {breathePhase !== "idle" && breathePhase !== "done" && breathePhase !== "rest" && (
                     <>
                       <p className="text-white text-xs font-semibold drop-shadow">
                         {BREATHE_SEQ.find((s) => s.phase === breathePhase)?.label}
                       </p>
                       <p className="text-white/80 text-xl font-bold drop-shadow">{breatheCount}</p>
                     </>
+                  )}
+                  {breathePhase === "rest" && (
+                    <p className="text-white/70 text-xs font-medium drop-shadow tracking-wide">Rest</p>
                   )}
                 </div>
               </div>
@@ -1103,25 +1113,28 @@ export default function HavenHome() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="fixed inset-0 z-[60] flex flex-col items-center justify-center px-6 bg-gradient-to-b from-rose-50 via-background to-background dark:from-rose-950/30 dark:via-background dark:to-background"
+            className="fixed inset-0 z-[60] overflow-y-auto bg-gradient-to-b from-rose-50 via-background to-background dark:from-rose-950/30 dark:via-background dark:to-background"
           >
+            {/* Inner wrapper: centers when room exists, scrolls when it doesn't */}
+            <div className="min-h-full flex flex-col items-center justify-center px-6 py-8">
+
             {/* Orb accent */}
-            <div className="relative w-20 h-20 mb-6">
+            <div className="relative w-16 h-16 mb-4 shrink-0">
               <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: "3s" }} />
-              <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-rose-300 via-primary to-rose-500 shadow-2xl flex items-center justify-center">
-                <span className="text-white text-2xl select-none">✦</span>
+              <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-rose-300 via-primary to-rose-500 shadow-2xl flex items-center justify-center">
+                <span className="text-white text-xl select-none">✦</span>
               </div>
             </div>
 
-            <h1 className="font-serif text-3xl font-semibold text-foreground text-center mb-2 leading-tight">
+            <h1 className="font-serif text-2xl md:text-3xl font-semibold text-foreground text-center mb-2 leading-tight">
               Welcome to HeartsHeal
             </h1>
-            <p className="text-muted-foreground text-center text-sm leading-relaxed max-w-xs mb-8">
+            <p className="text-muted-foreground text-center text-sm leading-relaxed max-w-xs mb-5">
               A quiet, compassionate space to process grief, heartbreak, and life transitions — guided by Haven, your personal healing companion.
             </p>
 
             {/* Feature pills */}
-            <div className="flex flex-wrap justify-center gap-2 mb-8 max-w-xs">
+            <div className="flex flex-wrap justify-center gap-2 mb-5 max-w-xs">
               {[
                 { icon: <Sparkles className="w-3.5 h-3.5" />, label: "AI voice companion" },
                 { icon: <Wind className="w-3.5 h-3.5" />,     label: "Guided breathing" },
@@ -1135,16 +1148,16 @@ export default function HavenHome() {
             </div>
 
             {/* CTA buttons */}
-            <div className="flex flex-col gap-3 w-full max-w-xs">
+            <div className="flex flex-col gap-2.5 w-full max-w-xs">
               <button
                 onClick={() => { setAuthModalMode("signup"); setAuthModalOpen(true) }}
-                className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+                className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
               >
                 Let's begin →
               </button>
               <button
                 onClick={() => { setAuthModalMode("signin"); setAuthModalOpen(true) }}
-                className="w-full py-3 rounded-2xl border border-border/60 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+                className="w-full py-2.5 rounded-2xl border border-border/60 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
               >
                 I already have an account
               </button>
@@ -1156,10 +1169,10 @@ export default function HavenHome() {
               </button>
             </div>
 
-            <p className="text-[10px] text-muted-foreground/40 mt-6">Free forever · No credit card required</p>
+            <p className="text-[10px] text-muted-foreground/40 mt-4">Free forever · No credit card required</p>
 
             {/* Crisis resources */}
-            <div className="mt-6 w-full max-w-xs rounded-2xl border border-rose-200/50 dark:border-rose-900/40 bg-rose-50/60 dark:bg-rose-950/20 px-4 py-3">
+            <div className="mt-4 w-full max-w-xs rounded-2xl border border-rose-200/50 dark:border-rose-900/40 bg-rose-50/60 dark:bg-rose-950/20 px-4 py-3">
               <p className="text-[11px] font-semibold text-rose-700 dark:text-rose-400 text-center mb-2">
                 If you're in crisis, please reach out
               </p>
@@ -1179,6 +1192,8 @@ export default function HavenHome() {
                 HeartsHeal supports healing — it is not a substitute for emergency care.
               </p>
             </div>
+
+            </div>{/* end inner wrapper */}
           </motion.div>
         )}
       </AnimatePresence>

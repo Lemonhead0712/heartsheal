@@ -79,7 +79,7 @@ export function AuthModal({ open, onClose, defaultMode = "signup" }: AuthModalPr
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm"
+            className="fixed inset-0 z-[70] bg-foreground/30 backdrop-blur-sm"
             onClick={handleClose}
             aria-hidden="true"
           />
@@ -91,7 +91,7 @@ export function AuthModal({ open, onClose, defaultMode = "signup" }: AuthModalPr
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+            className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none"
           >
             <div
               className="bg-card border border-border/50 rounded-3xl shadow-2xl w-full max-w-sm pointer-events-auto overflow-hidden"

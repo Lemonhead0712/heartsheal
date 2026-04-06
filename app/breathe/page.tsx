@@ -263,10 +263,10 @@ export default function BreathePage() {
 
   return (
     <div className="bg-gradient-to-b from-rose-50/50 via-background to-background dark:from-rose-950/15 min-h-screen">
-      <motion.div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5" variants={container} initial="hidden" animate="show">
+      <motion.div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-3 md:py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
-        <motion.div className="flex items-center justify-between mb-6" variants={item}>
+        <motion.div className="flex items-center justify-between mb-3" variants={item}>
           <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
             <ChevronLeft className="h-4 w-4" />
             <span className="text-primary">♥</span>

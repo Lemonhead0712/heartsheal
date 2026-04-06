@@ -5,8 +5,9 @@ import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   AreaChart, Area,
+  BarChart, Bar, Cell,
   LineChart, Line,
-  ScatterChart, Scatter, ReferenceLine,
+  ReferenceLine,
   XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer,
 } from "recharts"
@@ -15,7 +16,7 @@ import {
   Sparkles, BarChart3, Activity, Heart, PlusCircle, ChevronDown,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useInsightsData, type DateRange, type MoodPoint } from "@/hooks/use-insights-data"
+import { useInsightsData, type DateRange } from "@/hooks/use-insights-data"
 import { Logo } from "@/components/logo"
 
 /* ── Palette ── */
@@ -45,13 +46,20 @@ function emotionPillColor(avgIntensity: number) {
   return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800/40"
 }
 
-/* ── Mood dot color by valence ── */
-function moodDotColor(y: number) {
-  if (y >= 2)   return "#10b981"  // emerald — positive
-  if (y >= 0.5) return "#34d399"  // light emerald
-  if (y >= -0.5) return "#94a3b8" // slate — neutral
-  if (y >= -2)  return "#fb923c"  // orange — mild heavy
-  return "#f43f5e"                // rose — heavy
+/* ── Bar color by valence (for mood bar chart) ── */
+function barColor(v: number) {
+  if (v >= 2)    return "#10b981"
+  if (v >= 0.5)  return "#34d399"
+  if (v >= -0.5) return "#94a3b8"
+  if (v >= -2)   return "#fb923c"
+  return "#f43f5e"
+}
+
+/* ── Intensity progress bar color ── */
+function intensityBarColor(avg: number) {
+  if (avg >= 7.5) return "bg-rose-400"
+  if (avg >= 5)   return "bg-amber-400"
+  return "bg-emerald-400"
 }
 
 /* ── Reusable shell components ── */
@@ -120,27 +128,19 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   )
 }
 
-/* ── Mood Timeline custom dot ── */
-function MoodDot(props: any) {
-  const { cx, cy, payload } = props as { cx: number; cy: number; payload: MoodPoint }
-  if (!payload) return null
-  const r = 4 + payload.z * 0.8   // radius grows with intensity
-  const fill = moodDotColor(payload.y)
-  return (
-    <g>
-      <circle cx={cx} cy={cy} r={r} fill={fill} fillOpacity={0.85} stroke="white" strokeWidth={1} />
-    </g>
-  )
-}
-
-const MoodTooltip = ({ active, payload }: any) => {
+/* ── Mood bar chart tooltip ── */
+const MoodBarTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.[0]) return null
-  const p = payload[0].payload as MoodPoint
+  const v = payload[0].value as number
+  const mood = v >= 1.5 ? "Lighter 🌱" : v >= -0.5 ? "Neutral 〰" : "Heavier 💙"
   return (
-    <div className="bg-card border border-border/40 rounded-xl px-3 py-2 shadow-lg text-xs">
-      <p className="font-semibold text-foreground">{p.emoji} {p.emotion}</p>
-      <p className="text-muted-foreground">{p.dateStr}</p>
-      <p className="text-muted-foreground">Intensity {p.intensity}/10</p>
+    <div className="bg-card border border-border/40 rounded-xl px-3 py-2 shadow-lg text-xs max-w-[160px]">
+      <p className="font-semibold text-foreground mb-0.5">{label}</p>
+      <p className="text-muted-foreground">{mood}</p>
+      <p className="text-muted-foreground">Avg valence: {v > 0 ? "+" : ""}{v}</p>
+      {payload[0].payload.emotions && (
+        <p className="text-muted-foreground mt-1 leading-relaxed">{payload[0].payload.emotions}</p>
+      )}
     </div>
   )
 }
@@ -216,15 +216,19 @@ export function InsightsDashboard() {
               const hints = [
                 data.totalEmotionLogs < 3 && {
                   text: `${3 - data.totalEmotionLogs} more emotion log${(3 - data.totalEmotionLogs) !== 1 ? "s" : ""} needed to unlock your weekly reflection`,
-                  href: "/emotional-log", label: "Log now",
+                  href: "/", label: "Open Haven",
                 },
                 data.totalJournalEntries === 0 && {
-                  text: "No journal entries yet — journal insights are limited",
-                  href: "/thoughts", label: "Write",
+                  text: "No journal entries yet — Haven can guide you through a reflection",
+                  href: "/", label: "Open Haven",
                 },
                 data.totalBreathingSessions === 0 && {
-                  text: "No breathing sessions yet — try one to see its impact on your mood",
-                  href: "/breathe", label: "Breathe",
+                  text: "No breathing sessions yet — Haven can guide one right now",
+                  href: "/", label: "Open Haven",
+                },
+                data.totalQuizzes === 0 && {
+                  text: "No self-assessment yet — Haven can walk you through a quick check-in",
+                  href: "/", label: "Open Haven",
                 },
               ].filter(Boolean) as { text: string; href: string; label: string }[]
 
@@ -328,65 +332,72 @@ export function InsightsDashboard() {
               </motion.div>
             )}
 
-            {/* ── MOOD TIMELINE — the hero chart ── */}
+            {/* ── MOOD TIMELINE — vertical bar chart ── */}
             <motion.div variants={anim.item}>
               <SectionCard
                 title="Mood Timeline"
-                subtitle="Each dot is an emotion you logged — above the line feels lighter, below feels heavier. Bigger dots = higher intensity."
+                subtitle="Daily average valence — bars above the line feel lighter, below feel heavier."
                 accent="bg-gradient-to-br from-slate-50/50 to-sky-50/30 dark:from-slate-900/20 dark:to-sky-900/10"
               >
-                {data.moodTimeline.length >= 2 ? (
-                  <>
-                    {/* Valence legend */}
-                    <div className="flex items-center gap-4 mb-3 flex-wrap">
-                      {[
-                        { color: "#10b981", label: "Lighter feelings" },
-                        { color: "#94a3b8", label: "Neutral" },
-                        { color: "#f43f5e", label: "Heavier feelings" },
-                      ].map(({ color, label }) => (
-                        <span key={label} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                          {label}
-                        </span>
-                      ))}
-                      <span className="text-[11px] text-muted-foreground ml-auto">dot size = intensity</span>
-                    </div>
+                {data.moodTimeline.length >= 2 ? (() => {
+                  // Group moodTimeline points into daily buckets
+                  const buckets: Record<string, { vals: number[]; emotions: string[] }> = {}
+                  data.moodTimeline.forEach((pt) => {
+                    const d = pt.dateStr
+                    if (!buckets[d]) buckets[d] = { vals: [], emotions: [] }
+                    buckets[d].vals.push(pt.y)
+                    buckets[d].emotions.push(`${pt.emoji ?? ""} ${pt.emotion}`.trim())
+                  })
+                  const dailyMood = Object.entries(buckets)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([date, { vals, emotions }]) => ({
+                      date,
+                      avgValence: parseFloat((vals.reduce((s, v) => s + v, 0) / vals.length).toFixed(1)),
+                      emotions: emotions.slice(0, 3).join(", "),
+                    }))
 
-                    <ResponsiveContainer width="100%" height={220}>
-                      <ScatterChart margin={{ top: 16, right: 16, bottom: 0, left: -20 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.25)" />
-                        <XAxis
-                          type="number"
-                          dataKey="x"
-                          domain={["dataMin", "dataMax"]}
-                          tickFormatter={(v) => {
-                            const d = new Date(v)
-                            return d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-                          }}
-                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                          tickLine={false} axisLine={false}
-                          tickCount={5}
-                        />
-                        <YAxis
-                          type="number"
-                          dataKey="y"
-                          domain={[-4.5, 4.5]}
-                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                          tickLine={false} axisLine={false}
-                          tickFormatter={(v) => v === 0 ? "neutral" : v > 0 ? `+${v}` : `${v}`}
-                          tickCount={5}
-                        />
-                        {/* Neutral baseline */}
-                        <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.5} strokeWidth={1.5} strokeDasharray="6 3" label={{ value: "neutral", position: "right", fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
-                        <Tooltip content={<MoodTooltip />} cursor={false} />
-                        <Scatter
-                          data={data.moodTimeline}
-                          shape={<MoodDot />}
-                        />
-                      </ScatterChart>
-                    </ResponsiveContainer>
-                  </>
-                ) : (
+                  return (
+                    <>
+                      {/* Legend */}
+                      <div className="flex items-center gap-4 mb-3 flex-wrap">
+                        {[
+                          { color: "#10b981", label: "Lighter feelings" },
+                          { color: "#94a3b8", label: "Neutral" },
+                          { color: "#f43f5e", label: "Heavier feelings" },
+                        ].map(({ color, label }) => (
+                          <span key={label} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                            <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={dailyMood} margin={{ top: 16, right: 8, bottom: 0, left: -20 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.25)" vertical={false} />
+                          <XAxis
+                            dataKey="date"
+                            tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                            tickLine={false} axisLine={false}
+                          />
+                          <YAxis
+                            domain={[-4.5, 4.5]}
+                            tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                            tickLine={false} axisLine={false}
+                            tickFormatter={(v) => v === 0 ? "0" : v > 0 ? `+${v}` : `${v}`}
+                          />
+                          <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.4} strokeDasharray="6 3" />
+                          <Tooltip content={<MoodBarTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.3)" }} />
+                          <Bar dataKey="avgValence" radius={[4, 4, 0, 0]} maxBarSize={32}>
+                            {dailyMood.map((entry, i) => (
+                              <Cell key={i} fill={barColor(entry.avgValence)} fillOpacity={0.85} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </>
+                  )
+                })() : (
                   <EmptyState text="Log a few emotions to see your mood mapped over time." action="Log an emotion" href="/emotional-log" />
                 )}
               </SectionCard>
@@ -395,32 +406,39 @@ export function InsightsDashboard() {
             {/* ── Emotion frequency pills + Survey trends (2-col) ── */}
             <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-5" variants={anim.item}>
 
-              {/* Colorful emotion pills — size by count, color by avg intensity */}
-              <SectionCard title="Emotions This Period" subtitle="Size = how often · Color = how intense">
+              {/* Emotion frequency with horizontal bars */}
+              <SectionCard title="Emotions This Period" subtitle="How often each emotion appeared — color shows intensity">
                 {data.emotionFrequency.length > 0 ? (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {data.emotionFrequency.map(({ emotion, count, avgIntensity }) => {
-                      // Scale font and padding by count
+                  <div className="space-y-2.5 pt-1">
+                    {data.emotionFrequency.slice(0, 8).map(({ emotion, count, avgIntensity }) => {
                       const max = data.emotionFrequency[0].count
-                      const scale = 0.7 + (count / max) * 0.5
+                      const pct = Math.round((count / max) * 100)
                       return (
-                        <span
-                          key={emotion}
-                          className={cn("inline-flex items-center gap-1 rounded-full border font-semibold transition-all", emotionPillColor(avgIntensity))}
-                          style={{
-                            fontSize: `${Math.round(10 * scale)}px`,
-                            paddingTop: `${Math.round(3 * scale)}px`,
-                            paddingBottom: `${Math.round(3 * scale)}px`,
-                            paddingLeft: `${Math.round(8 * scale)}px`,
-                            paddingRight: `${Math.round(8 * scale)}px`,
-                          }}
-                          title={`${count} times · avg intensity ${avgIntensity}`}
-                        >
-                          {emotion}
-                          <span className="opacity-60 font-normal text-[10px]">×{count}</span>
-                        </span>
+                        <div key={emotion} className="flex items-center gap-2.5">
+                          <span className="text-xs text-foreground/80 font-medium w-28 shrink-0 truncate">{emotion}</span>
+                          <div className="flex-1 bg-muted/40 rounded-full h-2 overflow-hidden">
+                            <div
+                              className={cn("h-2 rounded-full transition-all duration-500", intensityBarColor(avgIntensity))}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground w-5 text-right shrink-0">{count}</span>
+                        </div>
                       )
                     })}
+                    {/* Intensity legend */}
+                    <div className="flex items-center gap-3 pt-1 flex-wrap">
+                      {[
+                        { cls: "bg-rose-400",   label: "High intensity" },
+                        { cls: "bg-amber-400",  label: "Medium" },
+                        { cls: "bg-emerald-400", label: "Low intensity" },
+                      ].map(({ cls, label }) => (
+                        <span key={label} className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <span className={cn("w-2 h-2 rounded-full shrink-0", cls)} />
+                          {label}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <EmptyState text="No emotions logged this period." action="Log an emotion" href="/emotional-log" />
@@ -687,7 +705,7 @@ export function InsightsDashboard() {
                 { href: "/emotional-log", label: "Log Emotion",   icon: BarChart3, color: "text-primary" },
                 { href: "/breathe",       label: "Breathe",       icon: Wind,       color: "text-sky-500" },
                 { href: "/thoughts",      label: "Journal",       icon: BookHeart,  color: "text-amber-500" },
-                { href: "/companion",     label: "Talk to Haven", icon: Sparkles,   color: "text-rose-500" },
+                { href: "/",              label: "Talk to Haven", icon: Sparkles,   color: "text-rose-500" },
               ].map(({ href, label, icon: Icon, color }) => (
                 <Link key={href} href={href}
                   className="glass-card rounded-2xl p-3 flex flex-col items-center gap-2 hover:border-primary/20 transition-colors group">

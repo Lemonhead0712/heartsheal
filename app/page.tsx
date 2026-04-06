@@ -167,6 +167,7 @@ export default function HavenHome() {
   const [breatheCyclesDone,     setBreatheCyclesDone]     = useState(0)
   const breatheInterval   = useRef<ReturnType<typeof setInterval> | null>(null)
   const breatheCyclesRef  = useRef(0)
+  const prevUserIdRef     = useRef<string | null | undefined>(undefined)
   const breatheTargetRef  = useRef(3)
 
   // ── Quiz widget state ─────────────────────────────────────────────────────
@@ -197,6 +198,33 @@ export default function HavenHome() {
     }, 16)
     speak(msg)
   }, [speak])
+
+  // ── Post-auth onboarding reset ────────────────────────────────────────────
+  const handlePostAuth = useCallback(() => {
+    setCompletedToday(new Set())
+    setApiMessages([{
+      role: "user",
+      content: "[ONBOARDING] The user just signed in or created an account. Guide them through a complete setup sequence in order: 1) emotion check-in, 2) breathing session, 3) journal reflection, 4) wellbeing survey, 5) self-assessment quiz, 6) show insights summary. After each activity is reported complete, immediately suggest the next one. Be warm and encouraging, 2 sentences max per response.",
+    }])
+    setMode("emotion-widget")
+    setChips(["I'm ready", "What are we doing?", "Let's go"])
+    setInput("")
+    stopSpeech()
+    writeStorage(STORAGE_KEYS.lastCheckin, null)
+    const name = readStorage<string>(STORAGE_KEYS.userName)
+    const msg = name
+      ? `Welcome, ${name} — I'm so glad you're here. Let's take a few minutes together to get your healing space set up.`
+      : `Welcome — I'm Haven, your healing companion. Let's take a few minutes to personalize your space and get everything ready.`
+    setTimeout(() => showMessage(msg), 400)
+  }, [stopSpeech, showMessage]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (authLoading) return
+    const prevId = prevUserIdRef.current
+    const nextId = user?.id ?? null
+    if (prevId === null && nextId !== null) handlePostAuth()
+    prevUserIdRef.current = nextId
+  }, [user, authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Initial greeting (synchronous, no API call) ──────────────────────────
   useEffect(() => {
@@ -502,7 +530,7 @@ export default function HavenHome() {
     <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-rose-50 via-background to-background dark:from-rose-950/20 dark:via-background dark:to-background overflow-hidden">
 
       {/* ── Thin header ── */}
-      <header className="flex items-center justify-between px-5 pt-4 pb-2 shrink-0">
+      <header className="flex items-center justify-between px-5 pt-2 pb-1 shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-primary">♥</span>
           <span className="font-serif font-semibold text-foreground tracking-tight">HeartsHeal</span>
@@ -522,10 +550,10 @@ export default function HavenHome() {
       </header>
 
       {/* ── Scrollable content ── */}
-      <div className="flex-1 flex flex-col items-center px-5 pt-6 pb-2 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center px-5 pt-3 pb-2 overflow-y-auto">
 
         {/* Orb */}
-        <div className="relative w-28 h-28 flex items-center justify-center mb-6 shrink-0">
+        <div className="relative w-28 h-28 flex items-center justify-center mb-3 shrink-0">
           <motion.span
             className="absolute inset-0 rounded-full bg-primary/20"
             animate={{ scale: [1, 1.18, 1], opacity: [0.5, 0.15, 0.5] }}
@@ -549,7 +577,7 @@ export default function HavenHome() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="w-full max-w-sm text-center mb-5"
+            className="w-full max-w-sm text-center mb-3"
           >
             {loading ? (
               <div className="flex justify-center gap-1.5">
@@ -891,7 +919,7 @@ export default function HavenHome() {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-wrap justify-center gap-2 mb-4 w-full max-w-sm"
+            className="flex flex-wrap justify-center gap-2 mb-2 w-full max-w-sm"
           >
             {chips.map((chip) => (
               <button key={chip} onClick={() => sendToHaven(chip)}
@@ -906,7 +934,7 @@ export default function HavenHome() {
 
       {/* ── Input hint bar — always visible, anchors to bottom ── */}
       {!welcomeOpen && (
-        <div className="shrink-0 px-3 pb-2 pt-1.5">
+        <div className="shrink-0 px-3 pb-1 pt-1">
           <p className="text-center text-[11px] text-muted-foreground/60 font-medium tracking-wide">
             Type or speak to Haven below ↓
           </p>
@@ -914,7 +942,7 @@ export default function HavenHome() {
       )}
 
       {/* ── Input bar ── */}
-      <div className="shrink-0 px-4 pb-safe pb-4 pt-2 border-t border-border/20 bg-background/80 backdrop-blur-md">
+      <div className="shrink-0 px-4 pb-4 pt-1.5 border-t border-border/20 bg-background/80 backdrop-blur-md">
         <div className="flex gap-2 items-center max-w-sm mx-auto">
           <textarea
             value={input}

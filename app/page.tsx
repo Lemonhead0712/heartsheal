@@ -104,8 +104,8 @@ Rules for action — set the action field ANY TIME one of these is true:
 - "emotion" — user wants to check in, mentions a feeling, or hasn't logged today
 - "breathe" — user mentions anxiety, stress, tension, overwhelm, panic, "I can't breathe", or wants to calm down. ALSO set "breathe" when user says "I want to breathe" or "breathing" or "breathe with me"
 - "journal" — user mentions wanting to write, process, reflect, "get it out", talk about what happened, or says "I have a lot on my mind". ALSO after any breathing session completes.
-- "survey" — user mentions overall wellbeing, self-care, or asks "how am I doing overall"; suggest at most once per session
-- "quiz" — user wants to understand themselves, mentions self-awareness, compassion, or emotional intelligence
+- "quiz" — IMMEDIATELY after the user says they completed a journal reflection. Also when user wants to understand themselves, mentions self-awareness, compassion, or emotional intelligence. In the guided walkthrough, quiz always follows journal.
+- "survey" — user mentions overall wellbeing, self-care, or asks "how am I doing overall"; suggest at most once per session. In the walkthrough, survey comes AFTER the quiz.
 - "insights" — user asks about progress, patterns, or after 2+ activities completed
 - null — casual reply only; no activity fits right now
 
@@ -329,7 +329,13 @@ export default function HavenHome() {
           parsed.action = "breathe"
         } else if (/journal|write|writing|process|reflect|get it out|on my mind|talk about/.test(lower) && !completedToday.has("journal")) {
           parsed.action = "journal"
+        } else if (/wrote a reflection|journal/.test(lower) && completedToday.has("journal") && !completedToday.has("quiz")) {
+          parsed.action = "quiz"
         }
+      }
+      // Hard override: journal just completed → quiz must follow
+      if (/just wrote a reflection in my journal/.test(userText) && !completedToday.has("quiz")) {
+        parsed.action = "quiz"
       }
 
       setApiMessages([...nextMessages, { role: "assistant", content: raw }])

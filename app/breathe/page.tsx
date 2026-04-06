@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 import { ChevronLeft, Wind, Play, Pause, RotateCcw, Volume2, VolumeX } from "lucide-react"
-import { Logo } from "@/components/logo"
 import { AiBreathingAffirmation } from "@/components/ai-breathing-affirmation"
 import { useTTS } from "@/hooks/use-speech"
 import { useAmbientSound, type SoundType } from "@/hooks/use-ambient-sound"
@@ -263,26 +262,18 @@ export default function BreathePage() {
   }
 
   return (
-    <div className="bg-page-gradient">
+    <div className="bg-gradient-to-b from-rose-50/50 via-background to-background dark:from-rose-950/15 min-h-screen">
       <motion.div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
-        <motion.div className="flex flex-col items-center mb-3" variants={item}>
-          <Logo size="medium" />
-        </motion.div>
-        <motion.div className="mb-5" variants={item}>
-          <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors text-sm">
-            <ChevronLeft className="mr-1 h-4 w-4" /> Back to Dashboard
+        <motion.div className="flex items-center justify-between mb-6" variants={item}>
+          <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
+            <ChevronLeft className="h-4 w-4" />
+            <span className="text-primary">♥</span>
+            <span className="font-serif font-semibold text-foreground tracking-tight">HeartsHeal</span>
           </Link>
-          <div className="flex items-center gap-3 mt-4">
-            <div className="w-9 h-9 rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400 flex items-center justify-center">
-              <Wind className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Guided Breathing</h1>
-              <p className="text-sm text-muted-foreground">A few minutes of breath can change everything</p>
-            </div>
-          </div>
+          <h1 className="font-serif text-lg font-semibold text-foreground">Guided Breathing</h1>
+          <div className="w-20" />{/* spacer */}
         </motion.div>
 
         {/* Two-column grid */}

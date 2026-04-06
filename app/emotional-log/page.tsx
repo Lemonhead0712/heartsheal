@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ChevronLeft, Save, AlertCircle, RefreshCw, Clock, Calendar } from "lucide-react"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
-import { Logo } from "@/components/logo"
 import { EmojiPicker } from "@/components/emoji-picker"
 
 import { useEmotionLogs } from "@/hooks/use-emotion-logs"
@@ -140,19 +139,18 @@ function EmotionalLog() {
   }
 
   return (
-    <div className="bg-page-gradient">
+    <div className="bg-gradient-to-b from-rose-50/50 via-background to-background dark:from-rose-950/15 min-h-screen">
       <motion.div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
-        <motion.div className="flex flex-col items-center mb-3" variants={item}>
-          <Logo size="medium" />
-        </motion.div>
-        <motion.div className="mb-5" variants={item}>
-          <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors">
-            <ChevronLeft className="mr-1 h-4 w-4" /> Back to Dashboard
+        <motion.div className="flex items-center justify-between mb-6" variants={item}>
+          <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
+            <ChevronLeft className="h-4 w-4" />
+            <span className="text-primary">♥</span>
+            <span className="font-serif font-semibold text-foreground tracking-tight">HeartsHeal</span>
           </Link>
-          <h1 className="text-3xl font-bold text-foreground mt-3 mb-2">How are you feeling?</h1>
-          <p className="text-muted-foreground">There's no right answer — just what's true for you right now.</p>
+          <h1 className="font-serif text-lg font-semibold text-foreground">Emotion Log</h1>
+          <div className="w-20" />{/* spacer */}
         </motion.div>
 
         {error && (

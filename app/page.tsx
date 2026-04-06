@@ -919,7 +919,7 @@ export default function HavenHome() {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-wrap justify-center gap-2 mb-2 w-full max-w-sm"
+            className="flex flex-wrap justify-center gap-2 mb-3 w-full max-w-sm"
           >
             {chips.map((chip) => (
               <button key={chip} onClick={() => sendToHaven(chip)}
@@ -927,6 +927,62 @@ export default function HavenHome() {
                 {chip}
               </button>
             ))}
+          </motion.div>
+        )}
+
+        {/* ── Quick-action panel — fills empty space when no widget is active ── */}
+        {!loading && (mode === "greeting" || mode === "chatting") && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+            className="w-full max-w-sm mt-2"
+          >
+            {/* Primary CTA — Log Emotion */}
+            {!completedToday.has("emotion") && (
+              <button
+                onClick={() => {
+                  setMode("emotion-widget")
+                  showMessage("How are you feeling right now? Pick what resonates most.")
+                }}
+                className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm mb-3 shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              >
+                <span className="text-base">💜</span> Log how I'm feeling
+              </button>
+            )}
+
+            {/* Secondary quick actions */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                {
+                  icon: "🌬️", label: "Breathe",
+                  done: completedToday.has("breathe"),
+                  onTap: () => { setMode("breathe-widget"); showMessage("Let's take a few deep breaths together.") },
+                },
+                {
+                  icon: "📖", label: "Journal",
+                  done: completedToday.has("journal"),
+                  onTap: () => { setMode("journal-widget"); showMessage("Take a moment to write what's on your mind.") },
+                },
+                {
+                  icon: "📊", label: "Insights",
+                  done: false,
+                  onTap: () => { setMode("insights-widget") },
+                },
+              ].map(({ icon, label, done, onTap }) => (
+                <button
+                  key={label}
+                  onClick={onTap}
+                  className="flex flex-col items-center gap-1.5 py-3 rounded-2xl border border-border/40 bg-card/60 hover:border-primary/30 hover:bg-primary/5 active:scale-95 transition-all relative"
+                >
+                  {done && (
+                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  )}
+                  <span className="text-xl">{icon}</span>
+                  <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
+                </button>
+              ))}
+            </div>
           </motion.div>
         )}
 

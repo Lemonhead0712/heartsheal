@@ -3,13 +3,12 @@
 import type React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, BookHeart, Wind, TrendingUp, Sparkles } from "lucide-react"
+import { BookHeart, Wind, TrendingUp, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useHapticContext } from "@/contexts/haptic-context"
 import { motion } from "framer-motion"
 
 const navItems = [
-  { name: "Home",     href: "/",          icon: Home },
   { name: "Haven",    href: "/",          icon: Sparkles },
   { name: "Breathe",  href: "/breathe",   icon: Wind },
   { name: "Thoughts", href: "/thoughts",  icon: BookHeart },
@@ -37,7 +36,7 @@ export function BottomNav() {
         className="glass-nav"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="grid grid-cols-5 max-w-lg mx-auto h-[68px]">
+        <div className="grid grid-cols-4 max-w-lg mx-auto h-[68px]">
           {navItems.map(({ name, href, icon: Icon }) => {
             const active = pathname === href
             return (

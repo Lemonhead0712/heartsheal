@@ -99,14 +99,16 @@ Your response MUST always be valid JSON in this exact shape:
 
 action must be one of: null | "emotion" | "breathe" | "journal" | "survey" | "quiz" | "insights"
 
-Rules for action:
-- "emotion" — when user needs to check in with how they feel right now
-- "breathe" — when user mentions anxiety, stress, or overwhelm, or after emotion check-in
-- "journal" — when user needs to process or reflect; after breathing or on request
-- "survey" — for a holistic wellbeing check; suggest at most once per session
-- "quiz" — a guided self-assessment (Emotional Awareness or Self-Compassion); suggest after 2+ sessions or when user wants to understand themselves more deeply
-- "insights" — after 3+ activities completed, to show their progress
-- null — for pure conversation; no activity needed right now
+Rules for action — set the action field ANY TIME one of these is true:
+- "emotion" — user wants to check in, mentions a feeling, or hasn't logged today
+- "breathe" — user mentions anxiety, stress, tension, overwhelm, panic, "I can't breathe", or wants to calm down. ALSO set "breathe" when user says "I want to breathe" or "breathing" or "breathe with me"
+- "journal" — user mentions wanting to write, process, reflect, "get it out", talk about what happened, or says "I have a lot on my mind". ALSO after any breathing session completes.
+- "survey" — user mentions overall wellbeing, self-care, or asks "how am I doing overall"; suggest at most once per session
+- "quiz" — user wants to understand themselves, mentions self-awareness, compassion, or emotional intelligence
+- "insights" — user asks about progress, patterns, or after 2+ activities completed
+- null — casual reply only; no activity fits right now
+
+IMPORTANT: When the user says anything related to breathing or journaling (even implicitly), you MUST set the corresponding action. Never leave action null when breathing or writing is relevant.
 
 chips must be 3-4 short (under 6 words) response options the user can tap.
 Always lead with empathy. Never rush. One question or suggestion at a time.
@@ -319,6 +321,16 @@ export default function HavenHome() {
         }
       }
 
+      // Client-side keyword fallback — if Claude missed an obvious trigger, catch it here
+      if (!parsed.action) {
+        const lower = userText.toLowerCase()
+        if (/breath|breathing|breathe|calm down|panic|anxious|anxiety/.test(lower) && !completedToday.has("breathe")) {
+          parsed.action = "breathe"
+        } else if (/journal|write|writing|process|reflect|get it out|on my mind|talk about/.test(lower) && !completedToday.has("journal")) {
+          parsed.action = "journal"
+        }
+      }
+
       setApiMessages([...nextMessages, { role: "assistant", content: raw }])
       setChips(parsed.chips ?? [])
       setActiveAction(parsed.action)
@@ -527,7 +539,7 @@ export default function HavenHome() {
     : "2s"
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-rose-50 via-background to-background dark:from-rose-950/20 dark:via-background dark:to-background overflow-hidden">
+    <div className="flex-1 flex flex-col bg-gradient-to-b from-rose-50 via-background to-background dark:from-rose-950/20 dark:via-background dark:to-background overflow-hidden">
 
       {/* ── Thin header ── */}
       <header className="flex items-center justify-between px-5 pt-2 pb-1 shrink-0">
@@ -549,11 +561,11 @@ export default function HavenHome() {
         </div>
       </header>
 
-      {/* ── Scrollable content ── */}
-      <div className="flex-1 flex flex-col items-center px-5 pt-3 pb-2 overflow-y-auto">
+      {/* ── Content — fills remaining space, no scrolling ── */}
+      <div className="flex-1 flex flex-col items-center px-4 pt-2 min-h-0">
 
-        {/* Orb */}
-        <div className="relative w-28 h-28 flex items-center justify-center mb-3 shrink-0">
+        {/* Orb — smaller on mobile to save vertical space */}
+        <div className="relative w-20 h-20 md:w-28 md:h-28 flex items-center justify-center mb-2 shrink-0">
           <motion.span
             className="absolute inset-0 rounded-full bg-primary/20"
             animate={{ scale: [1, 1.18, 1], opacity: [0.5, 0.15, 0.5] }}
@@ -564,8 +576,8 @@ export default function HavenHome() {
             animate={{ scale: [1, 1.35, 1], opacity: [0.3, 0, 0.3] }}
             transition={{ duration: parseFloat(orbPing) * 1.4, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
           />
-          <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-rose-300 via-primary to-rose-500 shadow-2xl z-10 flex items-center justify-center">
-            <span className="text-white text-2xl select-none">✦</span>
+          <div className="relative w-20 h-20 md:w-28 md:h-28 rounded-full bg-gradient-to-br from-rose-300 via-primary to-rose-500 shadow-2xl z-10 flex items-center justify-center">
+            <span className="text-white text-xl md:text-2xl select-none">✦</span>
           </div>
         </div>
 
@@ -577,7 +589,7 @@ export default function HavenHome() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="w-full max-w-sm text-center mb-3"
+            className="w-full max-w-sm text-center mb-2 shrink-0"
           >
             {loading ? (
               <div className="flex justify-center gap-1.5">
@@ -588,10 +600,13 @@ export default function HavenHome() {
                 ))}
               </div>
             ) : (
-              <p className="font-serif text-lg text-foreground leading-relaxed">{displayText}</p>
+              <p className="font-serif text-base md:text-lg text-foreground leading-snug">{displayText}</p>
             )}
           </motion.div>
         </AnimatePresence>
+
+        {/* ── Middle zone: widgets + chips + quick actions — flex-1 fills remaining space ── */}
+        <div className="flex-1 flex flex-col items-center justify-start w-full min-h-0 overflow-hidden">
 
         {/* ── Embedded Widget ── */}
         <AnimatePresence mode="wait">
@@ -986,7 +1001,8 @@ export default function HavenHome() {
           </motion.div>
         )}
 
-      </div>
+        </div>{/* end middle zone */}
+      </div>{/* end content column */}
 
       {/* ── Input hint bar — always visible, anchors to bottom ── */}
       {!welcomeOpen && (

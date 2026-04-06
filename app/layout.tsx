@@ -10,6 +10,7 @@ import { AuthProvider } from "@/contexts/auth-context"
 import { DesktopNav } from "@/components/desktop-nav"
 import { Footer } from "@/components/footer"
 import { GuidedSessionProvider } from "@/contexts/guided-session-context"
+import { HavenReturnOrb } from "@/components/haven-return-orb"
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -91,6 +92,7 @@ export default function RootLayout({
                 <Footer />
               </div>
               <BottomNav />
+              <HavenReturnOrb />
               <Toaster />
             </GuidedSessionProvider>
           </HapticProvider>

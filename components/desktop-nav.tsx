@@ -13,7 +13,7 @@ import { AuthModal } from "@/components/auth-modal"
 
 const navItems = [
   { name: "Home",     href: "/",          icon: Home },
-  { name: "Haven",    href: "/companion", icon: Sparkles },
+  { name: "Haven",    href: "/",          icon: Sparkles },
   { name: "Breathe",  href: "/breathe",   icon: Wind },
   { name: "Thoughts", href: "/thoughts",  icon: BookHeart },
   { name: "Insights", href: "/insights",  icon: TrendingUp },

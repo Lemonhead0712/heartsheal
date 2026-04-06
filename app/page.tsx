@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Mic, MicOff, Send, TrendingUp, Volume2, VolumeX, ChevronRight } from "lucide-react"
+import { Mic, MicOff, Send, TrendingUp, Volume2, VolumeX, ChevronRight, Sparkles, Wind, BookHeart, BarChart3 } from "lucide-react"
+import { AuthModal } from "@/components/auth-modal"
 import { useTTS, useSTT } from "@/hooks/use-speech"
 import { useEmotionLogs } from "@/hooks/use-emotion-logs"
 import { useJournalEntries } from "@/hooks/use-journal-entries"
@@ -131,7 +132,16 @@ function ScoreRing({ score }: { score: number }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function HavenHome() {
-  const { user } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
+  const [welcomeOpen, setWelcomeOpen] = useState(false)
+  const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [authModalMode, setAuthModalMode] = useState<"signin" | "signup">("signup")
+
+  // Show welcome screen for unauthenticated users (only evaluated client-side)
+  useEffect(() => {
+    if (!authLoading && !user) setWelcomeOpen(true)
+    if (user) setWelcomeOpen(false)
+  }, [authLoading, user])
   const { addEntry: addEmotion } = useEmotionLogs()
   const { addEntry: addJournal } = useJournalEntries()
   const { speak, stop: stopSpeech, prefetch, voiceEnabled, toggleVoice } = useTTS()
@@ -489,7 +499,7 @@ export default function HavenHome() {
     : "2s"
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-rose-50 via-background to-background dark:from-rose-950/20 dark:via-background dark:to-background">
+    <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-rose-50 via-background to-background dark:from-rose-950/20 dark:via-background dark:to-background overflow-hidden">
 
       {/* ── Thin header ── */}
       <header className="flex items-center justify-between px-5 pt-4 pb-2 shrink-0">
@@ -894,8 +904,17 @@ export default function HavenHome() {
 
       </div>
 
+      {/* ── Input hint bar — always visible, anchors to bottom ── */}
+      {!welcomeOpen && (
+        <div className="shrink-0 px-3 pb-2 pt-1.5">
+          <p className="text-center text-[11px] text-muted-foreground/60 font-medium tracking-wide">
+            Type or speak to Haven below ↓
+          </p>
+        </div>
+      )}
+
       {/* ── Input bar ── */}
-      <div className="shrink-0 px-4 pb-4 pt-2 border-t border-border/20 bg-background/60 backdrop-blur-sm">
+      <div className="shrink-0 px-4 pb-safe pb-4 pt-2 border-t border-border/20 bg-background/80 backdrop-blur-md">
         <div className="flex gap-2 items-center max-w-sm mx-auto">
           <textarea
             value={input}
@@ -928,6 +947,80 @@ export default function HavenHome() {
           </button>
         </div>
       </div>
+
+      {/* ── Welcome screen overlay ── */}
+      <AnimatePresence>
+        {welcomeOpen && (
+          <motion.div
+            key="welcome"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="fixed inset-0 z-[60] flex flex-col items-center justify-center px-6 bg-gradient-to-b from-rose-50 via-background to-background dark:from-rose-950/30 dark:via-background dark:to-background"
+          >
+            {/* Orb accent */}
+            <div className="relative w-20 h-20 mb-6">
+              <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: "3s" }} />
+              <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-rose-300 via-primary to-rose-500 shadow-2xl flex items-center justify-center">
+                <span className="text-white text-2xl select-none">✦</span>
+              </div>
+            </div>
+
+            <h1 className="font-serif text-3xl font-semibold text-foreground text-center mb-2 leading-tight">
+              Welcome to HeartsHeal
+            </h1>
+            <p className="text-muted-foreground text-center text-sm leading-relaxed max-w-xs mb-8">
+              A quiet, compassionate space to process grief, heartbreak, and life transitions — guided by Haven, your personal healing companion.
+            </p>
+
+            {/* Feature pills */}
+            <div className="flex flex-wrap justify-center gap-2 mb-8 max-w-xs">
+              {[
+                { icon: <Sparkles className="w-3.5 h-3.5" />, label: "AI voice companion" },
+                { icon: <Wind className="w-3.5 h-3.5" />,     label: "Guided breathing" },
+                { icon: <BookHeart className="w-3.5 h-3.5" />, label: "Reflective journaling" },
+                { icon: <BarChart3 className="w-3.5 h-3.5" />, label: "Healing insights" },
+              ].map(({ icon, label }) => (
+                <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-xs font-medium text-primary">
+                  {icon}{label}
+                </span>
+              ))}
+            </div>
+
+            {/* CTA buttons */}
+            <div className="flex flex-col gap-3 w-full max-w-xs">
+              <button
+                onClick={() => { setAuthModalMode("signup"); setAuthModalOpen(true) }}
+                className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+              >
+                Let's begin →
+              </button>
+              <button
+                onClick={() => { setAuthModalMode("signin"); setAuthModalOpen(true) }}
+                className="w-full py-3 rounded-2xl border border-border/60 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+              >
+                I already have an account
+              </button>
+              <button
+                onClick={() => setWelcomeOpen(false)}
+                className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors pt-1"
+              >
+                Continue without an account
+              </button>
+            </div>
+
+            <p className="text-[10px] text-muted-foreground/40 mt-6">Free forever · No credit card required</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Auth modal triggered from welcome screen */}
+      <AuthModal
+        open={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        defaultMode={authModalMode}
+      />
 
     </div>
   )

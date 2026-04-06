@@ -354,18 +354,19 @@ export default function HavenHome() {
 
   // ── Emotion widget ────────────────────────────────────────────────────────
   const [pickedEmotion, setPickedEmotion] = useState<string | null>(null)
+  const [intensityStep, setIntensityStep] = useState(false)
+  const [emotionIntensity, setEmotionIntensity] = useState(5)
 
   const handleEmotionPick = useCallback(async (label: string, emoji: string, intensity: number) => {
-    if (pickedEmotion) return
-    setPickedEmotion(label)
+    setIntensityStep(false)
     setSelectedEmotion(label)
     writeStorage(STORAGE_KEYS.lastCheckin, new Date().toDateString())
     await addEmotion({ emotion: label, emoji, intensity, notes: "" })
     setTimeout(() => {
       setPickedEmotion(null)
-      reportToHaven(`I just logged that I'm feeling ${label} ${emoji}.`, "emotion")
+      reportToHaven(`I just logged that I'm feeling ${label} ${emoji} at intensity ${intensity}/10.`, "emotion")
     }, 500)
-  }, [pickedEmotion, addEmotion, reportToHaven])
+  }, [addEmotion, reportToHaven])
 
   // ── Breathing widget ──────────────────────────────────────────────────────
   const saveBreatheSession = useCallback((cycles: number) => {
@@ -606,7 +607,7 @@ export default function HavenHome() {
         </AnimatePresence>
 
         {/* ── Middle zone: widgets + chips + quick actions — flex-1 fills remaining space ── */}
-        <div className="flex-1 flex flex-col items-center justify-start w-full min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col items-center justify-center w-full min-h-0 overflow-y-auto">
 
         {/* ── Embedded Widget ── */}
         <AnimatePresence mode="wait">
@@ -621,23 +622,58 @@ export default function HavenHome() {
               className="w-full max-w-sm mb-5 rounded-2xl border border-primary/40 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/15"
             >
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-3 text-center">How are you feeling right now?</p>
-              <div className="grid grid-cols-4 gap-2">
-                {EMOTIONS.map(({ label, emoji, intensity }) => (
-                  <button key={label} disabled={!!pickedEmotion}
-                    onClick={() => handleEmotionPick(label, emoji, intensity)}
-                    className={cn(
-                      "flex flex-col items-center gap-1.5 py-3 rounded-xl border text-center transition-all",
-                      pickedEmotion === label
-                        ? "border-primary bg-primary/10 scale-95"
-                        : pickedEmotion
-                        ? "border-border/20 opacity-30 cursor-default"
-                        : "border-border/40 hover:border-primary/50 hover:bg-primary/5 active:scale-95"
-                    )}>
-                    <span className="text-xl leading-none">{emoji}</span>
-                    <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
+              {!intensityStep && (
+                <div className="grid grid-cols-4 gap-2">
+                  {EMOTIONS.map(({ label, emoji }) => (
+                    <button key={label} disabled={!!pickedEmotion}
+                      onClick={() => {
+                        if (pickedEmotion) return
+                        setPickedEmotion(label)
+                        setIntensityStep(true)
+                        setEmotionIntensity(5)
+                      }}
+                      className={cn(
+                        "flex flex-col items-center gap-1.5 py-3 rounded-xl border text-center transition-all",
+                        pickedEmotion === label
+                          ? "border-primary bg-primary/10 scale-95"
+                          : pickedEmotion
+                          ? "border-border/20 opacity-30 cursor-default"
+                          : "border-border/40 hover:border-primary/50 hover:bg-primary/5 active:scale-95"
+                      )}>
+                      <span className="text-xl leading-none">{emoji}</span>
+                      <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {intensityStep && pickedEmotion && (
+                <motion.div key="intensity-step" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-1">
+                  <p className="text-[11px] text-center text-muted-foreground mb-3">
+                    How intense is this {pickedEmotion.toLowerCase()}?
+                  </p>
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="text-xs text-muted-foreground w-4 text-right">1</span>
+                    <input type="range" min={1} max={10} value={emotionIntensity}
+                      onChange={(e) => setEmotionIntensity(Number(e.target.value))}
+                      className="flex-1 accent-primary" />
+                    <span className="text-xs text-muted-foreground w-4">10</span>
+                  </div>
+                  <p className="text-center text-2xl font-bold text-primary mb-3">{emotionIntensity}</p>
+                  <button
+                    onClick={() => {
+                      const data = EMOTIONS.find(e => e.label === pickedEmotion)
+                      if (data) handleEmotionPick(data.label, data.emoji, emotionIntensity)
+                    }}
+                    className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors mb-2">
+                    Log this feeling
                   </button>
-                ))}
-              </div>
+                  <button
+                    onClick={() => { setPickedEmotion(null); setIntensityStep(false) }}
+                    className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors text-center">
+                    ← Pick a different emotion
+                  </button>
+                </motion.div>
+              )}
             </motion.div>
           )}
 
@@ -967,7 +1003,7 @@ export default function HavenHome() {
             )}
 
             {/* Secondary quick actions */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-5 gap-1.5">
               {[
                 {
                   icon: "🌬️", label: "Breathe",
@@ -980,6 +1016,16 @@ export default function HavenHome() {
                   onTap: () => { setMode("journal-widget"); showMessage("Take a moment to write what's on your mind.") },
                 },
                 {
+                  icon: "🧘", label: "Survey",
+                  done: completedToday.has("survey"),
+                  onTap: () => { setMode("survey-widget"); showMessage("Let's check in on how you're doing overall.") },
+                },
+                {
+                  icon: "🧠", label: "Quiz",
+                  done: completedToday.has("quiz"),
+                  onTap: () => { setMode("quiz-widget"); showMessage("Ready to explore a bit about yourself?") },
+                },
+                {
                   icon: "📊", label: "Insights",
                   done: false,
                   onTap: () => { setMode("insights-widget") },
@@ -988,13 +1034,13 @@ export default function HavenHome() {
                 <button
                   key={label}
                   onClick={onTap}
-                  className="flex flex-col items-center gap-1.5 py-3 rounded-2xl border border-border/40 bg-card/60 hover:border-primary/30 hover:bg-primary/5 active:scale-95 transition-all relative"
+                  className="flex flex-col items-center gap-1 py-2.5 rounded-2xl border border-border/40 bg-card/60 hover:border-primary/30 hover:bg-primary/5 active:scale-95 transition-all relative"
                 >
                   {done && (
-                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-emerald-400" />
                   )}
-                  <span className="text-xl">{icon}</span>
-                  <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
+                  <span className="text-lg">{icon}</span>
+                  <span className="text-[9px] font-medium text-muted-foreground">{label}</span>
                 </button>
               ))}
             </div>

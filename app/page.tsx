@@ -1011,12 +1011,35 @@ export default function HavenHome() {
             </div>
 
             <p className="text-[10px] text-muted-foreground/40 mt-6">Free forever · No credit card required</p>
+
+            {/* Crisis resources */}
+            <div className="mt-6 w-full max-w-xs rounded-2xl border border-rose-200/50 dark:border-rose-900/40 bg-rose-50/60 dark:bg-rose-950/20 px-4 py-3">
+              <p className="text-[11px] font-semibold text-rose-700 dark:text-rose-400 text-center mb-2">
+                If you're in crisis, please reach out
+              </p>
+              <div className="flex flex-col gap-1.5">
+                {[
+                  { label: "988 Suicide & Crisis Lifeline",  detail: "Call or text 988 (US)" },
+                  { label: "Crisis Text Line",                detail: "Text HOME to 741741" },
+                  { label: "International Association",       detail: "findahelpline.com" },
+                ].map(({ label, detail }) => (
+                  <div key={label} className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] text-rose-700/80 dark:text-rose-400/80 font-medium leading-tight">{label}</span>
+                    <span className="text-[10px] text-rose-600 dark:text-rose-300 font-semibold shrink-0">{detail}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[9px] text-rose-500/60 dark:text-rose-400/40 text-center mt-2 leading-relaxed">
+                HeartsHeal supports healing — it is not a substitute for emergency care.
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Auth modal triggered from welcome screen */}
       <AuthModal
+        key={authModalMode}
         open={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         defaultMode={authModalMode}

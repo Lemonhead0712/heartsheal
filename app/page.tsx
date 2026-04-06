@@ -19,9 +19,11 @@ type HavenMode =
   | "breathe-widget"
   | "journal-widget"
   | "survey-widget"
+  | "quiz-widget"
   | "insights-widget"
 
-type HavenAction = "emotion" | "breathe" | "journal" | "survey" | "insights" | null
+type HavenAction = "emotion" | "breathe" | "journal" | "survey" | "quiz" | "insights" | null
+type QuizType    = "emotional-awareness" | "self-compassion"
 
 type HavenResponse = {
   message: string
@@ -50,6 +52,32 @@ const BREATHE_SEQ = [
   { phase: "hold2"  as const, label: "Hold",        cue: "Hold",        dur: 2 },
 ]
 
+// ── Quiz data (5-question embedded version, saves to same key as /thoughts) ───
+type HavenQuizQ = { id: string; question: string; options: string[]; scores: number[]; category: string }
+
+const HAVEN_QUIZ: Record<QuizType, { label: string; emoji: string; questions: HavenQuizQ[] }> = {
+  "emotional-awareness": {
+    label: "Emotional Awareness", emoji: "🧠",
+    questions: [
+      { id: "ea1", question: "When you feel upset, how quickly do you recognise the specific emotion?", options: ["Immediately — I always know", "Within a few minutes", "I feel 'bad' before naming it", "I struggle to identify emotions"], scores: [100, 75, 50, 25], category: "recognition" },
+      { id: "ea2", question: "How well can you tell apart similar feelings — like disappointment vs sadness?", options: ["Very well", "Fairly well", "Sometimes I confuse them", "Most emotions feel the same"], scores: [100, 75, 50, 25], category: "recognition" },
+      { id: "ea3", question: "When a strong emotion hits, how well can you pause before reacting?", options: ["Almost always pause first", "Usually, when I remember", "I react, then reflect", "I react immediately"], scores: [100, 75, 50, 25], category: "regulation" },
+      { id: "ea4", question: "How well do you recover your emotional balance after being upset?", options: ["Quickly — within hours", "Usually within a day or two", "Often lingers for days", "Very hard to regain balance"], scores: [100, 75, 50, 25], category: "regulation" },
+      { id: "ea5", question: "How comfortable are you expressing emotions to people you trust?", options: ["Very comfortable", "Comfortable with close people", "Rarely share true feelings", "Very uncomfortable"], scores: [100, 75, 50, 25], category: "expression" },
+    ]
+  },
+  "self-compassion": {
+    label: "Self-Compassion", emoji: "💜",
+    questions: [
+      { id: "sc1", question: "When you fail at something important, how do you speak to yourself?", options: ["Kindly — like comforting a friend", "With some criticism but understanding", "Harshly — focusing on what I did wrong", "Very harshly — I'm my worst critic"], scores: [100, 75, 50, 25], category: "self-kindness" },
+      { id: "sc2", question: "When going through hard times, how patient are you with yourself?", options: ["Very patient — I give myself grace", "Usually patient, sometimes slip", "I feel I should be doing better", "Very impatient — I blame myself heavily"], scores: [100, 75, 50, 25], category: "self-kindness" },
+      { id: "sc3", question: "When struggling, how much do you remind yourself others feel this way too?", options: ["Often — it helps me feel less alone", "Sometimes — when I think to", "Rarely — my pain feels unique", "Never — I feel fundamentally alone"], scores: [100, 75, 50, 25], category: "common-humanity" },
+      { id: "sc4", question: "When overwhelmed, how aware are you of your feelings without being swept away?", options: ["Very aware — I observe, not over-identify", "Usually — I can step back", "Sometimes — I get swept up", "Rarely — I'm consumed by them"], scores: [100, 75, 50, 25], category: "mindfulness" },
+      { id: "sc5", question: "When something painful happens, how do you relate to it in the moment?", options: ["With balanced awareness", "I try to keep perspective", "I tend to blow it up", "I'm completely consumed"], scores: [100, 75, 50, 25], category: "mindfulness" },
+    ]
+  }
+}
+
 const EMOTION_JOURNAL_PROMPTS: Record<string, string> = {
   "Sad":      "What does this sadness feel like in your body right now? What does it most need from you?",
   "Anxious":  "What is your anxiety trying to protect you from? What would you say to it with kindness?",
@@ -68,14 +96,15 @@ You guide the user through their healing by proactively suggesting embedded acti
 Your response MUST always be valid JSON in this exact shape:
 {"message":"What you say to the user (plain conversational text, no markdown)","action":null,"chips":["chip 1","chip 2","chip 3"]}
 
-action must be one of: null | "emotion" | "breathe" | "journal" | "survey" | "insights"
+action must be one of: null | "emotion" | "breathe" | "journal" | "survey" | "quiz" | "insights"
 
 Rules for action:
 - "emotion" — when user needs to check in with how they feel right now
 - "breathe" — when user mentions anxiety, stress, or overwhelm, or after emotion check-in
 - "journal" — when user needs to process or reflect; after breathing or on request
 - "survey" — for a holistic wellbeing check; suggest at most once per session
-- "insights" — after 2+ activities completed, to show their progress
+- "quiz" — a guided self-assessment (Emotional Awareness or Self-Compassion); suggest after 2+ sessions or when user wants to understand themselves more deeply
+- "insights" — after 3+ activities completed, to show their progress
 - null — for pure conversation; no activity needed right now
 
 chips must be 3-4 short (under 6 words) response options the user can tap.
@@ -122,9 +151,19 @@ export default function HavenHome() {
   const [completedToday,  setCompletedToday]  = useState<Set<string>>(new Set())
 
   // ── Breathing widget state ────────────────────────────────────────────────
-  const [breathePhase, setBreathePhase] = useState<"idle" | "inhale" | "hold1" | "exhale" | "hold2" | "done">("idle")
-  const [breatheCount, setBreatheCount] = useState(0)
-  const breatheInterval = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [breathePhase,          setBreathePhase]          = useState<"idle" | "inhale" | "hold1" | "exhale" | "hold2" | "done">("idle")
+  const [breatheCount,          setBreatheCount]          = useState(0)
+  const [breatheTargetRounds,   setBreatheTargetRounds]   = useState(3)
+  const [breatheCyclesDone,     setBreatheCyclesDone]     = useState(0)
+  const breatheInterval   = useRef<ReturnType<typeof setInterval> | null>(null)
+  const breatheCyclesRef  = useRef(0)
+  const breatheTargetRef  = useRef(3)
+
+  // ── Quiz widget state ─────────────────────────────────────────────────────
+  const [quizType,    setQuizType]    = useState<QuizType>("emotional-awareness")
+  const [quizIndex,   setQuizIndex]   = useState(0)
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({})
+  const [quizPhase,   setQuizPhase]   = useState<"idle" | "active" | "done">("idle")
 
   // ── Journal widget state ──────────────────────────────────────────────────
   const [journalText,  setJournalText]  = useState("")
@@ -279,31 +318,59 @@ export default function HavenHome() {
   }, [pickedEmotion, addEmotion, reportToHaven])
 
   // ── Breathing widget ──────────────────────────────────────────────────────
-  const startBreathing = useCallback(() => {
+  const saveBreatheSession = useCallback((cycles: number) => {
+    if (cycles < 1) return
+    try {
+      const record = { id: Date.now().toString(), timestamp: new Date().toISOString(), pattern: "Box Breathing (4-4-4-2)", cycles }
+      const prev = readStorage<any[]>(STORAGE_KEYS.breathingHistory) ?? []
+      writeStorage(STORAGE_KEYS.breathingHistory, [...prev, record])
+    } catch {}
+  }, [])
+
+  const startBreathing = useCallback((rounds = 3) => {
+    breatheCyclesRef.current  = 0
+    breatheTargetRef.current  = rounds
+    setBreatheCyclesDone(0)
+    setBreatheTargetRounds(rounds)
+
     let seqIdx = 0; let count = BREATHE_SEQ[0].dur
     setBreathePhase(BREATHE_SEQ[0].phase); setBreatheCount(count)
     speak(BREATHE_SEQ[0].cue, { rate: 0.82, pitch: 0.9 })
+
     breatheInterval.current = setInterval(() => {
       count -= 1; setBreatheCount(count)
       if (count <= 0) {
         seqIdx += 1
         if (seqIdx >= BREATHE_SEQ.length) {
-          clearInterval(breatheInterval.current!); breatheInterval.current = null
-          setBreathePhase("done")
-          // Save breathing session
-          try {
-            const record = { id: Date.now().toString(), timestamp: new Date().toISOString(), pattern: "Box Breathing (4-4-4-2)", cycles: 1 }
-            const prev = readStorage<any[]>(STORAGE_KEYS.breathingHistory) ?? []
-            writeStorage(STORAGE_KEYS.breathingHistory, [...prev, record])
-          } catch {}
-          return
+          // One full cycle complete
+          breatheCyclesRef.current += 1
+          setBreatheCyclesDone(breatheCyclesRef.current)
+          if (breatheCyclesRef.current >= breatheTargetRef.current) {
+            clearInterval(breatheInterval.current!); breatheInterval.current = null
+            saveBreatheSession(breatheCyclesRef.current)
+            setBreathePhase("done")
+            return
+          }
+          seqIdx = 0
         }
         const next = BREATHE_SEQ[seqIdx]; count = next.dur
         setBreathePhase(next.phase); setBreatheCount(count)
         speak(next.cue, { rate: 0.82, pitch: 0.9 })
       }
     }, 1000)
-  }, [speak])
+  }, [speak, saveBreatheSession])
+
+  const endBreathingEarly = useCallback(() => {
+    if (breatheInterval.current) { clearInterval(breatheInterval.current); breatheInterval.current = null }
+    saveBreatheSession(breatheCyclesRef.current)
+    setBreathePhase("done")
+  }, [saveBreatheSession])
+
+  const skipBreathing = useCallback(() => {
+    if (breatheInterval.current) { clearInterval(breatheInterval.current); breatheInterval.current = null }
+    setBreathePhase("idle")
+    reportToHaven("I skipped the breathing exercise for now.", "breathe")
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => () => { if (breatheInterval.current) clearInterval(breatheInterval.current) }, [])
 
@@ -336,6 +403,53 @@ export default function HavenHome() {
     }, 600)
   }, [survey, reportToHaven])
 
+  // ── Quiz widget ───────────────────────────────────────────────────────────
+  // When quiz-widget mode opens, pick the less-completed quiz type
+  useEffect(() => {
+    if (mode !== "quiz-widget") return
+    const results = readStorage<any[]>(STORAGE_KEYS.quizResults) ?? []
+    const eaCount = results.filter((r) => r.type === "emotional-awareness").length
+    const scCount = results.filter((r) => r.type === "self-compassion").length
+    setQuizType(eaCount <= scCount ? "emotional-awareness" : "self-compassion")
+    setQuizIndex(0)
+    setQuizAnswers({})
+    setQuizPhase("idle")
+  }, [mode])
+
+  const handleQuizAnswer = useCallback((questionId: string, score: number) => {
+    setQuizAnswers((prev) => {
+      const next = { ...prev, [questionId]: score }
+      const questions = HAVEN_QUIZ[quizType].questions
+      if (Object.keys(next).length >= questions.length) {
+        // All answered — compute + save
+        const avgScore = Math.round(Object.values(next).reduce((a, b) => a + b, 0) / questions.length)
+        const catScores = questions.reduce((acc, q) => {
+          if (next[q.id] !== undefined) {
+            if (!acc[q.category]) acc[q.category] = []
+            acc[q.category].push(next[q.id])
+          }
+          return acc
+        }, {} as Record<string, number[]>)
+        const result = { id: Date.now().toString(), type: quizType, score: avgScore, category_scores: catScores, created_at: new Date().toISOString() }
+        const prev2 = readStorage<any[]>(STORAGE_KEYS.quizResults) ?? []
+        writeStorage(STORAGE_KEYS.quizResults, [...prev2, result])
+        setQuizPhase("done")
+        setTimeout(() => {
+          const label = HAVEN_QUIZ[quizType].label
+          reportToHaven(`I just completed the ${label} self-assessment. My score was ${avgScore} out of 100.`, "quiz")
+        }, 800)
+      } else {
+        setQuizIndex(Object.keys(next).length)
+      }
+      return next
+    })
+  }, [quizType]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const skipQuiz = useCallback(() => {
+    setQuizPhase("idle")
+    reportToHaven("I skipped the self-assessment for now.", "quiz")
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Insights widget data ──────────────────────────────────────────────────
   const insightsData = (() => {
     if (typeof window === "undefined") return null
@@ -356,7 +470,8 @@ export default function HavenHome() {
       survS = avg / 5
     }
     const score = Math.round((survS * 0.4 + intS * 0.35 + cons * 0.25) * 100)
-    return { logs: logs.length, journals: journals.length, breathing: breathing.length, score }
+    const quizzes = readStorage<any[]>(STORAGE_KEYS.quizResults) ?? []
+    return { logs: logs.length, journals: journals.length, breathing: breathing.length, quizzes: quizzes.length, score }
   })()
 
   // ── STT ───────────────────────────────────────────────────────────────────
@@ -485,6 +600,8 @@ export default function HavenHome() {
               <p className="text-xs font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wide mb-4">
                 {selectedEmotion ? `Breathing through ${selectedEmotion.toLowerCase()}` : "Box breathing · 4-4-4-2"}
               </p>
+
+              {/* Animated orb */}
               <div className="relative w-36 h-36 flex items-center justify-center mb-4">
                 <motion.div className="absolute rounded-full bg-sky-100 dark:bg-sky-900/30"
                   style={{ width: "100%", height: "100%" }}
@@ -507,18 +624,69 @@ export default function HavenHome() {
                   )}
                 </div>
               </div>
+
+              {/* PRE-START: round picker + start + skip */}
               {breathePhase === "idle" && (
-                <button onClick={startBreathing}
-                  className="px-7 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition-colors animate-pulse">
-                  Start breathing
-                </button>
+                <>
+                  <p className="text-xs text-muted-foreground mb-2">How many rounds?</p>
+                  <div className="flex gap-2 mb-4">
+                    {[3, 5, 7].map((r) => (
+                      <button key={r} onClick={() => setBreatheTargetRounds(r)}
+                        className={cn(
+                          "w-10 h-10 rounded-full text-sm font-bold border transition-all",
+                          breatheTargetRounds === r
+                            ? "bg-sky-500 text-white border-sky-500"
+                            : "border-border/50 text-muted-foreground hover:border-sky-400 hover:text-sky-500"
+                        )}>
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={() => startBreathing(breatheTargetRounds)}
+                    className="w-full py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition-colors mb-2">
+                    Start {breatheTargetRounds} rounds
+                  </button>
+                  <button onClick={skipBreathing}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    Skip for now
+                  </button>
+                </>
               )}
+
+              {/* ACTIVE: cycle progress + end early */}
+              {breathePhase !== "idle" && breathePhase !== "done" && (
+                <div className="flex flex-col items-center gap-3 w-full mt-1">
+                  {/* Cycle dots */}
+                  <div className="flex items-center gap-1.5">
+                    {Array.from({ length: breatheTargetRounds }).map((_, i) => (
+                      <span key={i} className={cn(
+                        "w-2 h-2 rounded-full transition-all duration-300",
+                        i < breatheCyclesDone ? "bg-sky-500" : "bg-sky-200 dark:bg-sky-800"
+                      )} />
+                    ))}
+                    <span className="text-[11px] text-muted-foreground ml-1">
+                      {breatheCyclesDone}/{breatheTargetRounds}
+                    </span>
+                  </div>
+                  <button onClick={endBreathingEarly}
+                    className="text-xs text-muted-foreground hover:text-sky-500 transition-colors">
+                    End session early
+                  </button>
+                </div>
+              )}
+
+              {/* DONE */}
               {breathePhase === "done" && (
-                <motion.button initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                  onClick={() => reportToHaven("I just completed a breathing exercise.", "breathe")}
-                  className="px-7 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
-                  Continue →
-                </motion.button>
+                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center gap-2 w-full">
+                  <p className="text-sm text-sky-600 dark:text-sky-400 font-medium">
+                    {breatheCyclesDone} round{breatheCyclesDone !== 1 ? "s" : ""} complete ✦
+                  </p>
+                  <button
+                    onClick={() => reportToHaven(`I just completed ${breatheCyclesDone} round${breatheCyclesDone !== 1 ? "s" : ""} of box breathing.`, "breathe")}
+                    className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
+                    Continue →
+                  </button>
+                </motion.div>
               )}
             </motion.div>
           )}
@@ -594,6 +762,84 @@ export default function HavenHome() {
             </motion.div>
           )}
 
+          {/* QUIZ WIDGET */}
+          {mode === "quiz-widget" && !completedToday.has("quiz") && (() => {
+            const quiz      = HAVEN_QUIZ[quizType]
+            const questions = quiz.questions
+            const current   = questions[quizIndex]
+
+            return (
+              <motion.div key="quiz-widget"
+                initial={{ opacity: 0, y: 16, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                transition={{ type: "spring", stiffness: 300, damping: 26 }}
+                className="w-full max-w-sm mb-5 rounded-2xl border border-indigo-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-indigo-400/15"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">
+                    {quiz.emoji} {quiz.label}
+                  </p>
+                  {quizPhase === "active" && (
+                    <span className="text-[11px] text-muted-foreground">{quizIndex + 1} / {questions.length}</span>
+                  )}
+                </div>
+
+                {/* Progress bar */}
+                {quizPhase === "active" && (
+                  <div className="w-full bg-muted/40 rounded-full h-1 mb-4 overflow-hidden">
+                    <div className="bg-indigo-400 h-1 rounded-full transition-all duration-500"
+                      style={{ width: `${((quizIndex) / questions.length) * 100}%` }} />
+                  </div>
+                )}
+
+                {quizPhase === "idle" && (
+                  <div className="flex flex-col items-center gap-3 py-2">
+                    <p className="text-sm text-foreground/80 text-center leading-relaxed">
+                      5 questions to understand yourself more deeply. Takes about 1 minute.
+                    </p>
+                    <button onClick={() => setQuizPhase("active")}
+                      className="w-full py-2.5 rounded-xl bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-600 transition-colors">
+                      Begin assessment
+                    </button>
+                    <button onClick={skipQuiz} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                      Skip for now
+                    </button>
+                  </div>
+                )}
+
+                {quizPhase === "active" && current && (
+                  <AnimatePresence mode="wait">
+                    <motion.div key={current.id}
+                      initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }}
+                      transition={{ duration: 0.22 }}>
+                      <p className="text-sm font-medium text-foreground leading-relaxed mb-3">{current.question}</p>
+                      <div className="flex flex-col gap-2">
+                        {current.options.map((opt, i) => (
+                          <button key={i}
+                            onClick={() => handleQuizAnswer(current.id, current.scores[i])}
+                            className="text-left px-3.5 py-2.5 rounded-xl border border-border/50 text-xs text-foreground/80 hover:border-indigo-400/60 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 hover:text-indigo-700 dark:hover:text-indigo-300 transition-all active:scale-[0.98]">
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                )}
+
+                {quizPhase === "done" && (
+                  <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col items-center gap-2 py-3">
+                    <p className="text-2xl">✦</p>
+                    <p className="text-sm font-medium text-foreground">Assessment complete</p>
+                    <p className="text-xs text-muted-foreground text-center">Haven is reflecting on your answers…</p>
+                  </motion.div>
+                )}
+              </motion.div>
+            )
+          })()}
+
           {/* INSIGHTS WIDGET */}
           {mode === "insights-widget" && (
             <motion.div key="insights-widget"
@@ -606,11 +852,12 @@ export default function HavenHome() {
               <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-4">Your progress</p>
               <div className="flex items-center gap-4 mb-4">
                 {insightsData && <ScoreRing score={insightsData.score} />}
-                <div className="flex-1 grid grid-cols-3 gap-2">
+                <div className="flex-1 grid grid-cols-4 gap-1">
                   {[
                     { icon: "💜", val: insightsData?.logs      ?? 0, label: "Emotions" },
                     { icon: "🌬️", val: insightsData?.breathing ?? 0, label: "Breathing" },
                     { icon: "📖", val: insightsData?.journals  ?? 0, label: "Journal" },
+                    { icon: "🧠", val: insightsData?.quizzes   ?? 0, label: "Quizzes" },
                   ].map(({ icon, val, label }) => (
                     <div key={label} className="text-center">
                       <p className="text-lg">{icon}</p>

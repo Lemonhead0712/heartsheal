@@ -6,7 +6,6 @@ import { motion, AnimatePresence, type Variants } from "framer-motion"
 import { ChevronLeft, BookHeart, Brain, Save, RotateCcw, CheckCircle2, ChevronRight, Sparkles, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Logo } from "@/components/logo"
 import { cn } from "@/lib/utils"
 import { useJournalEntries } from "@/hooks/use-journal-entries"
 import { supabase } from "@/lib/supabase"
@@ -261,19 +260,18 @@ export default function ThoughtsPage() {
   const item: Variants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } } }
 
   return (
-    <div className="bg-page-gradient">
+    <div className="bg-gradient-to-b from-rose-50/50 via-background to-background dark:from-rose-950/15 min-h-screen">
       <motion.div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
-        <motion.div className="flex flex-col items-center mb-3" variants={item}>
-          <Logo size="medium" />
-        </motion.div>
-        <motion.div className="mb-5" variants={item}>
-          <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors text-sm">
-            <ChevronLeft className="mr-1 h-4 w-4" /> Back to Dashboard
+        <motion.div className="flex items-center justify-between mb-6" variants={item}>
+          <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
+            <ChevronLeft className="h-4 w-4" />
+            <span className="text-primary">♥</span>
+            <span className="font-serif font-semibold text-foreground tracking-tight">HeartsHeal</span>
           </Link>
-          <h1 className="font-serif text-3xl font-semibold text-foreground mt-3 mb-1">Thoughts & Reflection</h1>
-          <p className="text-muted-foreground text-sm">A quiet space to write, explore, and understand yourself</p>
+          <h1 className="font-serif text-lg font-semibold text-foreground">Thoughts & Reflection</h1>
+          <div className="w-20" />{/* spacer */}
         </motion.div>
 
         {/* Tab switcher */}

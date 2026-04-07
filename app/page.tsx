@@ -5,6 +5,7 @@ import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { Mic, MicOff, Send, TrendingUp, Volume2, VolumeX, ChevronRight, Sparkles, Wind, BookHeart, BarChart3 } from "lucide-react"
 import { AuthModal } from "@/components/auth-modal"
+import { OnboardingModal } from "@/components/onboarding-modal"
 import { useTTS, useSTT } from "@/hooks/use-speech"
 import { useEmotionLogs } from "@/hooks/use-emotion-logs"
 import { useJournalEntries } from "@/hooks/use-journal-entries"
@@ -114,7 +115,45 @@ IMPORTANT: When the user says anything related to breathing or journaling (even 
 chips must be 3-4 short (under 6 words) response options the user can tap.
 Always lead with empathy. Never rush. One question or suggestion at a time.
 If the user just completed an activity, acknowledge it warmly before moving on.
-If self-harm is mentioned, gently include the 988 Lifeline in your message.`
+If self-harm is mentioned, gently include the 988 Lifeline in your message.
+
+Memory and personalization:
+- If the user's name is provided in context, use it naturally — not in every message, but warmly when it feels right.
+- Always frame responses through their healing context (loss type) — grief needs different empathy than a breakup or job loss.
+- If past session data is provided, notice patterns: if they were anxious last session and seem calmer today, acknowledge the shift. This continuity is what makes you feel like a real companion, not just a chatbot.
+- Never say "based on your data" or "I see from your records." Just speak as if you know them naturally.`
+
+// ── Streak helpers ────────────────────────────────────────────────────────────
+function getStreak(): number {
+  const data = readStorage<{ lastDate: string; count: number }>(STORAGE_KEYS.streakData)
+  if (!data) return 0
+  const today     = new Date().toDateString()
+  const yesterday = new Date(Date.now() - 86400000).toDateString()
+  if (data.lastDate === today || data.lastDate === yesterday) return data.count
+  return 0
+}
+
+function saveStreak(): number {
+  const data      = readStorage<{ lastDate: string; count: number }>(STORAGE_KEYS.streakData)
+  const today     = new Date().toDateString()
+  const yesterday = new Date(Date.now() - 86400000).toDateString()
+  if (data?.lastDate === today) return data.count
+  const count = data?.lastDate === yesterday ? data.count + 1 : 1
+  writeStorage(STORAGE_KEYS.streakData, { lastDate: today, count })
+  return count
+}
+
+function streakMilestoneMessage(count: number, emotion: string | null): string {
+  const seed = emotion
+    ? `You logged feeling ${emotion.toLowerCase()} today — come back tomorrow and let's see how that shifts.`
+    : `Come back tomorrow and we'll see how you've moved.`
+  if (count >= 30) return `30 days. You've built something real. ${seed}`
+  if (count >= 14) return `14 days straight — that's a habit, not a coincidence. ${seed}`
+  if (count >= 7)  return `A full week. Something in you is committed to healing. ${seed}`
+  if (count >= 3)  return `${count} days running — momentum is building. ${seed}`
+  if (count === 1) return `Day one done. That took courage. ${seed}`
+  return `${count} days in a row — your consistency is your healing. ${seed}`
+}
 
 // ── Score ring ────────────────────────────────────────────────────────────────
 function ScoreRing({ score }: { score: number }) {
@@ -136,14 +175,24 @@ function ScoreRing({ score }: { score: number }) {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function HavenHome() {
   const { user, isLoading: authLoading } = useAuth()
-  const [welcomeOpen, setWelcomeOpen] = useState(false)
+  const [welcomeOpen, setWelcomeOpen]     = useState(false)
+  const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [authModalMode, setAuthModalMode] = useState<"signin" | "signup">("signup")
+  const welcomeShownRef = useRef(false)
 
-  // Show welcome screen for unauthenticated users (only evaluated client-side)
+  // Show welcome screen for unauthenticated users; trigger onboarding after it closes
   useEffect(() => {
-    if (!authLoading && !user) setWelcomeOpen(true)
-    if (user) setWelcomeOpen(false)
+    if (!authLoading && !user) {
+      setWelcomeOpen(true)
+      welcomeShownRef.current = true
+    }
+    if (user) {
+      setWelcomeOpen(false)
+      if (welcomeShownRef.current && !readStorage(STORAGE_KEYS.welcomeSeen)) {
+        setTimeout(() => setOnboardingOpen(true), 500)
+      }
+    }
   }, [authLoading, user])
   const { addEntry: addEmotion } = useEmotionLogs()
   const { addEntry: addJournal } = useJournalEntries()
@@ -162,6 +211,8 @@ export default function HavenHome() {
   // ── Session tracking ──────────────────────────────────────────────────────
   const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null)
   const [completedToday,  setCompletedToday]  = useState<Set<string>>(new Set())
+  const [streak,          setStreak]          = useState(0)
+  const [sessionClosed,   setSessionClosed]   = useState(false)
 
   // ── Breathing widget state ────────────────────────────────────────────────
   const [breathePhase,          setBreathePhase]          = useState<"idle" | "inhale" | "hold1" | "exhale" | "hold2" | "rest" | "done">("idle")
@@ -221,6 +272,14 @@ export default function HavenHome() {
     setTimeout(() => showMessage(msg), 400)
   }, [stopSpeech, showMessage]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── After onboarding completes: greet with name if collected ─────────────
+  const handleOnboardingComplete = useCallback((collectedName?: string) => {
+    setOnboardingOpen(false)
+    if (collectedName) {
+      setTimeout(() => showMessage(`Nice to meet you, ${collectedName}. I'm Haven — I'm here whenever you need me.`), 300)
+    }
+  }, [showMessage])
+
   useEffect(() => {
     if (authLoading) return
     const prevId = prevUserIdRef.current
@@ -250,8 +309,16 @@ export default function HavenHome() {
       initChips  = ["Better", "About the same", "Harder today", "I want to try something"]
       initAction = null
     } else {
-      message    = `Good to see you${name ? ", " + name : ""}. How has today been?`
-      initChips  = ["It's been hard", "I'm managing", "I actually feel okay", "I want to breathe"]
+      // Returning user — reference yesterday's session emotion if available
+      const lastSession = readStorage<{ date: string; emotion: string; emoji: string }>(STORAGE_KEYS.lastSession)
+      const yesterday   = new Date(Date.now() - 86400000).toDateString()
+      if (lastSession?.date === yesterday) {
+        message   = `Yesterday you were feeling ${lastSession.emoji} ${lastSession.emotion.toLowerCase()}. How are you carrying that today?`
+        initChips = ["Still the same", "A bit better", "Harder now", "Something shifted"]
+      } else {
+        message   = `Good to see you${name ? ", " + name : ""}. How has today been?`
+        initChips = ["It's been hard", "I'm managing", "I actually feel okay", "I want to breathe"]
+      }
       initAction = null
     }
 
@@ -265,6 +332,11 @@ export default function HavenHome() {
     // Prefetch breathing cues while greeting plays
     prefetch("Breathe in"); prefetch("Hold"); prefetch("Breathe out")
 
+    // Load streak and detect if session already closed today (prevents double-fire)
+    setStreak(getStreak())
+    const sd = readStorage<{ lastDate: string; count: number }>(STORAGE_KEYS.streakData)
+    if (sd?.lastDate === new Date().toDateString()) setSessionClosed(true)
+
     return () => { clearTimeout(t); if (typewriterRef.current) clearInterval(typewriterRef.current) }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -276,16 +348,23 @@ export default function HavenHome() {
     setMode("chatting")
     stopSpeech()
 
-    const logs       = readStorage<any[]>(STORAGE_KEYS.emotionLogs) ?? []
-    const lossCtx    = readStorage<string[]>(STORAGE_KEYS.lossContext) ?? []
-    const recentLogs = logs.slice(0, 3).map((l: any) => `${l.emoji} ${l.emotion}`).join(", ")
-    const doneList   = Array.from(completedToday).join(", ")
+    const logs           = readStorage<any[]>(STORAGE_KEYS.emotionLogs) ?? []
+    const lossCtx        = readStorage<string[]>(STORAGE_KEYS.lossContext) ?? []
+    const userName       = readStorage<string>(STORAGE_KEYS.userName)
+    const sessionHistory = readStorage<any[]>(STORAGE_KEYS.sessionHistory) ?? []
+    const recentLogs     = logs.slice(0, 3).map((l: any) => `${l.emoji} ${l.emotion}`).join(", ")
+    const doneList       = Array.from(completedToday).join(", ")
+    const recentSessions = sessionHistory.slice(0, 3)
+      .map((s: any) => `${s.date}: felt ${s.emoji ?? ""} ${s.emotion ?? "unknown"}`)
+      .join("; ")
 
     const contextNote = [
-      lossCtx.length   ? `User's loss context: ${lossCtx.join(", ")}.` : "",
-      recentLogs        ? `Recent emotions logged: ${recentLogs}.` : "",
-      doneList          ? `Completed this session: ${doneList}.` : "",
-      selectedEmotion   ? `Current emotion picked today: ${selectedEmotion}.` : "",
+      userName         ? `User's name is ${userName}. Use it naturally and warmly.` : "",
+      lossCtx.length   ? `Their healing journey: ${lossCtx.join(", ")}.` : "",
+      recentSessions   ? `Past sessions: ${recentSessions}.` : "",
+      recentLogs        ? `Recent emotions: ${recentLogs}.` : "",
+      doneList          ? `Completed today: ${doneList}.` : "",
+      selectedEmotion   ? `Current emotion: ${selectedEmotion}.` : "",
     ].filter(Boolean).join(" ")
 
     const nextMessages: ApiMessage[] = [
@@ -358,6 +437,48 @@ export default function HavenHome() {
     setActiveAction(null)
     sendToHaven(msg)
   }, [sendToHaven])
+
+  // ── Session completion: fires when all 5 walkthrough steps are done ────────
+  const WALKTHROUGH_KEYS = ["emotion", "breathe", "journal", "quiz", "survey"] as const
+
+  useEffect(() => {
+    if (sessionClosed) return
+    const allDone = WALKTHROUGH_KEYS.every((k) => completedToday.has(k))
+    if (!allDone) return
+
+    setSessionClosed(true)
+    const newStreak  = saveStreak()
+    setStreak(newStreak)
+
+    // Persist this session's emotion for tomorrow's greeting
+    const logs = readStorage<any[]>(STORAGE_KEYS.emotionLogs) ?? []
+    const todayEmotion = logs.length > 0 ? logs[0] : null
+    if (todayEmotion) {
+      writeStorage(STORAGE_KEYS.lastSession, {
+        date:    new Date().toDateString(),
+        emotion: todayEmotion.emotion,
+        emoji:   todayEmotion.emoji,
+      })
+    }
+
+    // Save rolling session history (last 10) for Haven's cross-session memory
+    const history = readStorage<any[]>(STORAGE_KEYS.sessionHistory) ?? []
+    writeStorage(STORAGE_KEYS.sessionHistory, [{
+      date:       new Date().toDateString(),
+      emotion:    todayEmotion?.emotion ?? null,
+      emoji:      todayEmotion?.emoji ?? null,
+      streak:     newStreak,
+      activities: Array.from(completedToday),
+    }, ...history].slice(0, 10))
+
+    const milestoneMsg = streakMilestoneMessage(newStreak, todayEmotion?.emotion ?? null)
+
+    setTimeout(() => {
+      setMode("chatting")
+      showMessage(`You showed up for yourself today — emotion, breathing, journaling, quiz, wellbeing check-in. ${milestoneMsg}`)
+      setChips(["That felt good", "I'll be back tomorrow", "Show my insights"])
+    }, 1000)
+  }, [completedToday, sessionClosed]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Emotion widget ────────────────────────────────────────────────────────
   const [pickedEmotion, setPickedEmotion] = useState<string | null>(null)
@@ -561,6 +682,20 @@ export default function HavenHome() {
           <span className="text-primary">♥</span>
           <span className="font-serif font-semibold text-foreground tracking-tight">HeartsHeal</span>
         </div>
+
+        {/* Streak badge — always renders to prevent layout shift; fades in when streak > 0 */}
+        <div className={cn(
+          "flex items-center gap-1 px-2.5 py-1 rounded-full border transition-all duration-500",
+          streak > 0
+            ? "bg-primary/10 border-primary/20 opacity-100"
+            : "border-transparent opacity-0 pointer-events-none select-none"
+        )}>
+          <span className="text-xs">🔥</span>
+          <span className="text-xs font-semibold text-primary">
+            {streak > 0 ? `${streak} day${streak !== 1 ? "s" : ""}` : ""}
+          </span>
+        </div>
+
         <div className="flex items-center gap-2">
           <button onClick={voiceEnabled ? stopSpeech : toggleVoice}
             className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors"
@@ -1168,7 +1303,12 @@ export default function HavenHome() {
                 I already have an account
               </button>
               <button
-                onClick={() => setWelcomeOpen(false)}
+                onClick={() => {
+                  setWelcomeOpen(false)
+                  if (!readStorage(STORAGE_KEYS.welcomeSeen)) {
+                    setTimeout(() => setOnboardingOpen(true), 350)
+                  }
+                }}
                 className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors pt-1"
               >
                 Continue without an account
@@ -1211,6 +1351,9 @@ export default function HavenHome() {
         onClose={() => setAuthModalOpen(false)}
         defaultMode={authModalMode}
       />
+
+      {/* Onboarding — shown once after welcome closes for new users */}
+      <OnboardingModal open={onboardingOpen} onComplete={handleOnboardingComplete} />
 
     </div>
   )

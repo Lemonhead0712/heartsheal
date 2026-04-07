@@ -1348,94 +1348,154 @@ export default function HavenHome() {
             key="welcome"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="fixed inset-0 z-[60] overflow-y-auto bg-gradient-to-b from-rose-50 via-background to-background dark:from-rose-950/30 dark:via-background dark:to-background"
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.45, ease: "easeInOut" }}
+            className="fixed inset-0 z-[60] flex flex-col bg-gradient-to-b from-rose-50 via-background to-background dark:from-rose-950/20 dark:via-background dark:to-background overflow-y-auto"
           >
-            {/* Inner wrapper: centers when room exists, scrolls when it doesn't */}
-            <div className="min-h-full flex flex-col items-center justify-center px-6 py-8">
+            {/* Mirrors Haven's exact layout: header → orb → message → actions */}
+            <div className="flex flex-col items-center flex-1 px-5 pt-8 pb-6">
 
-            {/* Orb accent */}
-            <div className="relative w-16 h-16 mb-4 shrink-0">
-              <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: "3s" }} />
-              <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-rose-300 via-primary to-rose-500 shadow-2xl flex items-center justify-center">
-                <span className="text-white text-xl select-none">✦</span>
-              </div>
-            </div>
-
-            <h1 className="font-serif text-2xl md:text-3xl font-semibold text-foreground text-center mb-2 leading-tight">
-              Welcome to HeartsHeal
-            </h1>
-            <p className="text-muted-foreground text-center text-sm leading-relaxed max-w-xs mb-5">
-              A quiet, compassionate space to process grief, heartbreak, and life transitions — guided by Haven, your personal healing companion.
-            </p>
-
-            {/* Feature pills */}
-            <div className="flex flex-wrap justify-center gap-2 mb-5 max-w-xs">
-              {[
-                { icon: <Sparkles className="w-3.5 h-3.5" />, label: "AI voice companion" },
-                { icon: <Wind className="w-3.5 h-3.5" />,     label: "Guided breathing" },
-                { icon: <BookHeart className="w-3.5 h-3.5" />, label: "Reflective journaling" },
-                { icon: <BarChart3 className="w-3.5 h-3.5" />, label: "Healing insights" },
-              ].map(({ icon, label }) => (
-                <span key={label} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-xs font-medium text-primary">
-                  {icon}{label}
-                </span>
-              ))}
-            </div>
-
-            {/* CTA buttons */}
-            <div className="flex flex-col gap-2.5 w-full max-w-xs">
-              <button
-                onClick={() => { setAuthModalMode("signup"); setAuthModalOpen(true) }}
-                className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+              {/* Logo mark — matches Haven's thin header */}
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.4 }}
+                className="flex items-center gap-2 mb-8"
               >
-                Let's begin →
-              </button>
-              <button
-                onClick={() => { setAuthModalMode("signin"); setAuthModalOpen(true) }}
-                className="w-full py-2.5 rounded-2xl border border-border/60 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
-              >
-                I already have an account
-              </button>
-              <button
-                onClick={() => {
-                  setWelcomeOpen(false)
-                  if (!readStorage(STORAGE_KEYS.welcomeSeen)) {
-                    setTimeout(() => setOnboardingOpen(true), 350)
-                  }
-                }}
-                className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors pt-1"
-              >
-                Continue without an account
-              </button>
-            </div>
+                <span className="text-primary text-lg">♥</span>
+                <span className="font-serif font-semibold text-foreground tracking-tight">HeartsHeal</span>
+              </motion.div>
 
-            <p className="text-[10px] text-muted-foreground/40 mt-4">Free forever · No credit card required</p>
+              {/* Orb — identical to Haven's orb */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
+                className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center mb-5 shrink-0"
+              >
+                <motion.span
+                  className="absolute rounded-full bg-primary/15"
+                  style={{ width: "160%", height: "160%" }}
+                  animate={{ scale: [1, 1.12, 1], opacity: [0.4, 0.1, 0.4] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                />
+                <motion.span
+                  className="absolute rounded-full bg-primary/20"
+                  style={{ width: "130%", height: "130%" }}
+                  animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.2, 0.5] }}
+                  transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+                />
+                <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-rose-300 via-primary to-violet-500 shadow-[0_0_40px_8px] shadow-primary/30 z-10 flex items-center justify-center">
+                  <span className="text-white text-2xl md:text-3xl select-none">✦</span>
+                </div>
+              </motion.div>
 
-            {/* Crisis resources */}
-            <div className="mt-4 w-full max-w-xs rounded-2xl border border-rose-200/50 dark:border-rose-900/40 bg-rose-50/60 dark:bg-rose-950/20 px-4 py-3">
-              <p className="text-[11px] font-semibold text-rose-700 dark:text-rose-400 text-center mb-2">
-                If you're in crisis, please reach out
-              </p>
-              <div className="flex flex-col gap-1.5">
+              {/* Haven's voice — styled exactly like Haven's message bubble */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.5 }}
+                className="w-full max-w-sm text-center mb-2"
+              >
+                <p className="font-serif text-lg md:text-xl text-foreground leading-snug">
+                  Hello. I'm Haven — I'm here to walk alongside you through whatever you're carrying.
+                </p>
+              </motion.div>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.4 }}
+                className="text-sm text-muted-foreground text-center leading-relaxed max-w-xs mb-7"
+              >
+                Grief, heartbreak, loss — you don't have to move through it alone. Let's begin.
+              </motion.p>
+
+              {/* Feature tags — minimal, inline */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7, duration: 0.4 }}
+                className="flex flex-wrap justify-center gap-1.5 mb-7 max-w-[280px]"
+              >
                 {[
-                  { label: "988 Suicide & Crisis Lifeline",  detail: "Call or text 988 (US)" },
-                  { label: "Crisis Text Line",                detail: "Text HOME to 741741" },
-                  { label: "International Association",       detail: "findahelpline.com" },
-                ].map(({ label, detail }) => (
-                  <div key={label} className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] text-rose-700/80 dark:text-rose-400/80 font-medium leading-tight">{label}</span>
-                    <span className="text-[10px] text-rose-600 dark:text-rose-300 font-semibold shrink-0">{detail}</span>
-                  </div>
+                  { icon: <Sparkles className="w-3 h-3" />, label: "AI companion" },
+                  { icon: <Wind className="w-3 h-3" />,     label: "Breathing" },
+                  { icon: <BookHeart className="w-3 h-3" />, label: "Journaling" },
+                  { icon: <BarChart3 className="w-3 h-3" />, label: "Insights" },
+                ].map(({ icon, label }) => (
+                  <span key={label} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/8 border border-primary/12 text-[11px] font-medium text-primary/80">
+                    {icon}{label}
+                  </span>
                 ))}
-              </div>
-              <p className="text-[9px] text-rose-500/60 dark:text-rose-400/40 text-center mt-2 leading-relaxed">
-                HeartsHeal supports healing — it is not a substitute for emergency care.
-              </p>
-            </div>
+              </motion.div>
 
-            </div>{/* end inner wrapper */}
+              {/* CTAs — match Haven's pill input style */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8, duration: 0.4 }}
+                className="flex flex-col gap-2.5 w-full max-w-xs"
+              >
+                <button
+                  onClick={() => { setAuthModalMode("signup"); setAuthModalOpen(true) }}
+                  className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 active:scale-[0.98]"
+                >
+                  ✦ Begin with Haven
+                </button>
+                <button
+                  onClick={() => { setAuthModalMode("signin"); setAuthModalOpen(true) }}
+                  className="w-full py-3 rounded-full border border-border/60 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40 hover:border-border transition-all"
+                >
+                  Sign in to my account
+                </button>
+                <button
+                  onClick={() => {
+                    setWelcomeOpen(false)
+                    if (!readStorage(STORAGE_KEYS.welcomeSeen)) {
+                      setTimeout(() => setOnboardingOpen(true), 350)
+                    }
+                  }}
+                  className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors pt-0.5"
+                >
+                  Continue without an account
+                </button>
+              </motion.div>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1, duration: 0.4 }}
+                className="text-[10px] text-muted-foreground/40 mt-4"
+              >
+                Free forever · No credit card required
+              </motion.p>
+
+              {/* Crisis resources — compact, unobtrusive */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.1, duration: 0.4 }}
+                className="mt-5 w-full max-w-xs rounded-2xl border border-rose-200/40 dark:border-rose-900/30 bg-rose-50/50 dark:bg-rose-950/15 px-4 py-3"
+              >
+                <p className="text-[11px] font-semibold text-rose-600/80 dark:text-rose-400 text-center mb-2">
+                  In crisis? You're not alone.
+                </p>
+                <div className="flex flex-col gap-1">
+                  {[
+                    { label: "988 Lifeline",      detail: "Call or text 988" },
+                    { label: "Crisis Text Line",   detail: "Text HOME to 741741" },
+                    { label: "International",      detail: "findahelpline.com" },
+                  ].map(({ label, detail }) => (
+                    <div key={label} className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] text-rose-700/70 dark:text-rose-400/70 font-medium">{label}</span>
+                      <span className="text-[10px] text-rose-600 dark:text-rose-300 font-semibold">{detail}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

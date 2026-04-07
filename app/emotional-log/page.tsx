@@ -2,13 +2,12 @@
 
 import { useState, useRef } from "react"
 import Link from "next/link"
-import { ChevronLeft, AlertCircle, RefreshCw, Clock, Calendar } from "lucide-react"
+import { ChevronLeft, AlertCircle, RefreshCw, Calendar, TrendingUp } from "lucide-react"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 
 import { useEmotionLogs } from "@/hooks/use-emotion-logs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { EnhancedEmotionalAnalytics } from "@/components/enhanced-emotional-analytics"
 import { formatRelativeTime } from "@/utils/date-utils"
 import { useRealTimeUpdate } from "@/hooks/use-real-time-update"
 import { DailyEmotionFolder } from "@/components/daily-emotion-folder"
@@ -75,7 +74,7 @@ function EmotionalLog() {
 
   return (
     <div className="bg-gradient-to-b from-rose-50/50 via-background to-background dark:from-rose-950/15 min-h-screen">
-      <motion.div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-3 md:py-5" variants={container} initial="hidden" animate="show">
+      <motion.div className="w-full max-w-3xl mx-auto px-4 md:px-8 py-3 md:py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
         <motion.div className="flex items-center justify-between mb-3" variants={item}>
@@ -88,6 +87,9 @@ function EmotionalLog() {
           <div className="flex items-center gap-2">
             <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">
               💜 Talk to Haven
+            </Link>
+            <Link href="/insights" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/60 text-muted-foreground text-xs font-medium hover:bg-muted hover:text-foreground transition-colors">
+              <TrendingUp className="h-3 w-3" /> Insights
             </Link>
             <button onClick={handleRefresh} disabled={isLoading || isRefreshing} className="w-8 h-8 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors" title="Refresh data">
               <RefreshCw className={`h-4 w-4 text-primary/70 ${isRefreshing ? "animate-spin" : ""}`} />
@@ -106,60 +108,37 @@ function EmotionalLog() {
           </motion.div>
         )}
 
-        {/* Two-column grid */}
-        <motion.div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 lg:gap-8 items-start" variants={item}>
-
-          {/* ── Main column: journey ── */}
-          <div className="space-y-5 min-w-0">
-
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <Calendar className="h-5 w-5 text-primary mr-2" />
-                  <h2 className="text-2xl font-semibold text-foreground">Your Emotional Journey</h2>
-                </div>
-                <span className="text-xs text-primary/70">Last updated: {formatRelativeTime(lastUpdated)}</span>
+        {/* Archive */}
+        <motion.div className="space-y-5" variants={item}>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
+                <Calendar className="h-5 w-5 text-primary mr-2" />
+                <h2 className="text-2xl font-semibold text-foreground">Your Emotional Journey</h2>
               </div>
-              {isLoading ? (
-                <div className="flex justify-center items-center py-8"><LoadingSpinner size="md" /></div>
-              ) : (
-                <AnimatePresence>
-                  {emotionLogs.length === 0 ? (
-                    <div className="border border-border/40 bg-card rounded-xl p-8 text-center text-muted-foreground">
-                      No entries yet —{" "}
-                      <Link href="/" className="text-primary hover:underline font-medium">log your first emotion in Haven</Link>.
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {sortedDates.map((date) => (
-                        <DailyEmotionFolder key={date} date={date} entries={groupedEntries[date]} onDeleteEntry={handleDelete} />
-                      ))}
-                    </div>
-                  )}
-                </AnimatePresence>
-              )}
+              <span className="text-xs text-primary/70">Last updated: {formatRelativeTime(lastUpdated)}</span>
             </div>
-
+            {isLoading ? (
+              <div className="flex justify-center items-center py-8"><LoadingSpinner size="md" /></div>
+            ) : (
+              <AnimatePresence>
+                {emotionLogs.length === 0 ? (
+                  <div className="border border-border/40 bg-card rounded-xl p-8 text-center text-muted-foreground">
+                    No entries yet —{" "}
+                    <Link href="/" className="text-primary hover:underline font-medium">log your first emotion in Haven</Link>.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {sortedDates.map((date) => (
+                      <DailyEmotionFolder key={date} date={date} entries={groupedEntries[date]} onDeleteEntry={handleDelete} />
+                    ))}
+                  </div>
+                )}
+              </AnimatePresence>
+            )}
           </div>
-
-          {/* ── Sidebar: date chip + analytics ── */}
-          <aside className="lg:sticky lg:top-[76px] lg:self-start space-y-4 min-w-0">
-
-            {/* Date chip */}
-            <div className="glass-card rounded-2xl px-4 py-3 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-primary/70" />
-              <span className="text-sm font-medium text-foreground">{new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
-            </div>
-
-            {/* Emotional analytics */}
-            <div>
-              <h2 className="text-lg font-semibold text-foreground mb-3">Analytics</h2>
-              <EnhancedEmotionalAnalytics emotionLogs={emotionLogs} isLoading={isLoading} error={error} />
-            </div>
-
-          </aside>
-
         </motion.div>
+
       </motion.div>
 
       {/* Inline delete confirmation */}

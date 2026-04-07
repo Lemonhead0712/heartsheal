@@ -13,7 +13,7 @@ import {
 } from "recharts"
 import {
   TrendingUp, TrendingDown, Flame, Wind, BookHeart,
-  Sparkles, BarChart3, Activity, Heart, PlusCircle, ChevronDown,
+  Sparkles, BarChart3, Activity, Heart, PlusCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useInsightsData, type DateRange } from "@/hooks/use-insights-data"
@@ -148,7 +148,6 @@ const MoodBarTooltip = ({ active, payload, label }: any) => {
 /* ── Main component ── */
 export function InsightsDashboard() {
   const [dateRange, setDateRange] = useState<DateRange>("30d")
-  const [expandedActivity, setExpandedActivity] = useState<string | null>(null)
   const data = useInsightsData(dateRange)
 
   const anim = {
@@ -611,99 +610,10 @@ export function InsightsDashboard() {
               </SectionCard>
             </motion.div>
 
-            {/* ── Recent Activity ── */}
-            <motion.div variants={anim.item}>
-              <SectionCard title="Recent Activity">
-                {data.recentJournalSnippets.length === 0 && data.havenSessions.length === 0 ? (
-                  <EmptyState text="Your journals and Haven sessions will appear here." />
-                ) : (
-                  <div className="divide-y divide-border/30">
-                    {/* Haven session rows */}
-                    {data.havenSessions.map((session, idx) => {
-                      const key = `haven-${idx}`
-                      const open = expandedActivity === key
-                      return (
-                        <div key={key}>
-                          <button
-                            onClick={() => setExpandedActivity(open ? null : key)}
-                            className="w-full flex items-center justify-between gap-3 py-3 px-2 text-left hover:bg-muted/30 rounded-xl transition-colors"
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <Heart className="w-3.5 h-3.5 text-primary shrink-0" />
-                              <span className="text-xs font-semibold text-foreground truncate">Haven Session</span>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium shrink-0">
-                                {LOSS_LABELS[session.lossType] ?? session.lossType}
-                              </span>
-                              {session.messageCount !== undefined && (
-                                <span className="text-[10px] text-muted-foreground shrink-0">{session.messageCount} exchanges</span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-[10px] text-muted-foreground">{session.date}</span>
-                              <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform duration-200", open && "rotate-180")} />
-                            </div>
-                          </button>
-                          <AnimatePresence>
-                            {open && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }}
-                                className="overflow-hidden"
-                              >
-                                <p className="text-xs text-muted-foreground/80 leading-relaxed italic px-2 pb-3">
-                                  "{session.summary}"
-                                </p>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      )
-                    })}
-                    {/* Journal snippet rows */}
-                    {data.recentJournalSnippets.map((j, i) => {
-                      const key = `j-${i}`
-                      const open = expandedActivity === key
-                      const title = j.prompt && j.prompt !== "Free write"
-                        ? j.prompt.slice(0, 42) + (j.prompt.length > 42 ? "…" : "")
-                        : "Journal Entry"
-                      return (
-                        <div key={i}>
-                          <button
-                            onClick={() => setExpandedActivity(open ? null : key)}
-                            className="w-full flex items-center justify-between gap-3 py-3 px-2 text-left hover:bg-muted/30 rounded-xl transition-colors"
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <BookHeart className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                              <span className="text-xs font-semibold text-foreground truncate">{title}</span>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-[10px] text-muted-foreground">{j.date}</span>
-                              <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform duration-200", open && "rotate-180")} />
-                            </div>
-                          </button>
-                          <AnimatePresence>
-                            {open && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }}
-                                className="overflow-hidden"
-                              >
-                                <p className="text-xs text-muted-foreground leading-relaxed px-2 pb-3">"{j.excerpt}"</p>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </SectionCard>
-            </motion.div>
-
             {/* ── Quick-access footer ── */}
             <motion.div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1" variants={anim.item}>
               {[
-                { href: "/emotional-log", label: "Log Emotion",   icon: BarChart3, color: "text-primary" },
+                { href: "/emotional-log", label: "History",       icon: BarChart3, color: "text-primary" },
                 { href: "/breathe",       label: "Breathe",       icon: Wind,       color: "text-sky-500" },
                 { href: "/thoughts",      label: "Journal",       icon: BookHeart,  color: "text-amber-500" },
                 { href: "/",              label: "Talk to Haven", icon: Sparkles,   color: "text-rose-500" },

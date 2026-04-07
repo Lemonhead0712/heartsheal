@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useMemo, useEffect } from "react"
 import Link from "next/link"
 import { ChevronLeft, AlertCircle, RefreshCw, Calendar, TrendingUp } from "lucide-react"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
@@ -20,28 +20,43 @@ function EmotionalLog() {
   const { entries, isLoading, error, deleteEntry } = useEmotionLogs()
   const [isRefreshing, setIsRefreshing] = useState(false)
 
-  // Update the component every minute to keep relative times current
-  const currentTime = useRealTimeUpdate(60000)
+  // Triggers re-renders every 60s so formatRelativeTime stays current
+  useRealTimeUpdate(60000)
 
   const emotionLogs = entries || []
 
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Group entries by date
-  const groupedEntries = emotionLogs.reduce((groups: Record<string, any[]>, entry) => {
-    const date = new Date(entry.timestamp).toISOString().split("T")[0]
-    if (!groups[date]) groups[date] = []
-    groups[date].push(entry)
-    return groups
-  }, {})
+  // Memoize grouping — avoids re-running on unrelated state changes
+  const groupedEntries = useMemo(() =>
+    emotionLogs.reduce((groups: Record<string, any[]>, entry) => {
+      const date = new Date(entry.timestamp).toISOString().split("T")[0]
+      if (!groups[date]) groups[date] = []
+      groups[date].push(entry)
+      return groups
+    }, {}),
+    [emotionLogs]
+  )
 
-  const sortedDates = Object.keys(groupedEntries).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+  const sortedDates = useMemo(() =>
+    Object.keys(groupedEntries).sort((a, b) => new Date(b).getTime() - new Date(a).getTime()),
+    [groupedEntries]
+  )
+
+  // Clear pending timers on unmount
+  useEffect(() => {
+    return () => {
+      if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current)
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+    }
+  }, [])
 
   const handleRefresh = () => {
     setIsRefreshing(true)
-    setTimeout(() => {
+    refreshTimerRef.current = setTimeout(() => {
       setLastUpdated(new Date())
       setIsRefreshing(false)
     }, 500)
@@ -123,9 +138,15 @@ function EmotionalLog() {
             ) : (
               <AnimatePresence>
                 {emotionLogs.length === 0 ? (
-                  <div className="border border-border/40 bg-card rounded-xl p-8 text-center text-muted-foreground">
-                    No entries yet —{" "}
-                    <Link href="/" className="text-primary hover:underline font-medium">log your first emotion in Haven</Link>.
+                  <div className="border border-border/40 bg-card rounded-2xl p-10 flex flex-col items-center gap-4 text-center">
+                    <span className="text-5xl select-none">💜</span>
+                    <div>
+                      <p className="text-base font-semibold text-foreground mb-1">Your journey starts here</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">Haven is ready when you are. Log your first emotion and it will appear here.</p>
+                    </div>
+                    <Link href="/" className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
+                      Open Haven
+                    </Link>
                   </div>
                 ) : (
                   <div className="space-y-4">

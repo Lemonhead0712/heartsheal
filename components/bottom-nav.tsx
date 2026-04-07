@@ -3,16 +3,16 @@
 import type React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BookHeart, Wind, TrendingUp, Sparkles } from "lucide-react"
+import { Clock, TrendingUp, Sparkles, Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useHapticContext } from "@/contexts/haptic-context"
 import { motion } from "framer-motion"
 
 const navItems = [
-  { name: "Haven",    href: "/",          icon: Sparkles },
-  { name: "Breathe",  href: "/breathe",   icon: Wind },
-  { name: "Thoughts", href: "/thoughts",  icon: BookHeart },
-  { name: "Insights", href: "/insights",  icon: TrendingUp },
+  { name: "Haven",    href: "/",               icon: Sparkles },
+  { name: "History",  href: "/emotional-log",  icon: Clock },
+  { name: "Insights", href: "/insights",       icon: TrendingUp },
+  { name: "Settings", href: "/settings",       icon: Settings },
 ]
 
 export function BottomNav() {

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import {
   AreaChart, Area,
   BarChart, Bar, Cell,
@@ -63,9 +63,23 @@ function intensityBarColor(avg: number) {
 }
 
 /* ── Reusable shell components ── */
-function StatCard({ label, value, sub, icon: Icon, color, delta }: {
+function ScoreRing({ score }: { score: number }) {
+  const r = 20; const circ = 2 * Math.PI * r
+  const color = score >= 70 ? "#10b981" : score >= 45 ? "#f59e0b" : "#f43f5e"
+  return (
+    <svg width="50" height="50" viewBox="0 0 50 50" className="shrink-0">
+      <circle cx="25" cy="25" r={r} fill="none" stroke="currentColor" strokeWidth="4" className="text-border/30" />
+      <circle cx="25" cy="25" r={r} fill="none" stroke={color} strokeWidth="4"
+        strokeDasharray={circ} strokeDashoffset={circ - (score / 100) * circ}
+        strokeLinecap="round" transform="rotate(-90 25 25)" />
+      <text x="25" y="30" textAnchor="middle" fontSize="11" fontWeight="700" fill={color}>{score}</text>
+    </svg>
+  )
+}
+
+function StatCard({ label, value, sub, icon: Icon, color, delta, scoreRing }: {
   label: string; value: string | number; sub: string
-  icon: React.ElementType; color: string; delta?: number
+  icon: React.ElementType; color: string; delta?: number; scoreRing?: boolean
 }) {
   return (
     <div className="glass-card rounded-2xl p-4 flex flex-col gap-2">
@@ -80,10 +94,13 @@ function StatCard({ label, value, sub, icon: Icon, color, delta }: {
           </span>
         )}
       </div>
-      <div>
-        <p className="text-2xl font-bold text-foreground leading-none">{value}</p>
-        <p className="text-xs text-muted-foreground mt-1">{sub}</p>
-        <p className="text-[11px] font-medium text-muted-foreground/70 mt-0.5 uppercase tracking-wide">{label}</p>
+      <div className="flex items-end justify-between gap-2">
+        <div>
+          {!scoreRing && <p className="text-2xl font-bold text-foreground leading-none">{value}</p>}
+          <p className="text-xs text-muted-foreground mt-1">{sub}</p>
+          <p className="text-[11px] font-medium text-muted-foreground/70 mt-0.5 uppercase tracking-wide">{label}</p>
+        </div>
+        {scoreRing && typeof value === "number" && <ScoreRing score={value} />}
       </div>
     </div>
   )
@@ -265,7 +282,8 @@ export function InsightsDashboard() {
                   ? (data.healingScoreDelta !== 0 ? `${data.healingScoreDelta > 0 ? "+" : ""}${data.healingScoreDelta} vs last period` : "Based on your activity")
                   : `Log ${Math.max(0, 3 - data.totalEmotionLogs)} more to unlock`}
                 color="text-rose-500 bg-rose-100 dark:bg-rose-900/30 dark:text-rose-400"
-                delta={data.totalEmotionLogs >= 3 ? data.healingScoreDelta : undefined} />
+                delta={data.totalEmotionLogs >= 3 ? data.healingScoreDelta : undefined}
+                scoreRing={data.totalEmotionLogs >= 3} />
               <StatCard label="Daily Streak" icon={Flame}
                 value={`${data.currentStreak > 0 ? "🔥 " : ""}${data.currentStreak}`}
                 sub={`Best: ${data.longestStreak} days`}

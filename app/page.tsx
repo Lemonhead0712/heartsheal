@@ -47,13 +47,27 @@ const EMOTIONS = [
   { label: "Grief",    emoji: "💔", intensity: 2 },
 ]
 
-const BREATHE_SEQ = [
-  { phase: "inhale" as const, label: "Breathe In",  cue: "Breathe in",  dur: 4 },
-  { phase: "hold1"  as const, label: "Hold",        cue: "Hold",        dur: 4 },
-  { phase: "exhale" as const, label: "Breathe Out", cue: "Breathe out", dur: 4 },
-  { phase: "hold2"  as const, label: "Hold",        cue: "Hold",        dur: 3 },
-  { phase: "rest"   as const, label: "Rest",        cue: "Rest",        dur: 3 },
+type HavenPattern = {
+  id: string; name: string; description: string; benefit: string
+  inhale: number; hold1: number; exhale: number; hold2: number; color: string
+}
+
+const HAVEN_BREATHE_PATTERNS: HavenPattern[] = [
+  { id: "box",      name: "Box Breathing",    description: "4-4-4-4",  benefit: "Reduces stress, improves focus",      inhale: 4, hold1: 4, exhale: 4, hold2: 4, color: "sky" },
+  { id: "478",      name: "4-7-8 Breathing",  description: "4-7-8",    benefit: "Calms anxiety, promotes rest",        inhale: 4, hold1: 7, exhale: 8, hold2: 0, color: "violet" },
+  { id: "relaxing", name: "Relaxing Breath",  description: "4-6",      benefit: "Activates your calm response",        inhale: 4, hold1: 0, exhale: 6, hold2: 0, color: "rose" },
+  { id: "equal",    name: "Equal Breathing",  description: "5-5",      benefit: "Balances the nervous system",         inhale: 5, hold1: 0, exhale: 5, hold2: 0, color: "emerald" },
 ]
+
+function buildBreatheSeq(p: HavenPattern) {
+  const seq: { phase: "inhale" | "hold1" | "exhale" | "hold2" | "rest"; label: string; cue: string; dur: number }[] = []
+  seq.push({ phase: "inhale", label: "Breathe In",  cue: "Breathe in",  dur: p.inhale })
+  if (p.hold1 > 0) seq.push({ phase: "hold1",  label: "Hold",        cue: "Hold",        dur: p.hold1 })
+  seq.push({ phase: "exhale", label: "Breathe Out", cue: "Breathe out", dur: p.exhale })
+  if (p.hold2 > 0) seq.push({ phase: "hold2",  label: "Hold",        cue: "Hold",        dur: p.hold2 })
+  seq.push({ phase: "rest",   label: "Rest",        cue: "Rest",        dur: 3 })
+  return seq
+}
 
 // ── Quiz data (5-question embedded version, saves to same key as /thoughts) ───
 type HavenQuizQ = { id: string; question: string; options: string[]; scores: number[]; category: string }
@@ -81,15 +95,59 @@ const HAVEN_QUIZ: Record<QuizType, { label: string; emoji: string; questions: Ha
   }
 }
 
-const EMOTION_JOURNAL_PROMPTS: Record<string, string> = {
-  "Sad":      "What does this sadness feel like in your body right now? What does it most need from you?",
-  "Anxious":  "What is your anxiety trying to protect you from? What would you say to it with kindness?",
-  "Numb":     "When did you last feel something clearly? What were you doing, and who were you with?",
-  "Hopeful":  "What sparked this sense of hope today? How can you honour it and let it grow?",
-  "Grateful": "What are you most grateful for right now? Who or what has held you recently?",
-  "Angry":    "What is your anger telling you about what matters to you? What boundary needs honouring?",
-  "Calm":     "What brought you to this calm? How can you return here when things feel harder?",
-  "Grief":    "What are you grieving? If you could say one thing to what you've lost, what would it be?",
+// Prompts vary by emotion and intensity tier (low 1-3 / medium 4-6 / high 7-10)
+const EMOTION_JOURNAL_PROMPTS: Record<string, { low: string; medium: string; high: string }> = {
+  "Sad":      {
+    low:    "What is this quiet sadness about? Is there something you've been carrying that deserves a little more attention?",
+    medium: "What does this sadness feel like in your body right now? What does it most need from you?",
+    high:   "You're carrying something heavy right now. What would feel like relief, even just for a moment? Let it out here.",
+  },
+  "Anxious":  {
+    low:    "What's sitting in the back of your mind today? What would you need to feel more settled?",
+    medium: "What is your anxiety trying to protect you from? What would you say to it with kindness?",
+    high:   "When anxiety is this intense, it helps to name it. What specifically is your nervous system afraid of right now? Write it down — outside of you.",
+  },
+  "Numb":     {
+    low:    "Numbness is often rest in disguise. What do you think you're resting from?",
+    medium: "When did you last feel something clearly? What were you doing, and who were you with?",
+    high:   "Deep numbness can be protection. What might you be protecting yourself from feeling right now? You don't have to feel it — just name it.",
+  },
+  "Hopeful":  {
+    low:    "Something shifted today. What small thing gave you that feeling of possibility?",
+    medium: "What sparked this sense of hope today? How can you honour it and let it grow?",
+    high:   "This kind of hope feels like a light turning on. What does it make possible for you? Write about the version of yourself this hope is reaching toward.",
+  },
+  "Grateful": {
+    low:    "Something is good today. What are you quietly thankful for right now?",
+    medium: "What are you most grateful for right now? Who or what has held you recently?",
+    high:   "This depth of gratitude is rare and worth capturing. Who do you most want to thank? What has changed in you that allows you to feel this so fully?",
+  },
+  "Angry":    {
+    low:    "Something isn't sitting right. What bothered you today, and what did it touch in you?",
+    medium: "What is your anger telling you about what matters to you? What boundary needs honouring?",
+    high:   "This anger is strong and probably justified. What was crossed? What do you need to say that you haven't been able to say yet? Write it here, uncensored.",
+  },
+  "Calm":     {
+    low:    "There's a stillness in you right now. What's contributing to it?",
+    medium: "What brought you to this calm? How can you return here when things feel harder?",
+    high:   "This kind of peace feels earned. What's different today? What did you do or let go of that led you here?",
+  },
+  "Grief":    {
+    low:    "Grief visits in quiet ways too. What are you missing today, even a little?",
+    medium: "What are you grieving? If you could say one thing to what you've lost, what would it be?",
+    high:   "Grief this strong means you loved something deeply. Let yourself write about that love — what it meant, what it gave you, what it still means now.",
+  },
+}
+
+const EMOTION_QUIZ_MAP: Record<string, "emotional-awareness" | "self-compassion"> = {
+  "Sad":      "self-compassion",
+  "Anxious":  "emotional-awareness",
+  "Numb":     "self-compassion",
+  "Hopeful":  "emotional-awareness",
+  "Grateful": "self-compassion",
+  "Angry":    "emotional-awareness",
+  "Calm":     "self-compassion",
+  "Grief":    "self-compassion",
 }
 
 const HAVEN_SYSTEM = `You are Haven, the heart of HeartsHeal — a compassionate AI healing companion.
@@ -209,12 +267,13 @@ export default function HavenHome() {
   const [input,         setInput]         = useState("")
 
   // ── Session tracking ──────────────────────────────────────────────────────
-  const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null)
-  const [completedToday,  setCompletedToday]  = useState<Set<string>>(new Set())
-  const [streak,          setStreak]          = useState(0)
-  const [sessionClosed,   setSessionClosed]   = useState(false)
+  const [selectedEmotion,   setSelectedEmotion]   = useState<string | null>(null)
+  const [completedToday,    setCompletedToday]    = useState<Set<string>>(new Set())
+  const [streak,            setStreak]            = useState(0)
+  const [sessionClosed,     setSessionClosed]     = useState(false)
 
   // ── Breathing widget state ────────────────────────────────────────────────
+  const [havenBreathePattern, setHavenBreathePattern] = useState<HavenPattern>(HAVEN_BREATHE_PATTERNS[0])
   const [breathePhase,          setBreathePhase]          = useState<"idle" | "inhale" | "hold1" | "exhale" | "hold2" | "rest" | "done">("idle")
   const [breatheCount,          setBreatheCount]          = useState(0)
   const [breatheTargetRounds,   setBreatheTargetRounds]   = useState(3)
@@ -497,48 +556,49 @@ export default function HavenHome() {
   }, [addEmotion, reportToHaven])
 
   // ── Breathing widget ──────────────────────────────────────────────────────
-  const saveBreatheSession = useCallback((cycles: number) => {
+  const saveBreatheSession = useCallback((cycles: number, pattern: HavenPattern) => {
     if (cycles < 1) return
     try {
-      const record = { id: Date.now().toString(), timestamp: new Date().toISOString(), pattern: "Box Breathing (4-4-4-2)", cycles }
+      const record = { id: Date.now().toString(), timestamp: new Date().toISOString(), pattern: pattern.name, cycles }
       const prev = readStorage<any[]>(STORAGE_KEYS.breathingHistory) ?? []
       writeStorage(STORAGE_KEYS.breathingHistory, [...prev, record])
     } catch {}
   }, [])
 
-  const startBreathing = useCallback((rounds = 3) => {
+  const startBreathing = useCallback((rounds: number, pattern: HavenPattern) => {
+    const seq = buildBreatheSeq(pattern)
     breatheCyclesRef.current  = 0
     breatheTargetRef.current  = rounds
     setBreatheCyclesDone(0)
     setBreatheTargetRounds(rounds)
 
-    let seqIdx = 0; let count = BREATHE_SEQ[0].dur
-    setBreathePhase(BREATHE_SEQ[0].phase); setBreatheCount(count)
-    speak(BREATHE_SEQ[0].cue, { rate: 0.82, pitch: 0.9 })
+    let seqIdx = 0; let count = seq[0].dur
+    setBreathePhase(seq[0].phase); setBreatheCount(count)
+    speak(seq[0].cue, { rate: 0.82, pitch: 0.9 })
 
     breatheInterval.current = setInterval(() => {
       count -= 1; setBreatheCount(count)
       if (count <= 0) {
         seqIdx += 1
 
-        // Cycle completes when hold2 (index 3) ends and we enter rest (index 4)
-        if (seqIdx === BREATHE_SEQ.length - 1) {
+        // Cycle completes when we reach the rest phase (last item in seq)
+        if (seqIdx === seq.length - 1) {
           breatheCyclesRef.current += 1
           setBreatheCyclesDone(breatheCyclesRef.current)
           if (breatheCyclesRef.current >= breatheTargetRef.current) {
             // Final round — skip rest, end session
             clearInterval(breatheInterval.current!); breatheInterval.current = null
-            saveBreatheSession(breatheCyclesRef.current)
+            saveBreatheSession(breatheCyclesRef.current, pattern)
             setBreathePhase("done")
             return
           }
           // More rounds — fall through to show rest phase
-        } else if (seqIdx >= BREATHE_SEQ.length) {
+        } else if (seqIdx >= seq.length) {
           // Rest phase finished — loop back to inhale for next round
           seqIdx = 0
         }
 
-        const next = BREATHE_SEQ[seqIdx]; count = next.dur
+        const next = seq[seqIdx]; count = next.dur
         setBreathePhase(next.phase); setBreatheCount(count)
         if (next.cue) speak(next.cue, { rate: 0.82, pitch: 0.9 })
       }
@@ -547,9 +607,9 @@ export default function HavenHome() {
 
   const endBreathingEarly = useCallback(() => {
     if (breatheInterval.current) { clearInterval(breatheInterval.current); breatheInterval.current = null }
-    saveBreatheSession(breatheCyclesRef.current)
+    saveBreatheSession(breatheCyclesRef.current, havenBreathePattern)
     setBreathePhase("done")
-  }, [saveBreatheSession])
+  }, [saveBreatheSession, havenBreathePattern])
 
   const skipBreathing = useCallback(() => {
     if (breatheInterval.current) { clearInterval(breatheInterval.current); breatheInterval.current = null }
@@ -560,12 +620,18 @@ export default function HavenHome() {
   useEffect(() => () => { if (breatheInterval.current) clearInterval(breatheInterval.current) }, [])
 
   const breatheCircleScale = breathePhase === "inhale" ? 1.5 : breathePhase === "exhale" ? 0.68 : 1.0
-  const breatheDuration    = BREATHE_SEQ.find((s) => s.phase === breathePhase)?.dur ?? 4
+  const breatheDuration    = buildBreatheSeq(havenBreathePattern).find((s) => s.phase === breathePhase)?.dur ?? 4
 
   // ── Journal widget ────────────────────────────────────────────────────────
-  const journalPrompt = selectedEmotion
-    ? (EMOTION_JOURNAL_PROMPTS[selectedEmotion] ?? "What feeling is taking up the most space in you right now?")
-    : "What feeling is taking up the most space in you right now?"
+  const journalPrompt = (() => {
+    if (!selectedEmotion) return "What feeling is taking up the most space in you right now?"
+    const tiers = EMOTION_JOURNAL_PROMPTS[selectedEmotion]
+    if (!tiers) return "What feeling is taking up the most space in you right now?"
+    const intensity = emotionIntensity ?? 5
+    if (intensity >= 7) return tiers.high
+    if (intensity >= 4) return tiers.medium
+    return tiers.low
+  })()
 
   const saveJournal = useCallback(async () => {
     if (!journalText.trim()) return
@@ -589,17 +655,22 @@ export default function HavenHome() {
   }, [survey, reportToHaven])
 
   // ── Quiz widget ───────────────────────────────────────────────────────────
-  // When quiz-widget mode opens, pick the less-completed quiz type
+  // Pick quiz type: emotion-mapped first, then frequency-balance fallback
   useEffect(() => {
     if (mode !== "quiz-widget") return
     const results = readStorage<any[]>(STORAGE_KEYS.quizResults) ?? []
     const eaCount = results.filter((r) => r.type === "emotional-awareness").length
     const scCount = results.filter((r) => r.type === "self-compassion").length
-    setQuizType(eaCount <= scCount ? "emotional-awareness" : "self-compassion")
+    const emotionSuggested = selectedEmotion ? EMOTION_QUIZ_MAP[selectedEmotion] : null
+    // Use emotion-suggested type if it's the one they've done less (or equal), else frequency-balance
+    const pickedType = emotionSuggested
+      ? (emotionSuggested === "emotional-awareness" ? (eaCount <= scCount ? "emotional-awareness" : "self-compassion") : (scCount <= eaCount ? "self-compassion" : "emotional-awareness"))
+      : (eaCount <= scCount ? "emotional-awareness" : "self-compassion")
+    setQuizType(pickedType)
     setQuizIndex(0)
     setQuizAnswers({})
     setQuizPhase("idle")
-  }, [mode])
+  }, [mode, selectedEmotion])
 
   const handleQuizAnswer = useCallback((questionId: string, score: number) => {
     setQuizAnswers((prev) => {
@@ -713,21 +784,30 @@ export default function HavenHome() {
       {/* ── Content — fills remaining space, no scrolling ── */}
       <div className="flex-1 flex flex-col items-center px-4 pt-2 min-h-0">
 
-        {/* Orb — smaller on mobile to save vertical space */}
-        <div className="relative w-20 h-20 md:w-28 md:h-28 flex items-center justify-center mb-2 shrink-0">
+        {/* Orb */}
+        <div className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center mb-3 shrink-0">
+          {/* Outer ambient ring */}
           <motion.span
-            className="absolute inset-0 rounded-full bg-primary/20"
-            animate={{ scale: [1, 1.18, 1], opacity: [0.5, 0.15, 0.5] }}
+            className="absolute rounded-full bg-primary/15"
+            style={{ width: "160%", height: "160%" }}
+            animate={{ scale: [1, 1.12, 1], opacity: [0.4, 0.1, 0.4] }}
             transition={{ duration: parseFloat(orbPing), repeat: Infinity, ease: "easeInOut" }}
           />
+          {/* Mid ring */}
           <motion.span
-            className="absolute inset-0 rounded-full bg-primary/10"
-            animate={{ scale: [1, 1.35, 1], opacity: [0.3, 0, 0.3] }}
-            transition={{ duration: parseFloat(orbPing) * 1.4, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+            className="absolute rounded-full bg-primary/20"
+            style={{ width: "130%", height: "130%" }}
+            animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.2, 0.5] }}
+            transition={{ duration: parseFloat(orbPing) * 0.8, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
           />
-          <div className="relative w-20 h-20 md:w-28 md:h-28 rounded-full bg-gradient-to-br from-rose-300 via-primary to-rose-500 shadow-2xl z-10 flex items-center justify-center">
-            <span className="text-white text-xl md:text-2xl select-none">✦</span>
-          </div>
+          {/* Core orb */}
+          <motion.div
+            className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-rose-300 via-primary to-violet-500 shadow-[0_0_40px_8px] shadow-primary/30 z-10 flex items-center justify-center"
+            animate={loading ? { scale: [1, 1.06, 1] } : {}}
+            transition={loading ? { duration: 0.8, repeat: Infinity, ease: "easeInOut" } : {}}
+          >
+            <span className="text-white text-2xl md:text-3xl select-none">✦</span>
+          </motion.div>
         </div>
 
         {/* Haven's message bubble */}
@@ -749,7 +829,7 @@ export default function HavenHome() {
                 ))}
               </div>
             ) : (
-              <p className="font-serif text-base md:text-lg text-foreground leading-snug">{displayText}</p>
+              <p className="font-serif text-lg md:text-xl text-foreground leading-snug">{displayText}</p>
             )}
           </motion.div>
         </AnimatePresence>
@@ -834,9 +914,10 @@ export default function HavenHome() {
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
               className="w-full max-w-sm mb-5 rounded-2xl border border-sky-300/60 bg-card/80 backdrop-blur-sm p-5 shadow-[0_0_20px_2px] shadow-sky-400/15 flex flex-col items-center"
             >
-              <p className="text-xs font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wide mb-4">
-                {selectedEmotion ? `Breathing through ${selectedEmotion.toLowerCase()}` : "Box breathing · 4-4-4-2"}
+              <p className="text-xs font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wide mb-1">
+                {havenBreathePattern.name} · {havenBreathePattern.description}
               </p>
+              <p className="text-[11px] text-muted-foreground mb-4">{havenBreathePattern.benefit}</p>
 
               {/* Animated orb */}
               <div className="relative w-36 h-36 flex items-center justify-center mb-4">
@@ -854,7 +935,7 @@ export default function HavenHome() {
                   {breathePhase !== "idle" && breathePhase !== "done" && breathePhase !== "rest" && (
                     <>
                       <p className="text-white text-xs font-semibold drop-shadow">
-                        {BREATHE_SEQ.find((s) => s.phase === breathePhase)?.label}
+                        {buildBreatheSeq(havenBreathePattern).find((s) => s.phase === breathePhase)?.label}
                       </p>
                       <p className="text-white/80 text-xl font-bold drop-shadow">{breatheCount}</p>
                     </>
@@ -865,9 +946,24 @@ export default function HavenHome() {
                 </div>
               </div>
 
-              {/* PRE-START: round picker + start + skip */}
+              {/* PRE-START: pattern picker + round picker + start + skip */}
               {breathePhase === "idle" && (
                 <>
+                  {/* Pattern selector */}
+                  <div className="w-full grid grid-cols-2 gap-1.5 mb-4">
+                    {HAVEN_BREATHE_PATTERNS.map((p) => (
+                      <button key={p.id} onClick={() => setHavenBreathePattern(p)}
+                        className={cn(
+                          "flex flex-col items-start px-2.5 py-2 rounded-xl border text-left transition-all",
+                          havenBreathePattern.id === p.id
+                            ? "border-sky-400 bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300"
+                            : "border-border/40 text-muted-foreground hover:border-sky-300 hover:text-foreground"
+                        )}>
+                        <span className="text-[11px] font-semibold leading-tight">{p.name}</span>
+                        <span className="text-[10px] opacity-70">{p.description}</span>
+                      </button>
+                    ))}
+                  </div>
                   <p className="text-xs text-muted-foreground mb-2">How many rounds?</p>
                   <div className="flex gap-2 mb-4">
                     {[3, 5, 7].map((r) => (
@@ -882,7 +978,7 @@ export default function HavenHome() {
                       </button>
                     ))}
                   </div>
-                  <button onClick={() => startBreathing(breatheTargetRounds)}
+                  <button onClick={() => startBreathing(breatheTargetRounds, havenBreathePattern)}
                     className="w-full py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition-colors mb-2">
                     Start {breatheTargetRounds} rounds
                   </button>
@@ -922,7 +1018,7 @@ export default function HavenHome() {
                     {breatheCyclesDone} round{breatheCyclesDone !== 1 ? "s" : ""} complete ✦
                   </p>
                   <button
-                    onClick={() => reportToHaven(`I just completed ${breatheCyclesDone} round${breatheCyclesDone !== 1 ? "s" : ""} of box breathing.`, "breathe")}
+                    onClick={() => reportToHaven(`I just completed ${breatheCyclesDone} round${breatheCyclesDone !== 1 ? "s" : ""} of ${havenBreathePattern.name}.`, "breathe")}
                     className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
                     Continue →
                   </button>
@@ -1219,7 +1315,7 @@ export default function HavenHome() {
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendToHaven(input) } }}
             placeholder="Type or speak to Haven…"
             rows={1}
-            className="flex-1 resize-none bg-card border border-border/40 rounded-2xl px-4 py-2.5 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30 leading-relaxed"
+            className="flex-1 resize-none bg-card border border-border/40 rounded-full px-5 py-2.5 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30 leading-relaxed"
             style={{ minHeight: "42px", maxHeight: "80px" }}
           />
           {sttStatus !== "unsupported" && (

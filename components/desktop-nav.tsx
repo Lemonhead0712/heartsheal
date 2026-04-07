@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BookHeart, Wind, TrendingUp, Menu, X, Sparkles, Settings, Cloud, LogOut, User } from "lucide-react"
+import { Clock, TrendingUp, Menu, X, Sparkles, Settings, Cloud, LogOut, User } from "lucide-react"
 import { Logo } from "./logo"
 import { cn } from "@/lib/utils"
 import { useHapticContext } from "@/contexts/haptic-context"
@@ -12,10 +12,10 @@ import { useAuth } from "@/contexts/auth-context"
 import { AuthModal } from "@/components/auth-modal"
 
 const navItems = [
-  { name: "Haven",    href: "/",          icon: Sparkles },
-  { name: "Breathe",  href: "/breathe",   icon: Wind },
-  { name: "Thoughts", href: "/thoughts",  icon: BookHeart },
-  { name: "Insights", href: "/insights",  icon: TrendingUp },
+  { name: "Haven",    href: "/",               icon: Sparkles },
+  { name: "History",  href: "/emotional-log",  icon: Clock },
+  { name: "Insights", href: "/insights",       icon: TrendingUp },
+  { name: "Settings", href: "/settings",       icon: Settings },
 ]
 
 export function DesktopNav() {
@@ -95,21 +95,6 @@ export function DesktopNav() {
 
           {/* Auth button — desktop */}
           <div className="flex items-center gap-2">
-            {/* Settings gear icon */}
-            <Link
-              href="/settings"
-              onClick={() => click()}
-              title="Settings"
-              aria-label="Settings"
-              className={cn(
-                "w-8 h-8 flex items-center justify-center rounded-xl transition-colors duration-200",
-                pathname === "/settings"
-                  ? "text-primary bg-primary/8"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/70",
-              )}
-            >
-              <Settings className="w-[15px] h-[15px]" />
-            </Link>
             {user ? (
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground hidden lg:block truncate max-w-[140px]">{user.email}</span>
@@ -213,22 +198,6 @@ export function DesktopNav() {
                     </Link>
                   )
                 })}
-
-                {/* Settings link in mobile menu */}
-                <Link
-                  href="/settings"
-                  onClick={() => click()}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors",
-                    pathname === "/settings"
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/70",
-                  )}
-                  aria-current={pathname === "/settings" ? "page" : undefined}
-                >
-                  <Settings className="w-4 h-4 shrink-0" />
-                  Settings
-                </Link>
 
                 {/* Auth row in mobile menu */}
                 <div className="mt-2 pt-2 border-t border-border/40">

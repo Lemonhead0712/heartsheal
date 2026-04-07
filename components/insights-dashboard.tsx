@@ -172,7 +172,8 @@ export function InsightsDashboard() {
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Healing Insights</h1>
+              <p className="text-[10px] font-semibold text-primary/60 uppercase tracking-widest mb-0.5">Healing Journey</p>
+              <h1 className="text-2xl font-bold text-foreground">Your Insights</h1>
               <p className="text-sm text-muted-foreground">Your journey, reflected.</p>
             </div>
           </div>
@@ -190,9 +191,9 @@ export function InsightsDashboard() {
                 </button>
               ))}
             </div>
-            <Link href="/emotional-log"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-sm">
-              <PlusCircle className="w-3 h-3" /> Log Emotion
+            <Link href="/"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors">
+              💜 Talk to Haven
             </Link>
           </div>
         </motion.div>

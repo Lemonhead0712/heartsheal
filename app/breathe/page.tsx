@@ -273,7 +273,9 @@ export default function BreathePage() {
             <span className="font-serif font-semibold text-foreground tracking-tight">HeartsHeal</span>
           </Link>
           <h1 className="font-serif text-lg font-semibold text-foreground">Guided Breathing</h1>
-          <div className="w-20" />{/* spacer */}
+          <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">
+            💜 Talk to Haven
+          </Link>
         </motion.div>
 
         {/* Two-column grid */}

@@ -1,10 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X } from "lucide-react"
-import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
+import { writeStorage, STORAGE_KEYS } from "@/lib/storage"
 import { useEmotionLogs } from "@/hooks/use-emotion-logs"
 
 const LOSS_CHIPS = [
@@ -49,22 +48,26 @@ function getPersonalizedMessage(firstChip: string | undefined): string {
   }
 }
 
-export function OnboardingModal() {
-  const [open, setOpen]             = useState(false)
-  const [step, setStep]             = useState(1)
-  const [selected, setSelected]     = useState<string[]>([])
-  const [emotionPicked, setEmotionPicked] = useState<string | null>(null)
-  const { addEntry }                = useEmotionLogs()
-  const router                      = useRouter()
+interface OnboardingModalProps {
+  open: boolean
+  onComplete: (name?: string) => void
+}
 
-  useEffect(() => {
-    const seen = readStorage<boolean>(STORAGE_KEYS.welcomeSeen)
-    if (!seen) setOpen(true)
-  }, [])
+export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
+  const [step, setStep]               = useState(0)
+  const [name, setName]               = useState("")
+  const [selected, setSelected]       = useState<string[]>([])
+  const [emotionPicked, setEmotionPicked] = useState<string | null>(null)
+  const { addEntry }                  = useEmotionLogs()
 
   const dismiss = () => {
     writeStorage(STORAGE_KEYS.welcomeSeen, true)
-    setOpen(false)
+    onComplete(name.trim() || undefined)
+  }
+
+  const goStep1 = () => {
+    if (name.trim()) writeStorage(STORAGE_KEYS.userName, name.trim())
+    setStep(1)
   }
 
   const toggleChip = (id: string) => {
@@ -86,8 +89,8 @@ export function OnboardingModal() {
     setTimeout(() => setStep(3), 400)
   }
 
-  const firstChip = selected[0]
-  const personalizedMsg = getPersonalizedMessage(firstChip)
+  const firstChip        = selected[0]
+  const personalizedMsg  = getPersonalizedMessage(firstChip)
 
   return (
     <AnimatePresence>
@@ -100,7 +103,7 @@ export function OnboardingModal() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm"
+            className="fixed inset-0 z-[80] bg-foreground/30 backdrop-blur-sm"
           />
 
           {/* Modal */}
@@ -110,7 +113,7 @@ export function OnboardingModal() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 12 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+            className="fixed inset-0 z-[80] flex items-center justify-center p-4 pointer-events-none"
           >
             <div
               className="bg-card border border-border/50 rounded-3xl shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden"
@@ -119,7 +122,7 @@ export function OnboardingModal() {
               {/* Header row: progress dots + skip */}
               <div className="flex items-center justify-between px-6 pt-6 pb-2">
                 <div className="flex items-center gap-2">
-                  {[1, 2, 3].map((s) => (
+                  {[0, 1, 2, 3].map((s) => (
                     <div
                       key={s}
                       className={`rounded-full transition-all duration-300 ${
@@ -140,6 +143,42 @@ export function OnboardingModal() {
               </div>
 
               <AnimatePresence mode="wait">
+
+                {/* ── Step 0: Name ── */}
+                {step === 0 && (
+                  <motion.div
+                    key="step0"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.25 }}
+                    className="px-6 pb-6 pt-4"
+                  >
+                    <h2 className="font-serif text-2xl font-semibold text-foreground mb-1 leading-snug">
+                      What should Haven call you?
+                    </h2>
+                    <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+                      Completely optional — Haven will still be here either way.
+                    </p>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && goStep1()}
+                      placeholder="Your name…"
+                      maxLength={40}
+                      autoFocus
+                      className="w-full rounded-2xl border border-border/50 bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 mb-5"
+                    />
+                    <button
+                      onClick={goStep1}
+                      className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all"
+                    >
+                      {name.trim() ? "Continue →" : "Skip for now →"}
+                    </button>
+                  </motion.div>
+                )}
+
                 {/* ── Step 1: What brought you here ── */}
                 {step === 1 && (
                   <motion.div
@@ -234,20 +273,20 @@ export function OnboardingModal() {
                       </div>
                     </div>
                     <h2 className="font-serif text-2xl font-semibold text-foreground mb-2 text-center leading-snug">
-                      You're in the right place.
+                      {name.trim() ? `${name.trim()}, you're in the right place.` : "You're in the right place."}
                     </h2>
                     <p className="text-sm text-muted-foreground mb-6 text-center leading-relaxed">
                       {personalizedMsg}
                     </p>
                     <div className="flex flex-col gap-2.5">
                       <button
-                        onClick={() => { writeStorage(STORAGE_KEYS.welcomeSeen, true); setOpen(false); router.push("/companion") }}
+                        onClick={() => { writeStorage(STORAGE_KEYS.welcomeSeen, true); onComplete(name.trim() || undefined) }}
                         className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all"
                       >
                         Talk to Haven →
                       </button>
                       <button
-                        onClick={() => { writeStorage(STORAGE_KEYS.welcomeSeen, true); setOpen(false); router.push("/breathe") }}
+                        onClick={() => { writeStorage(STORAGE_KEYS.welcomeSeen, true); onComplete(name.trim() || undefined) }}
                         className="w-full py-3 rounded-2xl border border-border/60 text-muted-foreground font-semibold text-sm hover:text-foreground hover:border-border transition-all"
                       >
                         Try a breathing session
@@ -261,6 +300,7 @@ export function OnboardingModal() {
                     </button>
                   </motion.div>
                 )}
+
               </AnimatePresence>
             </div>
           </motion.div>

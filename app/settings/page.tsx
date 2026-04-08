@@ -8,7 +8,6 @@ import {
   CheckCircle2, AlertTriangle, Database, Heart, Shield, Cloud, LogOut, Mail, Lock
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Logo } from "@/components/logo"
 import { cn } from "@/lib/utils"
 import { exportUserData, importUserData, clearAllData, readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
 import { useAuth } from "@/contexts/auth-context"
@@ -141,18 +140,19 @@ export default function SettingsPage() {
 
   return (
     <div className="bg-page-gradient">
-      <motion.div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5" variants={container} initial="hidden" animate="show">
+      <motion.div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-3 md:py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
-        <motion.div className="flex flex-col items-center mb-3" variants={item}>
-          <Logo size="medium" />
-        </motion.div>
-        <motion.div className="mb-5" variants={item}>
-          <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors text-sm">
-            <ChevronLeft className="mr-1 h-4 w-4" /> Back to Dashboard
+        <motion.div className="flex items-center justify-between mb-5" variants={item}>
+          <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
+            <ChevronLeft className="h-4 w-4" />
+            <span className="text-primary">♥</span>
+            <span className="font-serif font-semibold text-foreground tracking-tight">HeartsHeal</span>
           </Link>
-          <h1 className="font-serif text-3xl font-semibold text-foreground mt-3 mb-1">Settings & Data</h1>
-          <p className="text-muted-foreground text-sm">Your data lives on your device — private, always.</p>
+          <h1 className="font-serif text-lg font-semibold text-foreground">Settings & Data</h1>
+          <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">
+            💜 Talk to Haven
+          </Link>
         </motion.div>
 
         {/* Two-column grid — single col on mobile, side-by-side on desktop */}

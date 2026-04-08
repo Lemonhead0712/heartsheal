@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { DM_Sans, Playfair_Display } from "next/font/google"
+import { DM_Sans, Cormorant_Garamond } from "next/font/google"
 import "./globals.css"
 import { ThemeProviderFixed as ThemeProvider } from "@/components/theme-provider-fixed"
 import { BottomNav } from "@/components/bottom-nav"
@@ -18,10 +18,11 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "600", "700"],
 })
 
-const playfair = Playfair_Display({
+const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   variable: "--font-serif",
   weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
 })
 
 export const metadata: Metadata = {
@@ -69,8 +70,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#faf7f5" },
-    { media: "(prefers-color-scheme: dark)",  color: "#0f1117" },
+    { media: "(prefers-color-scheme: light)", color: "#0d0b12" },
+    { media: "(prefers-color-scheme: dark)",  color: "#0d0b12" },
   ],
 }
 
@@ -80,9 +81,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`h-full ${dmSans.variable} ${playfair.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`h-full ${dmSans.variable} ${cormorant.variable}`} suppressHydrationWarning>
       <body className="font-sans flex min-h-full flex-col antialiased" suppressHydrationWarning>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           <AuthProvider>
           <HapticProvider>
             <GuidedSessionProvider>

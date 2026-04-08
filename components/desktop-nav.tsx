@@ -57,11 +57,6 @@ export function DesktopNav() {
             <Logo size="small" />
           </Link>
 
-          {/* Free forever badge */}
-          <span className="hidden lg:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold tracking-wide">
-            ✓ Free forever
-          </span>
-
           {/* Nav links */}
           <nav className="flex items-center gap-0.5" aria-label="Primary navigation">
             {navItems.map(({ name, href, icon: Icon }) => {
@@ -117,7 +112,8 @@ export function DesktopNav() {
                 </button>
                 <button
                   onClick={() => openAuth("signup")}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-sm"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-white text-xs font-semibold transition-all shadow-sm"
+                  style={{ background: "linear-gradient(135deg, #9b6fdf, #d472b0)" }}
                 >
                   <Cloud className="w-3.5 h-3.5" />
                   Save Data

@@ -70,35 +70,35 @@
     --background:        252 20% 7%;       /* #0d0b12 */
     --foreground:        270 43% 95%;      /* #f0eaf8 */
 
-    --card:              252 18% 10%;      /* ~#12101a */
+    --card:              252 14% 17%;      /* ~#221f2e — visibly distinct from background */
     --card-foreground:   270 43% 95%;
 
-    --popover:           252 18% 10%;
+    --popover:           252 14% 17%;
     --popover-foreground: 270 43% 95%;
 
     /* ── Brand: violet-rose gradient primary ── */
     --primary:           270 58% 65%;      /* #9b6fdf violet */
     --primary-foreground: 0 0% 100%;
 
-    --secondary:         252 14% 14%;
+    --secondary:         252 12% 20%;
     --secondary-foreground: 270 43% 95%;
 
-    --muted:             252 12% 13%;
+    --muted:             252 10% 15%;
     --muted-foreground:  270 15% 55%;      /* rgba(240,234,248,0.55) */
 
-    --accent:            252 14% 14%;
+    --accent:            252 12% 20%;
     --accent-foreground: 270 43% 95%;
 
     --destructive:       0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border:            252 12% 16%;      /* rgba(255,255,255,0.08) at obsidian base */
-    --input:             252 12% 16%;
+    --border:            252 12% 24%;      /* clearly visible border */
+    --input:             252 12% 22%;
     --ring:              270 58% 65%;
 
-    --surface:           252 16% 11%;
-    --surface-raised:    252 14% 13%;
-    --highlight:         270 40% 14%;
+    --surface:           252 14% 14%;
+    --surface-raised:    252 12% 18%;
+    --highlight:         270 40% 16%;
 
     --sage:              158 22% 44%;
     --sage-foreground:   0 0% 100%;
@@ -114,10 +114,10 @@
     --g-mid:    315 25% 8%;
     --g-end:    252 20% 7%;
 
-    --shadow-sm:  0 1px 3px 0 hsl(0 0% 0% / 0.35), 0 1px 2px -1px hsl(0 0% 0% / 0.35);
-    --shadow-md:  0 4px 16px -2px hsl(0 0% 0% / 0.50), 0 2px 6px -2px hsl(0 0% 0% / 0.35);
-    --shadow-lg:  0 12px 32px -4px hsl(0 0% 0% / 0.60), 0 4px 10px -4px hsl(0 0% 0% / 0.40);
-    --shadow-card: 0 2px 12px -1px hsl(270 58% 65% / 0.12), 0 1px 3px 0 hsl(0 0% 0% / 0.30);
+    --shadow-sm:  0 1px 3px 0 hsl(0 0% 0% / 0.40), 0 1px 2px -1px hsl(0 0% 0% / 0.40);
+    --shadow-md:  0 4px 16px -2px hsl(0 0% 0% / 0.55), 0 2px 6px -2px hsl(0 0% 0% / 0.40);
+    --shadow-lg:  0 12px 32px -4px hsl(0 0% 0% / 0.65), 0 4px 10px -4px hsl(0 0% 0% / 0.45);
+    --shadow-card: 0 2px 12px -1px hsl(270 58% 65% / 0.15), 0 1px 4px 0 hsl(0 0% 0% / 0.40);
   }
 }
 
@@ -211,6 +211,11 @@
     border-radius: 16px;
     box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
+  .dark .glass-card {
+    background: hsl(var(--card) / 0.97);
+    border: 1px solid hsl(var(--border) / 0.7);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
 
   .glass-card-elevated {
     background: hsl(var(--card) / 0.92);
@@ -219,6 +224,11 @@
     border: 0.5px solid rgba(255, 255, 255, 0.10);
     border-radius: 16px;
     box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  }
+  .dark .glass-card-elevated {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border) / 0.8);
+    box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   /* ── Nav glass ── */

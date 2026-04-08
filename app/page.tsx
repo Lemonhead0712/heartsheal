@@ -745,7 +745,7 @@ export default function HavenHome() {
     : "2s"
 
   return (
-    <div className="flex-1 flex flex-col bg-gradient-to-b from-rose-50 via-background to-background dark:from-rose-950/20 dark:via-background dark:to-background overflow-hidden">
+    <div className="flex-1 flex flex-col bg-gradient-to-b from-[#16101f] via-background to-background overflow-hidden">
 
       {/* ── Thin header ── */}
       <header className="flex items-center justify-between px-5 pt-2 pb-1 shrink-0">
@@ -802,7 +802,8 @@ export default function HavenHome() {
           />
           {/* Core orb */}
           <motion.div
-            className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-rose-300 via-primary to-violet-500 shadow-[0_0_40px_8px] shadow-primary/30 z-10 flex items-center justify-center"
+            className="relative w-24 h-24 md:w-32 md:h-32 rounded-full shadow-[0_0_48px_10px] shadow-primary/25 z-10 flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg, #9b6fdf, #d472b0)" }}
             animate={loading ? { scale: [1, 1.06, 1] } : {}}
             transition={loading ? { duration: 0.8, repeat: Infinity, ease: "easeInOut" } : {}}
           >
@@ -1350,7 +1351,7 @@ export default function HavenHome() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.45, ease: "easeInOut" }}
-            className="fixed inset-0 z-[60] flex flex-col bg-gradient-to-b from-rose-50 via-background to-background dark:from-rose-950/20 dark:via-background dark:to-background overflow-y-auto"
+            className="fixed inset-0 z-[60] flex flex-col bg-gradient-to-b from-[#16101f] via-background to-background overflow-y-auto"
           >
             {/* Mirrors Haven's exact layout: header → orb → message → actions */}
             <div className="flex flex-col items-center flex-1 px-5 pt-8 pb-6">
@@ -1385,7 +1386,7 @@ export default function HavenHome() {
                   animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.2, 0.5] }}
                   transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
                 />
-                <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-rose-300 via-primary to-violet-500 shadow-[0_0_40px_8px] shadow-primary/30 z-10 flex items-center justify-center">
+                <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full shadow-[0_0_48px_10px] shadow-primary/25 z-10 flex items-center justify-center" style={{ background: "linear-gradient(135deg, #9b6fdf, #d472b0)" }}>
                   <span className="text-white text-2xl md:text-3xl select-none">✦</span>
                 </div>
               </motion.div>
@@ -1439,7 +1440,8 @@ export default function HavenHome() {
               >
                 <button
                   onClick={() => { setAuthModalMode("signup"); setAuthModalOpen(true) }}
-                  className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 active:scale-[0.98]"
+                  className="w-full py-3.5 rounded-full text-white font-semibold text-sm transition-all shadow-lg active:scale-[0.98]"
+                  style={{ background: "linear-gradient(135deg, #9b6fdf, #d472b0)", boxShadow: "0 4px 20px rgba(155,111,223,0.35)" }}
                 >
                   ✦ Begin with Haven
                 </button>

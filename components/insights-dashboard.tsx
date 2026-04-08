@@ -17,7 +17,6 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useInsightsData, type DateRange } from "@/hooks/use-insights-data"
-import { Logo } from "@/components/logo"
 
 /* ── Palette ── */
 const SURVEY_COLORS = {
@@ -185,38 +184,32 @@ export function InsightsDashboard() {
         variants={anim.container} initial="hidden" animate="show">
 
         {/* Header */}
-        <motion.div className="flex flex-col items-center mb-4" variants={anim.item}>
-          <Logo size="medium" />
-        </motion.div>
-
-        <motion.div className="flex items-start justify-between mb-6 gap-4 flex-wrap" variants={anim.item}>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400 flex items-center justify-center shrink-0">
-              <TrendingUp className="w-5 h-5" />
+        <motion.div className="flex items-center justify-between mb-5 gap-3 flex-wrap" variants={anim.item}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400 flex items-center justify-center shrink-0">
+              <TrendingUp className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-[10px] font-semibold text-primary/60 uppercase tracking-widest mb-0.5">Healing Journey</p>
-              <h1 className="text-2xl font-bold text-foreground">Your Insights</h1>
-              <p className="text-sm text-muted-foreground">Your journey, reflected.</p>
+              <h1 className="text-lg font-bold text-foreground font-serif leading-none">Your Insights</h1>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Your journey, reflected.</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Human-readable range picker */}
-            <div className="flex gap-1 p-1 rounded-xl bg-muted/50 border border-border/30">
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1 p-1 rounded-xl bg-muted/50 border border-border/40">
               {RANGES.map(({ value, label }) => (
                 <button key={value} onClick={() => setDateRange(value)}
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap",
-                    dateRange === value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    dateRange === value ? "bg-card text-foreground shadow-sm border border-border/40" : "text-muted-foreground hover:text-foreground"
                   )}>
                   {label}
                 </button>
               ))}
             </div>
             <Link href="/"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors">
-              💜 Talk to Haven
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors">
+              💜 Haven
             </Link>
           </div>
         </motion.div>

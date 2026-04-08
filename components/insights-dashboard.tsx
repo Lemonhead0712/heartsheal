@@ -21,10 +21,10 @@ import { Logo } from "@/components/logo"
 
 /* ── Palette ── */
 const SURVEY_COLORS = {
-  emotionalState: "#f43f5e",
-  selfConnection:  "#8b5cf6",
-  selfCompassion:  "#0ea5e9",
-  selfCare:        "#10b981",
+  emotionalState: "#d472b0",   // rose brand
+  selfConnection:  "#9b6fdf",  // violet brand
+  selfCompassion:  "#5dcaa5",  // teal
+  selfCare:        "#ef9f27",  // amber
 }
 
 const LOSS_LABELS: Record<string, string> = {
@@ -48,28 +48,35 @@ function emotionPillColor(avgIntensity: number) {
 
 /* ── Bar color by valence (for mood bar chart) ── */
 function barColor(v: number) {
-  if (v >= 2)    return "#10b981"
-  if (v >= 0.5)  return "#34d399"
-  if (v >= -0.5) return "#94a3b8"
-  if (v >= -2)   return "#fb923c"
-  return "#f43f5e"
+  if (v >= 2)    return "#5dcaa5"   // teal — lighter/calmer feelings
+  if (v >= 0.5)  return "#9b6fdf"   // violet — mildly positive
+  if (v >= -0.5) return "#6b7280"   // neutral gray
+  if (v >= -2)   return "#d472b0"   // rose — heavier feelings
+  return "#e24b4a"                   // red — intense weight
 }
 
 /* ── Intensity progress bar color ── */
 function intensityBarColor(avg: number) {
-  if (avg >= 7.5) return "bg-rose-400"
-  if (avg >= 5)   return "bg-amber-400"
-  return "bg-emerald-400"
+  if (avg >= 7.5) return "bg-[#d472b0]"   // rose brand
+  if (avg >= 5)   return "bg-[#9b6fdf]"   // violet brand
+  return "bg-[#5dcaa5]"                    // teal calm
 }
 
 /* ── Reusable shell components ── */
 function ScoreRing({ score }: { score: number }) {
   const r = 20; const circ = 2 * Math.PI * r
-  const color = score >= 70 ? "#10b981" : score >= 45 ? "#f59e0b" : "#f43f5e"
+  // Brand gradient colors: violet at high, rose at medium, muted at low
+  const color = score >= 70 ? "#9b6fdf" : score >= 45 ? "#d472b0" : "#6b7280"
   return (
     <svg width="50" height="50" viewBox="0 0 50 50" className="shrink-0">
-      <circle cx="25" cy="25" r={r} fill="none" stroke="currentColor" strokeWidth="4" className="text-border/30" />
-      <circle cx="25" cy="25" r={r} fill="none" stroke={color} strokeWidth="4"
+      <defs>
+        <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#9b6fdf" />
+          <stop offset="100%" stopColor="#d472b0" />
+        </linearGradient>
+      </defs>
+      <circle cx="25" cy="25" r={r} fill="none" stroke="currentColor" strokeWidth="4" className="text-border/20" />
+      <circle cx="25" cy="25" r={r} fill="none" stroke={score >= 45 ? "url(#scoreGrad)" : color} strokeWidth="4"
         strokeDasharray={circ} strokeDashoffset={circ - (score / 100) * circ}
         strokeLinecap="round" transform="rotate(-90 25 25)" />
       <text x="25" y="30" textAnchor="middle" fontSize="11" fontWeight="700" fill={color}>{score}</text>

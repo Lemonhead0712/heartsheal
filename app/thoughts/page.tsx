@@ -260,7 +260,7 @@ export default function ThoughtsPage() {
   const item: Variants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } } }
 
   return (
-    <div className="bg-gradient-to-b from-rose-50/50 via-background to-background dark:from-rose-950/15 min-h-screen">
+    <div className="bg-gradient-to-b from-[#13101b] via-background to-background min-h-screen">
       <motion.div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-3 md:py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}

@@ -781,7 +781,10 @@ export default function HavenHome() {
   const widgetActive = mode !== "greeting" && mode !== "chatting"
 
   return (
-    <div className="flex-1 flex flex-col bg-gradient-to-b from-[#16101f] via-background to-background overflow-hidden">
+    <div
+      className="flex flex-col bg-gradient-to-b from-[#16101f] via-background to-background overflow-hidden md:flex-1 md:h-auto"
+      style={{ height: "calc(100dvh - 84px)" }}
+    >
 
       {/* ── Header ── */}
       <header className="flex items-center justify-between px-5 pt-3 pb-2 shrink-0">

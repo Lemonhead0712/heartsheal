@@ -20,7 +20,7 @@ export default function ConfirmPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
         setStatus("success")
-        setMessage("Your email has been confirmed! Welcome to HeartsHeal.")
+        setMessage("Your email has been confirmed! Welcome to Haven.")
         setTimeout(() => router.replace("/"), 2500)
       }
     })
@@ -29,7 +29,7 @@ export default function ConfirmPage() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         setStatus("success")
-        setMessage("Your email has been confirmed! Welcome to HeartsHeal.")
+        setMessage("Your email has been confirmed! Welcome to Haven.")
         setTimeout(() => router.replace("/"), 2500)
       }
     })
@@ -65,7 +65,7 @@ export default function ConfirmPage() {
         </div>
 
         <div>
-          <p className="text-xs font-semibold tracking-widest uppercase text-primary/70 mb-1">HeartsHeal</p>
+          <p className="text-xs font-semibold tracking-widest uppercase text-primary/70 mb-1">Haven</p>
           <h1 className="text-xl font-bold text-foreground">Email Confirmation</h1>
         </div>
 
@@ -111,7 +111,7 @@ export default function ConfirmPage() {
               onClick={() => router.replace("/")}
               className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
             >
-              Back to HeartsHeal
+              Back to Haven
             </button>
           </motion.div>
         )}

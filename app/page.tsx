@@ -234,27 +234,32 @@ function ScoreRing({ score }: { score: number }) {
 export default function HavenHome() {
   const { user, isLoading: authLoading } = useAuth()
   const [welcomeOpen, setWelcomeOpen]     = useState(false)
+  const welcomeOpenRef = useRef(false)   // sync ref so audio guards don't need re-render
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [authModalMode, setAuthModalMode] = useState<"signin" | "signup">("signup")
   const welcomeShownRef = useRef(false)
 
+  const { addEntry: addEmotion } = useEmotionLogs()
+  const { addEntry: addJournal } = useJournalEntries()
+  const { speak, stop: stopSpeech, prefetch, voiceEnabled, toggleVoice } = useTTS()
+
   // Show welcome screen for unauthenticated users; trigger onboarding after it closes
   useEffect(() => {
     if (!authLoading && !user) {
+      welcomeOpenRef.current = true
       setWelcomeOpen(true)
       welcomeShownRef.current = true
+      stopSpeech()   // kill any greeting audio that may have already started
     }
     if (user) {
+      welcomeOpenRef.current = false
       setWelcomeOpen(false)
       if (welcomeShownRef.current && !readStorage(STORAGE_KEYS.welcomeSeen)) {
         setTimeout(() => setOnboardingOpen(true), 500)
       }
     }
-  }, [authLoading, user])
-  const { addEntry: addEmotion } = useEmotionLogs()
-  const { addEntry: addJournal } = useJournalEntries()
-  const { speak, stop: stopSpeech, prefetch, voiceEnabled, toggleVoice } = useTTS()
+  }, [authLoading, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Conversation state ────────────────────────────────────────────────────
   const [mode,          setMode]          = useState<HavenMode>("greeting")
@@ -309,7 +314,8 @@ export default function HavenHome() {
       setDisplayText(msg.slice(0, ++i))
       if (i >= msg.length) clearInterval(typewriterRef.current!)
     }, 16)
-    speak(msg)
+    // Never speak while the welcome overlay is showing
+    if (!welcomeOpenRef.current) speak(msg)
   }, [speak])
 
   // ── Post-auth onboarding reset ────────────────────────────────────────────

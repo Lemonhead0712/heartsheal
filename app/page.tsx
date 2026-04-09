@@ -785,7 +785,7 @@ export default function HavenHome() {
 
   return (
     <div
-      className="flex flex-col bg-gradient-to-b from-[#16101f] via-background to-background md:flex-1 md:h-screen md:overflow-hidden"
+      className="flex flex-col bg-gradient-to-b from-[#16101f] via-background to-background md:flex-1 md:h-auto"
       style={{ height: "calc(100dvh - 140px)" }}
     >
 
@@ -818,11 +818,8 @@ export default function HavenHome() {
         </div>
       </header>
 
-      {/* ── Content — flex-1 col with justify-between: top group + bottom actions ── */}
-      <div className="flex-1 flex flex-col items-center px-4 pt-1 pb-2 min-h-0 justify-between">
-
-        {/* ── Top group: orb + message + widgets/chips ── */}
-        <div className="flex flex-col items-center w-full max-w-sm">
+      {/* ── Content — natural flow, quick actions anchor to bottom via mt-auto ── */}
+      <div className="flex-1 flex flex-col items-center px-4 min-h-0 overflow-y-auto">
 
         {/* Orb — compact when a widget is open */}
         <motion.div
@@ -880,8 +877,7 @@ export default function HavenHome() {
           </motion.div>
         </AnimatePresence>
 
-        {/* ── Widgets + chips (inside top group) ── */}
-        <div className="w-full overflow-y-auto max-h-[55vh]">
+        {/* ── Widgets + chips ── */}
         <AnimatePresence mode="wait">
 
           {/* EMOTION WIDGET */}
@@ -1294,16 +1290,13 @@ export default function HavenHome() {
           </motion.div>
         )}
 
-        </div>{/* end widgets scroll zone */}
-        </div>{/* end top group */}
-
-        {/* ── Bottom group: quick actions — anchored to bottom via justify-between ── */}
+        {/* ── Quick actions — mt-auto floats naturally to bottom of remaining space ── */}
         {!loading && (mode === "greeting" || mode === "chatting") && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.4 }}
-            className="w-full max-w-sm shrink-0"
+            className="w-full max-w-sm mt-auto pt-4 pb-3 shrink-0"
           >
             {/* Primary CTA — Log Emotion */}
             {!completedToday.has("emotion") && (
@@ -1312,7 +1305,7 @@ export default function HavenHome() {
                   setMode("emotion-widget")
                   showMessage("How are you feeling right now? Pick what resonates most.")
                 }}
-                className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm mb-2.5 shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm mb-3 shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 <span className="text-base">💜</span> Log how I'm feeling
               </button>
@@ -1363,7 +1356,7 @@ export default function HavenHome() {
           </motion.div>
         )}
 
-      </div>{/* end content column (justify-between) */}
+      </div>{/* end content column */}
 
       {/* ── Input bar ── */}
       <div className="shrink-0 px-4 pb-4 pt-1.5 border-t border-border/20 bg-background/80 backdrop-blur-md">

@@ -447,7 +447,7 @@ export function InsightsDashboard() {
                     </>
                   )
                 })() : (
-                  <EmptyState text="Log a few emotions to see your mood mapped over time." action="Log an emotion" href="/emotional-log" />
+                  <EmptyState text="Log a few emotions to see your mood mapped over time." action="Open Haven" href="/" />
                 )}
               </SectionCard>
             </motion.div>
@@ -490,19 +490,19 @@ export function InsightsDashboard() {
                     </div>
                   </div>
                 ) : (
-                  <EmptyState text="No emotions logged this period." action="Log an emotion" href="/emotional-log" />
+                  <EmptyState text="No emotions logged this period." action="Open Haven" href="/" />
                 )}
               </SectionCard>
 
               {/* Survey dimension trends */}
-              <SectionCard title="Post-Log Survey" subtitle="4-question check-in after each emotion log — Emotional State · Self-Connection · Compassion · Self-Care (scale 1–5)">
+              <SectionCard title="Wellbeing Check-In" subtitle="Your self-ratings after each check-in (scale 1–5)">
                 {data.surveyTrend.length >= 2 ? (
                   <>
-                    <ResponsiveContainer width="100%" height={160}>
+                    <ResponsiveContainer width="100%" height={180}>
                       <LineChart data={data.surveyTrend}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.25)" />
                         <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
-                        <YAxis domain={[1, 5]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
+                        <YAxis domain={[1, 5]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} tickCount={5} />
                         <Tooltip content={<CustomTooltip />} />
                         <Line type="monotone" dataKey="emotionalState" name="Emotional State" stroke={SURVEY_COLORS.emotionalState} strokeWidth={2} dot={false} />
                         <Line type="monotone" dataKey="selfConnection"  name="Self-Connection"  stroke={SURVEY_COLORS.selfConnection}  strokeWidth={2} dot={false} />
@@ -510,11 +510,11 @@ export function InsightsDashboard() {
                         <Line type="monotone" dataKey="selfCare"        name="Self-Care"        stroke={SURVEY_COLORS.selfCare}        strokeWidth={2} dot={false} />
                       </LineChart>
                     </ResponsiveContainer>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
                       {(Object.entries(SURVEY_COLORS) as [keyof typeof SURVEY_COLORS, string][]).map(([key, color]) => (
-                        <span key={key} className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                          {key === "emotionalState" ? "Emotional" : key === "selfConnection" ? "Connected" : key === "selfCompassion" ? "Compassion" : "Self-Care"}
+                        <span key={key} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                          {key === "emotionalState" ? "Emotional State" : key === "selfConnection" ? "Self-Connection" : key === "selfCompassion" ? "Self-Compassion" : "Self-Care"}
                         </span>
                       ))}
                     </div>
@@ -525,8 +525,8 @@ export function InsightsDashboard() {
                             <p className="text-sm font-bold" style={{ color: SURVEY_COLORS[key] }}>
                               {(data.avgSurveyDimensions as NonNullable<typeof data.avgSurveyDimensions>)[key]}
                             </p>
-                            <p className="text-[9px] text-muted-foreground leading-tight">
-                              {key === "emotionalState" ? "State" : key === "selfConnection" ? "Connected" : key === "selfCompassion" ? "Compassion" : "Self-Care"}
+                            <p className="text-[10px] text-muted-foreground leading-tight">
+                              {key === "emotionalState" ? "Emotional" : key === "selfConnection" ? "Connection" : key === "selfCompassion" ? "Compassion" : "Self-Care"}
                             </p>
                           </div>
                         ))}
@@ -534,7 +534,7 @@ export function InsightsDashboard() {
                     )}
                   </>
                 ) : (
-                  <EmptyState text="After logging an emotion, complete the 4-question survey that follows. Your answers will appear here." action="Log an emotion" href="/emotional-log" />
+                  <EmptyState text="After logging an emotion, complete the 4-question survey that follows. Your answers will appear here." action="Open Haven" href="/" />
                 )}
               </SectionCard>
             </motion.div>
@@ -563,7 +563,7 @@ export function InsightsDashboard() {
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
-                  <EmptyState text="Log emotions on multiple days to see your intensity trend." action="Log an emotion" href="/emotional-log" />
+                  <EmptyState text="Log emotions on multiple days to see your intensity trend." action="Open Haven" href="/" />
                 )}
               </SectionCard>
             </motion.div>

@@ -82,7 +82,7 @@ export function AppStatusDashboard() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-foreground">HeartsHeal Status</CardTitle>
+            <CardTitle className="text-foreground">Haven Status</CardTitle>
             <CardDescription>Health and usage overview</CardDescription>
           </div>
           <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400">

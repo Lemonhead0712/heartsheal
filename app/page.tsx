@@ -744,6 +744,9 @@ export default function HavenHome() {
     ? "3s"
     : "2s"
 
+  // True when a widget panel is open — used to compress the orb/header zone
+  const widgetActive = mode !== "greeting" && mode !== "chatting"
+
   return (
     <div className="flex-1 flex flex-col bg-gradient-to-b from-[#16101f] via-background to-background overflow-hidden">
 
@@ -784,8 +787,13 @@ export default function HavenHome() {
       {/* ── Content — fills remaining space, no scrolling ── */}
       <div className="flex-1 flex flex-col items-center px-4 pt-2 min-h-0">
 
-        {/* Orb */}
-        <div className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center mb-3 shrink-0">
+        {/* Orb — compact when a widget is open */}
+        <motion.div
+          animate={{ width: widgetActive ? 56 : 96, height: widgetActive ? 56 : 96 }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          className={cn("relative flex items-center justify-center shrink-0", widgetActive ? "mb-2" : "mb-3")}
+          style={{ width: widgetActive ? 56 : 96, height: widgetActive ? 56 : 96 }}
+        >
           {/* Outer ambient ring */}
           <motion.span
             className="absolute rounded-full bg-primary/15"
@@ -802,14 +810,14 @@ export default function HavenHome() {
           />
           {/* Core orb */}
           <motion.div
-            className="relative w-24 h-24 md:w-32 md:h-32 rounded-full shadow-[0_0_48px_10px] shadow-primary/25 z-10 flex items-center justify-center"
+            className="absolute inset-0 rounded-full shadow-[0_0_32px_6px] shadow-primary/25 z-10 flex items-center justify-center"
             style={{ background: "linear-gradient(135deg, #9b6fdf, #d472b0)" }}
             animate={loading ? { scale: [1, 1.06, 1] } : {}}
             transition={loading ? { duration: 0.8, repeat: Infinity, ease: "easeInOut" } : {}}
           >
-            <span className="text-white text-2xl md:text-3xl select-none">✦</span>
+            <span className={cn("text-white select-none", widgetActive ? "text-lg" : "text-2xl md:text-3xl")}>✦</span>
           </motion.div>
-        </div>
+        </motion.div>
 
         {/* Haven's message bubble */}
         <AnimatePresence mode="wait">
@@ -819,7 +827,7 @@ export default function HavenHome() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="w-full max-w-sm text-center mb-2 shrink-0"
+            className={cn("w-full max-w-sm text-center shrink-0", widgetActive ? "mb-2" : "mb-3")}
           >
             {loading ? (
               <div className="flex justify-center gap-1.5">
@@ -830,7 +838,7 @@ export default function HavenHome() {
                 ))}
               </div>
             ) : (
-              <p className="font-serif text-lg md:text-xl text-foreground leading-snug">{displayText}</p>
+              <p className={cn("font-serif text-foreground leading-snug", widgetActive ? "text-sm text-muted-foreground" : "text-lg md:text-xl")}>{displayText}</p>
             )}
           </motion.div>
         </AnimatePresence>
@@ -848,11 +856,11 @@ export default function HavenHome() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="w-full max-w-sm mb-5 rounded-2xl border border-primary/40 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/15"
+              className="w-full max-w-sm mb-3 rounded-2xl border border-primary/40 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/15"
             >
-              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-3 text-center">How are you feeling right now?</p>
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2.5 text-center">How are you feeling right now?</p>
               {!intensityStep && (
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-1.5">
                   {EMOTIONS.map(({ label, emoji }) => (
                     <button key={label} disabled={!!pickedEmotion}
                       onClick={() => {
@@ -862,7 +870,7 @@ export default function HavenHome() {
                         setEmotionIntensity(5)
                       }}
                       className={cn(
-                        "flex flex-col items-center gap-1.5 py-3 rounded-xl border text-center transition-all",
+                        "flex flex-col items-center gap-1 py-2 rounded-xl border text-center transition-all",
                         pickedEmotion === label
                           ? "border-primary bg-primary/10 scale-95"
                           : pickedEmotion
@@ -913,7 +921,7 @@ export default function HavenHome() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="w-full max-w-sm mb-5 rounded-2xl border border-sky-300/60 bg-card/80 backdrop-blur-sm p-5 shadow-[0_0_20px_2px] shadow-sky-400/15 flex flex-col items-center"
+              className="w-full max-w-sm mb-3 rounded-2xl border border-sky-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-sky-400/15 flex flex-col items-center"
             >
               <p className="text-xs font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wide mb-1">
                 {havenBreathePattern.name} · {havenBreathePattern.description}
@@ -1035,7 +1043,7 @@ export default function HavenHome() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="w-full max-w-sm mb-5 rounded-2xl border border-amber-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-amber-400/15"
+              className="w-full max-w-sm mb-3 rounded-2xl border border-amber-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-amber-400/15"
             >
               <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-3">
                 {selectedEmotion ? `Reflecting on your ${selectedEmotion.toLowerCase()}` : "Write it out"}
@@ -1068,7 +1076,7 @@ export default function HavenHome() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="w-full max-w-sm mb-5 rounded-2xl border border-violet-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-violet-400/15"
+              className="w-full max-w-sm mb-3 rounded-2xl border border-violet-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-violet-400/15"
             >
               <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide mb-4">Wellbeing check-in</p>
               {[
@@ -1111,7 +1119,7 @@ export default function HavenHome() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.97 }}
                 transition={{ type: "spring", stiffness: 300, damping: 26 }}
-                className="w-full max-w-sm mb-5 rounded-2xl border border-indigo-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-indigo-400/15"
+                className="w-full max-w-sm mb-3 rounded-2xl border border-indigo-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-indigo-400/15"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-3">
@@ -1184,7 +1192,7 @@ export default function HavenHome() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="w-full max-w-sm mb-5 rounded-2xl border border-emerald-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-emerald-400/15"
+              className="w-full max-w-sm mb-3 rounded-2xl border border-emerald-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-emerald-400/15"
             >
               <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-4">Your progress</p>
               <div className="flex items-center gap-4 mb-4">
@@ -1213,8 +1221,8 @@ export default function HavenHome() {
 
         </AnimatePresence>
 
-        {/* ── Chips ── */}
-        {!loading && chips.length > 0 && (
+        {/* ── Chips — only in greeting/chatting mode, not when a widget panel is open ── */}
+        {!loading && chips.length > 0 && !widgetActive && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1298,8 +1306,8 @@ export default function HavenHome() {
         </div>{/* end middle zone */}
       </div>{/* end content column */}
 
-      {/* ── Input hint bar — always visible, anchors to bottom ── */}
-      {!welcomeOpen && (
+      {/* ── Input hint bar — hidden when a widget is filling the screen ── */}
+      {!welcomeOpen && !widgetActive && (
         <div className="shrink-0 px-3 pb-1 pt-1">
           <p className="text-center text-[11px] text-muted-foreground/60 font-medium tracking-wide">
             Type or speak to Haven below ↓

@@ -53,7 +53,7 @@ export function DesktopNav() {
       >
         <div className="max-w-5xl mx-auto w-full px-6 h-[60px] flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" onClick={() => click()} aria-label="HeartsHeal home">
+          <Link href="/" onClick={() => click()} aria-label="Haven home">
             <Logo size="small" />
           </Link>
 
@@ -131,7 +131,7 @@ export function DesktopNav() {
       {/* ── Mobile top bar ── */}
       <div className="fixed top-0 left-0 right-0 z-50 md:hidden glass-nav border-b">
         <div className="flex items-center justify-between px-4 h-14">
-          <Link href="/" onClick={() => { click(); setMobileOpen(false) }} aria-label="HeartsHeal home">
+          <Link href="/" onClick={() => { click(); setMobileOpen(false) }} aria-label="Haven home">
             <Logo size="small" />
           </Link>
           <button

@@ -264,8 +264,8 @@ export default function ThoughtsPage() {
         <motion.div className="flex items-center justify-between mb-3" variants={item}>
           <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
             <ChevronLeft className="h-4 w-4" />
-            <span className="text-primary">♥</span>
-            <span className="font-serif font-semibold text-foreground tracking-tight">HeartsHeal</span>
+            <img src="/haven-logo.png" alt="Haven" className="w-5 h-5 object-contain" />
+            <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <h1 className="font-serif text-lg font-semibold text-foreground">Thoughts & Reflection</h1>
           <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">

@@ -27,8 +27,8 @@ const cormorant = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   title: {
-    default: "HeartsHeal — Your Space for Healing",
-    template: "%s | HeartsHeal",
+    default: "Haven — Your Space for Healing",
+    template: "%s | Haven",
   },
   description:
     "A safe, calming space for emotional healing, guided breathing, reflective journaling, and personal growth.",
@@ -36,30 +36,30 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://heartsheal.netlify.app"),
   icons: {
     icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/haven-logo.png", type: "image/png" },
       { url: "/icon.png", type: "image/png" },
     ],
     apple: "/apple-touch-icon.png",
-    shortcut: "/icon.png",
+    shortcut: "/haven-logo.png",
   },
   openGraph: {
-    title: "HeartsHeal — Your Space for Healing",
+    title: "Haven — Your Space for Healing",
     description: "A safe, calming space for emotional healing and personal growth.",
     url: "https://heartsheal.netlify.app",
-    siteName: "HeartsHeal",
+    siteName: "Haven",
     type: "website",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "HeartsHeal — Your Space for Healing",
+        alt: "Haven — Your Space for Healing",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "HeartsHeal — Your Space for Healing",
+    title: "Haven — Your Space for Healing",
     description: "A safe, calming space for emotional healing, guided breathing, and reflective journaling.",
     images: ["/og-image.png"],
   },

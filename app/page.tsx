@@ -557,6 +557,9 @@ export default function HavenHome() {
     setSelectedEmotion(label)
     writeStorage(STORAGE_KEYS.lastCheckin, new Date().toDateString())
     await addEmotion({ emotion: label, emoji, intensity, notes: "" })
+    // Update streak immediately on first activity so badge feels live
+    const liveStreak = saveStreak()
+    setStreak(liveStreak)
     setTimeout(() => {
       setPickedEmotion(null)
       reportToHaven(`I just logged that I'm feeling ${label} ${emoji} at intensity ${intensity}/10.`, "emotion")
@@ -782,23 +785,13 @@ export default function HavenHome() {
 
   return (
     <div
-      className="flex flex-col bg-gradient-to-b from-[#16101f] via-background to-background overflow-hidden md:flex-1 md:h-auto"
-      style={{ height: "calc(100dvh - 84px)" }}
+      className="flex flex-col bg-gradient-to-b from-[#16101f] via-background to-background md:flex-1 md:h-screen md:overflow-hidden"
+      style={{ height: "calc(100dvh - 140px)" }}
     >
 
-      {/* ── Header ── */}
-      <header className="flex items-center justify-between px-5 pt-3 pb-2 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <img
-            src="/havenlogo.png"
-            alt="Haven"
-            className="w-10 h-10 object-contain shrink-0"
-            style={{ background: "transparent", filter: "drop-shadow(0 0 6px rgba(155,111,223,0.45))" }}
-          />
-          <span className="font-serif font-semibold text-foreground tracking-tight text-base">Haven</span>
-        </div>
-
-        {/* Streak badge — always renders to prevent layout shift; fades in when streak > 0 */}
+      {/* ── Header — mobile only (desktop uses DesktopNav) ── */}
+      <header className="md:hidden flex items-center justify-between px-4 pt-2 pb-1 shrink-0">
+        {/* Streak badge — fades in when streak > 0 */}
         <div className={cn(
           "flex items-center gap-1 px-2.5 py-1 rounded-full border transition-all duration-500",
           streak > 0
@@ -807,11 +800,11 @@ export default function HavenHome() {
         )}>
           <span className="text-xs">🔥</span>
           <span className="text-xs font-semibold text-primary">
-            {streak > 0 ? `${streak} day${streak !== 1 ? "s" : ""}` : ""}
+            {streak > 0 ? `${streak} day${streak !== 1 ? "s" : ""}` : "‎"}
           </span>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <button onClick={voiceEnabled ? stopSpeech : toggleVoice}
             className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             aria-label={voiceEnabled ? "Mute Haven" : "Unmute Haven"}>
@@ -826,7 +819,7 @@ export default function HavenHome() {
       </header>
 
       {/* ── Content — flex-1 col with justify-between: top group + bottom actions ── */}
-      <div className="flex-1 flex flex-col items-center px-4 pt-2 pb-2 min-h-0 justify-between overflow-hidden">
+      <div className="flex-1 flex flex-col items-center px-4 pt-1 pb-2 min-h-0 justify-between">
 
         {/* ── Top group: orb + message + widgets/chips ── */}
         <div className="flex flex-col items-center w-full max-w-sm">
@@ -835,7 +828,7 @@ export default function HavenHome() {
         <motion.div
           animate={{ width: widgetActive ? 56 : 88, height: widgetActive ? 56 : 88 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className={cn("relative flex items-center justify-center shrink-0 mt-1", widgetActive ? "mb-2" : "mb-3")}
+          className={cn("relative flex items-center justify-center shrink-0 mt-5", widgetActive ? "mb-2" : "mb-3")}
           style={{ width: widgetActive ? 56 : 88, height: widgetActive ? 56 : 88 }}
         >
           {/* Outer ambient ring */}

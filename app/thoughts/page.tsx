@@ -408,6 +408,31 @@ export default function ThoughtsPage() {
 
                   {quizPhase === "results" && (
                     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+                      {/* Combined scores card — only when both quizzes have results */}
+                      {(() => {
+                        const allResults = readStorage<{ type: QuizType; score: number; created_at: string }[]>(STORAGE_KEYS.quizResults) ?? []
+                        const otherType: QuizType = quizType === "self-compassion" ? "emotional-awareness" : "self-compassion"
+                        const otherResult = allResults.filter((r) => r.type === otherType).sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
+                        if (!otherResult) return null
+                        return (
+                          <div className="glass-card rounded-2xl p-4 mb-4">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-3">Your Progress</p>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="text-center p-3 rounded-xl bg-background/60 border border-border/30">
+                                <p className="text-xs text-muted-foreground mb-1">{QUIZ_META[quizType].label}</p>
+                                <p className={cn("text-2xl font-bold", getScore(avgScore).color)}>{avgScore}</p>
+                                <p className={cn("text-[11px] font-medium", getScore(avgScore).color)}>{getScore(avgScore).label}</p>
+                              </div>
+                              <div className="text-center p-3 rounded-xl bg-background/60 border border-border/30">
+                                <p className="text-xs text-muted-foreground mb-1">{QUIZ_META[otherType].label}</p>
+                                <p className={cn("text-2xl font-bold", getScore(otherResult.score).color)}>{otherResult.score}</p>
+                                <p className={cn("text-[11px] font-medium", getScore(otherResult.score).color)}>{getScore(otherResult.score).label}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })()}
+
                       <div className="glass-card rounded-2xl p-6 text-center">
                         <div className="text-4xl mb-1">{QUIZ_META[quizType].emoji}</div>
                         <h2 className="font-serif text-xl font-semibold text-foreground mb-1">{QUIZ_META[quizType].label}</h2>
@@ -446,7 +471,17 @@ export default function ThoughtsPage() {
                         <Button onClick={() => startQuiz(quizType)} variant="outline" className="flex-1 rounded-xl gap-2">
                           <RotateCcw className="w-4 h-4" /> Retake
                         </Button>
-                        <Button onClick={() => setQuizPhase("select")} className="flex-1 rounded-xl gap-2">Try Other Quiz</Button>
+                        <Button
+                          onClick={() => startQuiz(quizType === "self-compassion" ? "emotional-awareness" : "self-compassion")}
+                          className="flex-1 rounded-xl gap-2"
+                        >
+                          Take {quizType === "self-compassion" ? "Emotional Awareness" : "Self-Compassion"} →
+                        </Button>
+                      </div>
+                      <div className="mt-3 text-center">
+                        <Link href="/insights" className="text-xs text-primary hover:underline">
+                          View full analysis in Insights →
+                        </Link>
                       </div>
                     </motion.div>
                   )}

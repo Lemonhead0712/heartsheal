@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * Centralised localStorage keys for all HeartsHeal user data.
+ * Centralised localStorage keys for all Haven user data.
  * Import this wherever you read/write user data to keep keys consistent.
  */
 export const STORAGE_KEYS = {
@@ -58,7 +58,7 @@ export function exportUserData(): void {
   const url  = URL.createObjectURL(blob)
   const a    = document.createElement("a")
   a.href     = url
-  a.download = `heartsheal-backup-${new Date().toISOString().slice(0, 10)}.json`
+  a.download = `haven-backup-${new Date().toISOString().slice(0, 10)}.json`
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -81,7 +81,7 @@ export async function importUserData(file: File): Promise<{ success: boolean; er
   }
 }
 
-/** Wipe all HeartsHeal data from localStorage. */
+/** Wipe all Haven data from localStorage. */
 export function clearAllData(): void {
   if (typeof window === "undefined") return
   for (const key of Object.values(STORAGE_KEYS)) {

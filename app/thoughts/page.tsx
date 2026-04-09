@@ -93,8 +93,9 @@ export default function ThoughtsPage() {
   const [saved, setSaved] = useState(false)
   const { entries: journalEntries, addEntry: addJournalEntry, deleteEntry: deleteJournalEntry } = useJournalEntries()
 
-  /* Journal modal */
+  /* Journal modal + delete confirmation */
   const [viewEntry, setViewEntry] = useState<JournalEntry | null>(null)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   /* Quiz state */
   const [quizPhase, setQuizPhase] = useState<"select" | "questions" | "results">("select")
@@ -140,10 +141,6 @@ export default function ThoughtsPage() {
     setSaved(true)
     const next = JOURNAL_PROMPTS[Math.floor(Math.random() * JOURNAL_PROMPTS.length)]
     setTimeout(() => { setEntry(""); setActivePrompt(next); setIsAiPrompt(false); setSaved(false) }, 1200)
-  }
-
-  const deleteEntry = (id: string) => {
-    deleteJournalEntry(id)
   }
 
   /* ── Quiz helpers ── */
@@ -467,27 +464,50 @@ export default function ThoughtsPage() {
                 <h2 className="font-semibold text-foreground text-sm mb-4">Past Entries</h2>
                 <div className="space-y-3">
                   {journalEntries.slice(0, 5).map((e) => (
-                    <div key={e.id} className="border border-border/40 rounded-xl p-4 group relative">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="text-[11px] text-primary/70 font-medium font-serif italic line-clamp-1 flex-1">"{e.prompt}"</p>
-                        <button onClick={() => deleteEntry(e.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                      <button
-                        onClick={() => setViewEntry(e)}
-                        className="w-full text-left"
-                      >
-                        <p className="text-sm text-foreground/80 leading-relaxed line-clamp-2">{e.entry}</p>
-                        <div className="flex items-center justify-between mt-2">
-                          <p className="text-[10px] text-muted-foreground">
-                            {new Date(e.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                          </p>
-                          <span className="text-[10px] text-primary/60 flex items-center gap-0.5 font-medium">
-                            Read <ChevronRight className="w-3 h-3" />
-                          </span>
+                    <div key={e.id} className="border border-border/40 rounded-xl overflow-hidden">
+                      {pendingDeleteId === e.id ? (
+                        /* Inline delete confirmation */
+                        <div className="flex items-center justify-between px-4 py-3 bg-destructive/5 border-l-2 border-destructive/40">
+                          <span className="text-sm text-foreground">Delete this entry?</span>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => { deleteJournalEntry(e.id); setPendingDeleteId(null) }}
+                              className="text-sm font-semibold text-rose-500 hover:text-rose-600 transition-colors"
+                            >
+                              Delete
+                            </button>
+                            <button
+                              onClick={() => setPendingDeleteId(null)}
+                              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
-                      </button>
+                      ) : (
+                        <div className="p-4">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <p className="text-[11px] text-primary/70 font-medium font-serif italic line-clamp-1 flex-1">"{e.prompt}"</p>
+                            <button
+                              onClick={() => setPendingDeleteId(e.id)}
+                              className="text-muted-foreground/40 hover:text-destructive transition-colors shrink-0"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <button onClick={() => setViewEntry(e)} className="w-full text-left">
+                            <p className="text-sm text-foreground/80 leading-relaxed line-clamp-2">{e.entry}</p>
+                            <div className="flex items-center justify-between mt-2">
+                              <p className="text-[10px] text-muted-foreground">
+                                {new Date(e.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                              </p>
+                              <span className="text-[10px] text-primary/60 flex items-center gap-0.5 font-medium">
+                                Read <ChevronRight className="w-3 h-3" />
+                              </span>
+                            </div>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

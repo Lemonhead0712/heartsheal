@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "HeartsHeal — Your Space for Healing",
-    short_name: "HeartsHeal",
+    name: "Haven — Your Space for Healing",
+    short_name: "Haven",
     description: "A safe, calming space for emotional healing, guided breathing, reflective journaling, and personal growth.",
     start_url: "/",
     display: "standalone",

@@ -150,7 +150,7 @@ const EMOTION_QUIZ_MAP: Record<string, "emotional-awareness" | "self-compassion"
   "Grief":    "self-compassion",
 }
 
-const HAVEN_SYSTEM = `You are Haven, the heart of HeartsHeal — a compassionate AI healing companion.
+const HAVEN_SYSTEM = `You are Haven — a compassionate AI healing companion.
 You speak warmly, gently, and briefly (2-3 sentences max).
 You guide the user through their healing by proactively suggesting embedded activities.
 
@@ -295,8 +295,10 @@ export default function HavenHome() {
   const [quizPhase,   setQuizPhase]   = useState<"idle" | "active" | "done">("idle")
 
   // ── Journal widget state ──────────────────────────────────────────────────
-  const [journalText,  setJournalText]  = useState("")
-  const [journalSaved, setJournalSaved] = useState(false)
+  const [journalText,       setJournalText]       = useState("")
+  const [journalSaved,      setJournalSaved]      = useState(false)
+  const [havenAiPrompt,     setHavenAiPrompt]     = useState<string | null>(null)
+  const [havenPromptLoading, setHavenPromptLoading] = useState(false)
 
   // ── Survey widget state ───────────────────────────────────────────────────
   const [survey, setSurvey] = useState({ emotionalState: 3, selfConnection: 3, selfCompassion: 3, selfCare: 3 })
@@ -641,12 +643,37 @@ export default function HavenHome() {
 
   const saveJournal = useCallback(async () => {
     if (!journalText.trim()) return
-    await addJournal({ prompt: journalPrompt, entry: journalText.trim() })
+    const usedPrompt = havenAiPrompt ?? journalPrompt
+    await addJournal({ prompt: usedPrompt, entry: journalText.trim() })
     setJournalSaved(true)
     setTimeout(() => {
       reportToHaven(`I just wrote a reflection in my journal.`, "journal")
     }, 600)
-  }, [journalText, journalPrompt, addJournal, reportToHaven])
+  }, [journalText, havenAiPrompt, journalPrompt, addJournal, reportToHaven])
+
+  const generateHavenPrompt = useCallback(async () => {
+    setHavenPromptLoading(true)
+    const recentEmotion = selectedEmotion ?? (readStorage<any[]>(STORAGE_KEYS.emotionLogs)?.[0]?.emotion ?? "reflective")
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 120,
+          system: "You generate compassionate, trauma-informed journaling prompts for people healing from loss, grief, or emotional pain. Output ONLY the prompt — one or two sentences, warm and open-ended. No preamble, no quotes.",
+          messages: [{ role: "user", content: `Generate a unique journaling prompt for someone feeling: ${recentEmotion}. Make it gentle and specific to this emotional state.` }],
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const text = data.content?.[0]?.text?.trim()
+        if (text) setHavenAiPrompt(text)
+      }
+    } catch { /* silently keep current prompt */ } finally {
+      setHavenPromptLoading(false)
+    }
+  }, [selectedEmotion])
 
   // ── Survey widget ─────────────────────────────────────────────────────────
   const saveSurvey = useCallback(() => {
@@ -756,11 +783,11 @@ export default function HavenHome() {
   return (
     <div className="flex-1 flex flex-col bg-gradient-to-b from-[#16101f] via-background to-background overflow-hidden">
 
-      {/* ── Thin header ── */}
-      <header className="flex items-center justify-between px-5 pt-2 pb-1 shrink-0">
+      {/* ── Header ── */}
+      <header className="flex items-center justify-between px-5 pt-3 pb-2 shrink-0">
         <div className="flex items-center gap-2">
-          <span className="text-primary">♥</span>
-          <span className="font-serif font-semibold text-foreground tracking-tight">HeartsHeal</span>
+          <img src="/haven-logo.png" alt="Haven" className="w-7 h-7 object-contain shrink-0" />
+          <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
         </div>
 
         {/* Streak badge — always renders to prevent layout shift; fades in when streak > 0 */}
@@ -776,14 +803,14 @@ export default function HavenHome() {
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <button onClick={voiceEnabled ? stopSpeech : toggleVoice}
-            className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             aria-label={voiceEnabled ? "Mute Haven" : "Unmute Haven"}>
             {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </button>
           <Link href="/insights"
-            className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             aria-label="View insights">
             <TrendingUp className="w-4 h-4" />
           </Link>
@@ -791,13 +818,13 @@ export default function HavenHome() {
       </header>
 
       {/* ── Content — fills remaining space, no scrolling ── */}
-      <div className="flex-1 flex flex-col items-center px-4 pt-2 min-h-0">
+      <div className="flex-1 flex flex-col items-center px-4 pt-4 min-h-0">
 
         {/* Orb — compact when a widget is open */}
         <motion.div
           animate={{ width: widgetActive ? 56 : 96, height: widgetActive ? 56 : 96 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className={cn("relative flex items-center justify-center shrink-0", widgetActive ? "mb-2" : "mb-3")}
+          className={cn("relative flex items-center justify-center shrink-0 mt-2", widgetActive ? "mb-2" : "mb-4")}
           style={{ width: widgetActive ? 56 : 96, height: widgetActive ? 56 : 96 }}
         >
           {/* Outer ambient ring */}
@@ -850,7 +877,7 @@ export default function HavenHome() {
         </AnimatePresence>
 
         {/* ── Middle zone: widgets + chips + quick actions — flex-1 fills remaining space ── */}
-        <div className="flex-1 flex flex-col items-center justify-center w-full min-h-0 overflow-y-auto">
+        <div className="flex-1 flex flex-col items-center justify-start w-full min-h-0 overflow-y-auto">
 
         {/* ── Embedded Widget ── */}
         <AnimatePresence mode="wait">
@@ -1051,11 +1078,33 @@ export default function HavenHome() {
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
               className="w-full max-w-sm mb-3 rounded-2xl border border-amber-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-amber-400/15"
             >
-              <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-3">
-                {selectedEmotion ? `Reflecting on your ${selectedEmotion.toLowerCase()}` : "Write it out"}
-              </p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">
+                  {selectedEmotion ? `Reflecting on your ${selectedEmotion.toLowerCase()}` : "Write it out"}
+                </p>
+                <button
+                  onClick={generateHavenPrompt}
+                  disabled={havenPromptLoading}
+                  className="flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 disabled:opacity-50 transition-colors"
+                >
+                  {havenPromptLoading ? (
+                    <span className="inline-block w-3 h-3 border-2 border-amber-400/40 border-t-amber-500 rounded-full animate-spin" />
+                  ) : (
+                    <span>✨</span>
+                  )}
+                  {havenPromptLoading ? "Generating…" : "New prompt"}
+                </button>
+              </div>
               <div className="bg-amber-50/60 dark:bg-amber-900/20 rounded-xl px-3.5 py-2.5 mb-3 border border-amber-200/40">
-                <p className="text-sm text-foreground/80 font-serif italic leading-relaxed">"{journalPrompt}"</p>
+                {havenPromptLoading ? (
+                  <div className="space-y-1.5">
+                    {[100, 80].map((w) => (
+                      <div key={w} className="h-3 bg-amber-200/50 dark:bg-amber-800/40 rounded-full animate-pulse" style={{ width: `${w}%` }} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-foreground/80 font-serif italic leading-relaxed">"{havenAiPrompt ?? journalPrompt}"</p>
+                )}
               </div>
               <textarea
                 value={journalText}
@@ -1370,15 +1419,15 @@ export default function HavenHome() {
             {/* Mirrors Haven's exact layout: header → orb → message → actions */}
             <div className="flex flex-col items-center flex-1 px-5 pt-8 pb-6">
 
-              {/* Logo mark — matches Haven's thin header */}
+              {/* Logo mark — matches Haven's header */}
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.4 }}
-                className="flex items-center gap-2 mb-8"
+                className="flex items-center gap-2 mb-6"
               >
-                <span className="text-primary text-lg">♥</span>
-                <span className="font-serif font-semibold text-foreground tracking-tight">HeartsHeal</span>
+                <img src="/haven-logo.png" alt="Haven" className="w-8 h-8 object-contain shrink-0" />
+                <span className="font-serif font-semibold text-foreground tracking-tight text-lg">Haven</span>
               </motion.div>
 
               {/* Orb — identical to Haven's orb */}
@@ -1386,7 +1435,7 @@ export default function HavenHome() {
                 initial={{ opacity: 0, scale: 0.85 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
-                className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center mb-5 shrink-0"
+                className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center mb-4 shrink-0"
               >
                 <motion.span
                   className="absolute rounded-full bg-primary/15"
@@ -1410,7 +1459,7 @@ export default function HavenHome() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
-                className="w-full max-w-sm text-center mb-2"
+                className="w-full max-w-sm text-center mb-3"
               >
                 <p className="font-serif text-lg md:text-xl text-foreground leading-snug">
                   Hello. I'm Haven — I'm here to walk alongside you through whatever you're carrying.
@@ -1421,17 +1470,17 @@ export default function HavenHome() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6, duration: 0.4 }}
-                className="text-sm text-muted-foreground text-center leading-relaxed max-w-xs mb-7"
+                className="text-sm text-muted-foreground text-center leading-relaxed max-w-xs mb-5"
               >
                 Grief, heartbreak, loss — you don't have to move through it alone. Let's begin.
               </motion.p>
 
-              {/* Feature tags — minimal, inline */}
+              {/* Feature tags */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7, duration: 0.4 }}
-                className="flex flex-wrap justify-center gap-1.5 mb-7 max-w-[280px]"
+                className="flex flex-wrap justify-center gap-2 mb-5 max-w-[300px]"
               >
                 {[
                   { icon: <Sparkles className="w-3 h-3" />, label: "AI companion" },
@@ -1439,8 +1488,8 @@ export default function HavenHome() {
                   { icon: <BookHeart className="w-3 h-3" />, label: "Journaling" },
                   { icon: <BarChart3 className="w-3 h-3" />, label: "Insights" },
                 ].map(({ icon, label }) => (
-                  <span key={label} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/8 border border-primary/12 text-[11px] font-medium text-primary/80">
-                    {icon}{label}
+                  <span key={label} className="glass-card inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium text-foreground/70">
+                    <span className="text-primary">{icon}</span>{label}
                   </span>
                 ))}
               </motion.div>

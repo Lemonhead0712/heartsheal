@@ -36,11 +36,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://heartsheal.netlify.app"),
   icons: {
     icon: [
-      { url: "/haven-logo.png", type: "image/png" },
+      { url: "/havenlogo.png", type: "image/png" },
       { url: "/icon.png", type: "image/png" },
     ],
     apple: "/apple-touch-icon.png",
-    shortcut: "/haven-logo.png",
+    shortcut: "/havenlogo.png",
   },
   openGraph: {
     title: "Haven — Your Space for Healing",

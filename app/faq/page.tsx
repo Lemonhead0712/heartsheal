@@ -17,19 +17,19 @@ const sections: FAQSection[] = [
     color: "bg-primary/10 text-primary",
     items: [
       {
-        q: "What is HeartsHeal?",
-        a: "HeartsHeal is a free emotional wellness app designed to support you through grief, heartbreak, loss, and life transitions. It gives you tools to track your emotions, journal, practise guided breathing, and talk with Haven — a compassionate AI companion — all in one calm, private space.",
+        q: "What is Haven?",
+        a: "Haven is a free emotional wellness app designed to support you through grief, heartbreak, loss, and life transitions. It gives you tools to track your emotions, journal, practise guided breathing, and talk with Haven — a compassionate AI companion — all in one calm, private space.",
       },
       {
-        q: "Is HeartsHeal completely free?",
+        q: "Is Haven completely free?",
         a: "Yes. Every core feature — Haven AI, the Emotional Log, Guided Breathing, and the Thoughts Journal — is free to use. Creating an account to sync your data across devices is also free. There are no hidden fees or paywalls on the tools that matter most.",
       },
       {
-        q: "Who is HeartsHeal for?",
-        a: "HeartsHeal is for anyone navigating emotional pain — grief and loss, heartbreak, divorce, job loss, loneliness, family estrangement, identity shifts, or trauma. No loss is too small. If it hurts, it matters, and you belong here.",
+        q: "Who is Haven for?",
+        a: "Haven is for anyone navigating emotional pain — grief and loss, heartbreak, divorce, job loss, loneliness, family estrangement, identity shifts, or trauma. No loss is too small. If it hurts, it matters, and you belong here.",
       },
       {
-        q: "Do I need to create an account to use HeartsHeal?",
+        q: "Do I need to create an account to use Haven?",
         a: "No. You can use every feature without signing up. All your data is stored locally on your device. Creating a free account simply lets you sync your data across multiple devices and keeps it safe in the cloud.",
       },
     ],
@@ -41,7 +41,7 @@ const sections: FAQSection[] = [
     items: [
       {
         q: "What is Haven?",
-        a: "Haven is HeartsHeal's AI companion — a compassionate, non-judgmental presence that listens to what you're carrying and gently holds space for your feelings. Haven can also speak responses aloud and listen to your voice, making conversations feel more natural and human.",
+        a: "Haven is Haven's AI companion — a compassionate, non-judgmental presence that listens to what you're carrying and gently holds space for your feelings. Haven can also speak responses aloud and listen to your voice, making conversations feel more natural and human.",
       },
       {
         q: "Is Haven a licensed therapist or mental health professional?",
@@ -49,7 +49,7 @@ const sections: FAQSection[] = [
       },
       {
         q: "Are my Haven conversations stored or shared?",
-        a: "No. Your Haven conversations are sent to Anthropic's Claude API to generate responses and are not stored by HeartsHeal. Anthropic processes messages according to their own privacy policy. HeartsHeal does not retain, read, or share your conversation content.",
+        a: "No. Your Haven conversations are sent to Anthropic's Claude API to generate responses and are not stored by Haven. Anthropic processes messages according to their own privacy policy. Haven does not retain, read, or share your conversation content.",
       },
       {
         q: "Can Haven remember previous conversations?",
@@ -64,7 +64,7 @@ const sections: FAQSection[] = [
     items: [
       {
         q: "Is my emotional data private?",
-        a: "Absolutely. When you use HeartsHeal without an account, everything stays on your device in local storage — nothing is sent to any server. If you create an account, your data is synced to Supabase, our secure cloud database, using industry-standard encryption. We never sell your data or use it for advertising.",
+        a: "Absolutely. When you use Haven without an account, everything stays on your device in local storage — nothing is sent to any server. If you create an account, your data is synced to Supabase, our secure cloud database, using industry-standard encryption. We never sell your data or use it for advertising.",
       },
       {
         q: "How do I sync my data across devices?",
@@ -76,7 +76,7 @@ const sections: FAQSection[] = [
       },
       {
         q: "How do I delete all my data?",
-        a: "Go to Settings → Danger Zone → Delete All My Data to permanently clear all locally stored data from your device. If you have an account and want your cloud data deleted as well, use the Delete My Account option (available when signed in) or contact us at support@heartsheal.app.",
+        a: "Go to Settings → Danger Zone → Delete All My Data to permanently clear all locally stored data from your device. If you have an account and want your cloud data deleted as well, use the Delete My Account option (available when signed in) or contact us at support@haven.app.",
       },
     ],
   },
@@ -94,7 +94,7 @@ const sections: FAQSection[] = [
         a: "The Thoughts Journal is a private space to write freely or respond to guided prompts. Haven AI can suggest personalised prompts based on your recent entries. You can also take self-compassion quizzes to deepen self-awareness.",
       },
       {
-        q: "What breathing techniques does HeartsHeal offer?",
+        q: "What breathing techniques does Haven offer?",
         a: "The Guided Breathing section includes Box Breathing (4-4-4-4), 4-7-8 Breathing, Relaxing Breath, Equal Breathing, and more. Each technique is paired with a gentle animation, optional ambient sounds, and can be read aloud by Haven's voice.",
       },
     ],
@@ -106,15 +106,15 @@ const sections: FAQSection[] = [
     items: [
       {
         q: "What should I do if I'm in crisis right now?",
-        a: "Please reach out immediately. Call or text 988 (Suicide & Crisis Lifeline) — available 24/7. You can also text HOME to 741741 for the Crisis Text Line. HeartsHeal and Haven are not crisis services and cannot provide emergency support.",
+        a: "Please reach out immediately. Call or text 988 (Suicide & Crisis Lifeline) — available 24/7. You can also text HOME to 741741 for the Crisis Text Line. Haven and Haven are not crisis services and cannot provide emergency support.",
       },
       {
-        q: "How do I contact HeartsHeal support?",
-        a: "Email us at support@heartsheal.app. We aim to respond within 2 business days. For urgent mental health needs, please use the crisis resources above rather than waiting for a support response.",
+        q: "How do I contact Haven support?",
+        a: "Email us at support@haven.app. We aim to respond within 2 business days. For urgent mental health needs, please use the crisis resources above rather than waiting for a support response.",
       },
       {
-        q: "Is HeartsHeal suitable for children?",
-        a: "HeartsHeal is intended for users aged 13 and older. We do not knowingly collect data from children under 13. If you believe a child has provided personal information, please contact us at support@heartsheal.app and we will delete it promptly.",
+        q: "Is Haven suitable for children?",
+        a: "Haven is intended for users aged 13 and older. We do not knowingly collect data from children under 13. If you believe a child has provided personal information, please contact us at support@haven.app and we will delete it promptly.",
       },
     ],
   },
@@ -179,7 +179,7 @@ export default function FAQPage() {
           <h1 className="font-serif text-3xl font-semibold text-foreground">Frequently Asked Questions</h1>
         </div>
         <p className="text-sm text-muted-foreground mb-10 ml-12">
-          Everything you need to know about HeartsHeal.
+          Everything you need to know about Haven.
         </p>
 
         <div className="space-y-8">
@@ -203,7 +203,7 @@ export default function FAQPage() {
             We're here to help. Send us a message and we'll get back to you within 2 business days.
           </p>
           <a
-            href="mailto:support@heartsheal.app"
+            href="mailto:support@haven.app"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-primary/30 text-primary text-sm font-semibold hover:bg-primary/10 transition-colors"
           >
             Contact Support

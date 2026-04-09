@@ -79,6 +79,8 @@ export type InsightsData = {
   recentJournalSnippets: { date: string; prompt: string; excerpt: string }[]
   weeklyNarrative: string | null
   narrativeLoading: boolean
+  journalInsight: string | null
+  journalInsightLoading: boolean
   breathingPatternBreakdown: { pattern: string; count: number }[]
   avgSurveyDimensions: { emotionalState: number; selfConnection: number; selfCompassion: number; selfCare: number } | null
   avgIntensity: number | null   // mean intensity across all filtered emotion logs
@@ -422,62 +424,115 @@ export function useInsightsData(dateRange: DateRange) {
       recentJournalSnippets,
       weeklyNarrative: null,
       narrativeLoading: false,
+      journalInsight: null,
+      journalInsightLoading: false,
       breathingPatternBreakdown,
       avgSurveyDimensions,
       avgIntensity,
       milestones,
     })
 
-    // ── AI Weekly Narrative (cached per ISO week) ──
+    // ── AI Weekly Narrative + Journal Insight (both cached per ISO week) ──
     const allTimeLogs = readStorage<EmotionEntry[]>(STORAGE_KEYS.emotionLogs) ?? []
+    const currentWeek = getISOWeek()
+
     if (allTimeLogs.length >= 3) {
-      const currentWeek = getISOWeek()
-      const cached = readStorage<{ text: string; week: string }>(STORAGE_KEYS.weeklyNarrative)
-      if (cached?.week === currentWeek) {
-        setData((prev) => prev ? { ...prev, weeklyNarrative: cached.text } : prev)
-        return
-      }
+      const cachedNarrative = readStorage<{ text: string; week: string }>(STORAGE_KEYS.weeklyNarrative)
+      if (cachedNarrative?.week === currentWeek) {
+        setData((prev) => prev ? { ...prev, weeklyNarrative: cachedNarrative.text } : prev)
+      } else {
+        setData((prev) => prev ? { ...prev, narrativeLoading: true } : prev)
 
-      setData((prev) => prev ? { ...prev, narrativeLoading: true } : prev)
+        try {
+          const topEmotions = Array.from(emotionMap.entries())
+            .sort((a, b) => b[1].count - a[1].count)
+            .slice(0, 3)
+            .map(([e, { count }]) => `${e} ×${count}`)
+            .join(", ")
+          const avgIntensity = emotionLogs.length
+            ? Math.round((emotionLogs.reduce((s, e) => s + e.intensity, 0) / emotionLogs.length) * 10) / 10
+            : "N/A"
+          const surveyAvgs = avgSurveyDimensions
+            ? `emotional state ${avgSurveyDimensions.emotionalState}/5, self-connection ${avgSurveyDimensions.selfConnection}/5, self-compassion ${avgSurveyDimensions.selfCompassion}/5, self-care ${avgSurveyDimensions.selfCare}/5`
+            : "no survey data yet"
+          const journalExcerpts = journalEntries.length > 0
+            ? journalEntries
+                .sort((a, b) => b.date.localeCompare(a.date))
+                .slice(0, 3)
+                .map((e) => `"${e.entry.slice(0, 200)}${e.entry.length > 200 ? "…" : ""}"`)
+                .join("; ")
+            : null
 
-      try {
-        // Build compact summary for Claude
-        const topEmotions = Array.from(emotionMap.entries())
-          .sort((a, b) => b[1].count - a[1].count)
-          .slice(0, 3)
-          .map(([e, { count }]) => `${e} ×${count}`)
-          .join(", ")
-        const avgIntensity = emotionLogs.length
-          ? Math.round((emotionLogs.reduce((s, e) => s + e.intensity, 0) / emotionLogs.length) * 10) / 10
-          : "N/A"
-        const surveyAvgs = avgSurveyDimensions
-          ? `emotional state ${avgSurveyDimensions.emotionalState}/5, self-connection ${avgSurveyDimensions.selfConnection}/5, self-compassion ${avgSurveyDimensions.selfCompassion}/5, self-care ${avgSurveyDimensions.selfCare}/5`
-          : "no survey data yet"
+          const prompt = `You are a compassionate wellness analyst. Write exactly 2-3 warm, personalized sentences summarising this person's healing journey this week based on their data. Be specific, encouraging, and human. Plain prose only — no lists, no markdown.
 
-        const prompt = `You are a compassionate wellness analyst. Write exactly 2-3 warm, personalized sentences summarising this person's healing journey this week based on their data. Be specific, encouraging, and human. Plain prose only — no lists, no markdown.
+Data: emotions logged: ${emotionLogs.length} (top: ${topEmotions || "none"}), avg intensity: ${avgIntensity}/10, survey averages: ${surveyAvgs}, breathing sessions: ${breathingSessions.length}, journal entries: ${journalEntries.length}${journalExcerpts ? `, recent excerpts: ${journalExcerpts}` : ""}, Haven session: ${lastSession ? lastSession.lossId : "none"}.`
 
-Data: emotions logged: ${emotionLogs.length} (top: ${topEmotions || "none"}), avg intensity: ${avgIntensity}/10, survey averages: ${surveyAvgs}, breathing sessions: ${breathingSessions.length}, journal entries: ${journalEntries.length}, Haven session: ${lastSession ? lastSession.lossId : "none"}.`
-
-        const res = await fetch("/api/ai", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "claude-haiku-4-5-20251001",
-            max_tokens: 120,
-            system: "You write warm, concise 2-3 sentence wellness summaries. Plain prose only.",
-            messages: [{ role: "user", content: prompt }],
-          }),
-        })
-        if (res.ok) {
-          const json = await res.json()
-          const text = json.content?.[0]?.text ?? null
-          if (text) {
-            writeStorage(STORAGE_KEYS.weeklyNarrative, { text, week: currentWeek })
-            setData((prev) => prev ? { ...prev, weeklyNarrative: text, narrativeLoading: false } : prev)
+          const res = await fetch("/api/ai", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "claude-haiku-4-5-20251001",
+              max_tokens: 120,
+              system: "You write warm, concise 2-3 sentence wellness summaries. Plain prose only.",
+              messages: [{ role: "user", content: prompt }],
+            }),
+          })
+          if (res.ok) {
+            const json = await res.json()
+            const text = json.content?.[0]?.text ?? null
+            if (text) {
+              writeStorage(STORAGE_KEYS.weeklyNarrative, { text, week: currentWeek })
+              setData((prev) => prev ? { ...prev, weeklyNarrative: text, narrativeLoading: false } : prev)
+            }
           }
+        } catch { /* silently fail */ } finally {
+          setData((prev) => prev ? { ...prev, narrativeLoading: false } : prev)
         }
-      } catch { /* silently fail */ } finally {
-        setData((prev) => prev ? { ...prev, narrativeLoading: false } : prev)
+      }
+    }
+
+    // ── AI Journal Theme Insight (cached per ISO week) ──
+    const allJournalAll = readStorage<JournalEntry[]>(STORAGE_KEYS.journalEntries) ?? []
+    if (allJournalAll.length >= 2) {
+      const cachedInsight = readStorage<{ text: string; week: string }>(STORAGE_KEYS.journalInsight)
+      if (cachedInsight?.week === currentWeek) {
+        setData((prev) => prev ? { ...prev, journalInsight: cachedInsight.text } : prev)
+      } else {
+        setData((prev) => prev ? { ...prev, journalInsightLoading: true } : prev)
+
+        try {
+          const recentEntries = allJournalAll
+            .sort((a, b) => b.date.localeCompare(a.date))
+            .slice(0, 5)
+            .map((e, i) => `Entry ${i + 1} (${e.date.slice(0, 10)}): ${e.prompt ? `Prompt: "${e.prompt.slice(0, 50)}" — ` : ""}${e.entry.slice(0, 300)}`)
+            .join("\n\n")
+
+          const journalPrompt = `You are a compassionate therapist reading someone's grief journal. Based on these recent entries, identify 2-3 recurring emotional themes or patterns and what they suggest about this person's healing direction. Be warm, specific, and encouraging. Plain prose only — 3-4 sentences, no bullet points or markdown.
+
+Journal entries:
+${recentEntries}`
+
+          const res = await fetch("/api/ai", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "claude-haiku-4-5-20251001",
+              max_tokens: 160,
+              system: "You identify emotional patterns in journal entries with warmth and clinical insight. Plain prose only.",
+              messages: [{ role: "user", content: journalPrompt }],
+            }),
+          })
+          if (res.ok) {
+            const json = await res.json()
+            const text = json.content?.[0]?.text ?? null
+            if (text) {
+              writeStorage(STORAGE_KEYS.journalInsight, { text, week: currentWeek })
+              setData((prev) => prev ? { ...prev, journalInsight: text, journalInsightLoading: false } : prev)
+            }
+          }
+        } catch { /* silently fail */ } finally {
+          setData((prev) => prev ? { ...prev, journalInsightLoading: false } : prev)
+        }
       }
     }
   }, [dateRange])

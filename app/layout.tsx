@@ -35,11 +35,8 @@ export const metadata: Metadata = {
   keywords: ["mental health", "emotional wellness", "journaling", "meditation", "grief", "healing"],
   metadataBase: new URL("https://heartsheal.netlify.app"),
   icons: {
-    icon: [
-      { url: "/havenlogo.png", type: "image/png" },
-      { url: "/icon.png", type: "image/png" },
-    ],
-    apple: "/apple-touch-icon.png",
+    icon: [{ url: "/havenlogo.png", type: "image/png" }],
+    apple: "/havenlogo.png",
     shortcut: "/havenlogo.png",
   },
   openGraph: {
@@ -50,7 +47,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.png",
+        url: "/havenlogo.png",
         width: 1200,
         height: 630,
         alt: "Haven — Your Space for Healing",
@@ -61,7 +58,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Haven — Your Space for Healing",
     description: "A safe, calming space for emotional healing, guided breathing, and reflective journaling.",
-    images: ["/og-image.png"],
+    images: ["/havenlogo.png"],
   },
 }
 

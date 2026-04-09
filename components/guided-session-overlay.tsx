@@ -76,7 +76,7 @@ const HAVEN_CHIPS = [
 
 // ── Voice lines per step ──────────────────────────────────────────────────────
 const VOICE_LINES: Record<string, string> = {
-  auth:     "Welcome to HeartsHeal. Sign in to save your healing journey and access it from any device.",
+  auth:     "Welcome to Haven. Sign in to save your healing journey and access it from any device.",
   intro:    "Hi, I'm Haven. I'll guide you through your first healing session — a check-in, a breath, a reflection, and a look at your progress. Let's go gently.",
   "step-0": "How are you feeling right now? Choose the emotion that feels most true in this moment.",
   "step-1": "Let's breathe together. Just one cycle. Press start and follow the circle.",
@@ -238,7 +238,7 @@ export function GuidedSessionOverlay() {
         body: JSON.stringify({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 160,
-          system: "You are Haven, a warm, compassionate AI guide in the HeartsHeal healing app. Give a brief, caring 2-3 sentence response. Be specific and warm. Speak directly to the person using 'you'. End with a gentle, actionable suggestion.",
+          system: "You are Haven, a warm, compassionate AI healing guide. Give a brief, caring 2-3 sentence response. Be specific and warm. Speak directly to the person using 'you'. End with a gentle, actionable suggestion.",
           messages: [{ role: "user", content: question }],
         }),
       })

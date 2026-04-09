@@ -19,7 +19,7 @@ export function Logo({ size = "medium", className }: LogoProps) {
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
       <img
-        src="/haven-logo.png"
+        src="/havenlogo.png"
         alt="Haven logo"
         className={cn(img, "flex-shrink-0 object-contain")}
         aria-hidden="true"

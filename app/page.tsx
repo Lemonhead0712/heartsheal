@@ -786,7 +786,7 @@ export default function HavenHome() {
       {/* ── Header ── */}
       <header className="flex items-center justify-between px-5 pt-3 pb-2 shrink-0">
         <div className="flex items-center gap-2">
-          <img src="/haven-logo.png" alt="Haven" className="w-7 h-7 object-contain shrink-0" />
+          <img src="/havenlogo.png" alt="Haven" className="w-7 h-7 object-contain shrink-0" />
           <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
         </div>
 
@@ -1426,7 +1426,7 @@ export default function HavenHome() {
                 transition={{ delay: 0.1, duration: 0.4 }}
                 className="flex items-center gap-2 mb-6"
               >
-                <img src="/haven-logo.png" alt="Haven" className="w-8 h-8 object-contain shrink-0" />
+                <img src="/havenlogo.png" alt="Haven" className="w-8 h-8 object-contain shrink-0" />
                 <span className="font-serif font-semibold text-foreground tracking-tight text-lg">Haven</span>
               </motion.div>
 

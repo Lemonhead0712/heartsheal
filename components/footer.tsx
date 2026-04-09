@@ -38,8 +38,8 @@ export function Footer() {
           {/* Brand */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-3">
-              <img src="/icon.png" alt="HeartsHeal logo" className="h-6 w-6 object-contain shrink-0 mix-blend-multiply dark:mix-blend-screen" />
-              <span className="font-serif text-base font-semibold text-foreground">HeartsHeal</span>
+              <img src="/haven-logo.png" alt="Haven logo" className="h-6 w-6 object-contain shrink-0" />
+              <span className="font-serif text-base font-semibold text-foreground">Haven</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-4">
               A free, calming space for emotional healing, guided breathing, reflective journaling, and personal growth.
@@ -95,11 +95,11 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-border/50 pt-5 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            <span className="font-medium text-foreground/70">Disclaimer:</span> HeartsHeal is a wellness app and is not a substitute for professional mental health care.{" "}
+            <span className="font-medium text-foreground/70">Disclaimer:</span> Haven is a wellness app and is not a substitute for professional mental health care.{" "}
             If you are in crisis, call or text <a href="tel:988" className="text-primary font-semibold">988</a>.
           </p>
           <p className="text-xs text-muted-foreground shrink-0">
-            &copy; {new Date().getFullYear()} HeartsHeal. All rights reserved.
+            &copy; {new Date().getFullYear()} Haven. All rights reserved.
           </p>
         </div>
       </div>

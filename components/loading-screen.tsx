@@ -21,7 +21,7 @@ export function LoadingScreen({ className }: LoadingScreenProps) {
         transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
         className="mb-6"
       >
-        <img src="/haven-logo.png" alt="Haven" className="w-16 h-16 object-contain" aria-hidden="true" />
+        <img src="/havenlogo.png" alt="Haven" className="w-16 h-16 object-contain" aria-hidden="true" />
       </motion.div>
 
       <motion.h1

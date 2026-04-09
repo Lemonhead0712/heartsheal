@@ -2,13 +2,12 @@
 
 import { useState, useRef, useMemo, useEffect } from "react"
 import Link from "next/link"
-import { ChevronLeft, AlertCircle, RefreshCw, Calendar, TrendingUp } from "lucide-react"
+import { ChevronLeft, AlertCircle, RefreshCw } from "lucide-react"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 
 import { useEmotionLogs } from "@/hooks/use-emotion-logs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { formatRelativeTime } from "@/utils/date-utils"
 import { useRealTimeUpdate } from "@/hooks/use-real-time-update"
 import { DailyEmotionFolder } from "@/components/daily-emotion-folder"
 
@@ -19,18 +18,13 @@ export default function EmotionalLogPage() {
 function EmotionalLog() {
   const { entries, isLoading, error, deleteEntry } = useEmotionLogs()
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Triggers re-renders every 60s so formatRelativeTime stays current
   useRealTimeUpdate(60000)
 
   const emotionLogs = entries || []
 
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
-  const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // Memoize grouping — avoids re-running on unrelated state changes
   const groupedEntries = useMemo(() =>
     emotionLogs.reduce((groups: Record<string, any[]>, entry) => {
       const date = new Date(entry.timestamp).toISOString().split("T")[0]
@@ -46,35 +40,13 @@ function EmotionalLog() {
     [groupedEntries]
   )
 
-  // Clear pending timers on unmount
   useEffect(() => {
-    return () => {
-      if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current)
-      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
-    }
+    return () => { if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current) }
   }, [])
 
   const handleRefresh = () => {
     setIsRefreshing(true)
-    refreshTimerRef.current = setTimeout(() => {
-      setLastUpdated(new Date())
-      setIsRefreshing(false)
-    }, 500)
-  }
-
-  const handleDelete = (id: string) => {
-    if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current)
-    setPendingDeleteId(id)
-    deleteTimerRef.current = setTimeout(() => setPendingDeleteId(null), 3000)
-  }
-
-  const confirmDelete = () => {
-    if (pendingDeleteId) {
-      deleteEntry(pendingDeleteId)
-      setPendingDeleteId(null)
-      if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current)
-      setLastUpdated(new Date())
-    }
+    refreshTimerRef.current = setTimeout(() => setIsRefreshing(false), 500)
   }
 
   const container: Variants = {
@@ -89,24 +61,31 @@ function EmotionalLog() {
 
   return (
     <div className="bg-gradient-to-b from-[#13101b] via-background to-background min-h-screen">
-      <motion.div className="w-full max-w-3xl mx-auto px-4 md:px-8 py-3 md:py-5" variants={container} initial="hidden" animate="show">
+      <motion.div className="w-full max-w-3xl mx-auto px-4 md:px-8 py-4 md:py-6" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
-        <motion.div className="flex items-center justify-between mb-3" variants={item}>
+        <motion.div className="flex items-center justify-between mb-6" variants={item}>
           <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
             <ChevronLeft className="h-4 w-4" />
             <span className="text-primary">♥</span>
             <span className="font-serif font-semibold text-foreground tracking-tight">HeartsHeal</span>
           </Link>
+
           <h1 className="font-serif text-lg font-semibold text-foreground">Emotion History</h1>
+
           <div className="flex items-center gap-2">
-            <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">
-              💜 Talk to Haven
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
+            >
+              💜 Haven
             </Link>
-            <Link href="/insights" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/60 text-muted-foreground text-xs font-medium hover:bg-muted hover:text-foreground transition-colors">
-              <TrendingUp className="h-3 w-3" /> Insights
-            </Link>
-            <button onClick={handleRefresh} disabled={isLoading || isRefreshing} className="w-8 h-8 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors" title="Refresh data">
+            <button
+              onClick={handleRefresh}
+              disabled={isLoading || isRefreshing}
+              className="w-8 h-8 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+              title="Refresh"
+            >
               <RefreshCw className={`h-4 w-4 text-primary/70 ${isRefreshing ? "animate-spin" : ""}`} />
               <span className="sr-only">Refresh</span>
             </button>
@@ -123,65 +102,47 @@ function EmotionalLog() {
           </motion.div>
         )}
 
-        {/* Archive */}
-        <motion.div className="space-y-5" variants={item}>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center">
-                <Calendar className="h-5 w-5 text-primary mr-2" />
-                <h2 className="text-2xl font-semibold text-foreground">Your Emotional Journey</h2>
-              </div>
-              <span className="text-xs text-primary/70">Last updated: {formatRelativeTime(lastUpdated)}</span>
+        {/* Entry list */}
+        <motion.div variants={item}>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-16">
+              <LoadingSpinner size="md" />
             </div>
-            {isLoading ? (
-              <div className="flex justify-center items-center py-8"><LoadingSpinner size="md" /></div>
-            ) : (
-              <AnimatePresence>
-                {emotionLogs.length === 0 ? (
-                  <div className="border border-border/40 bg-card rounded-2xl p-10 flex flex-col items-center gap-4 text-center">
-                    <span className="text-5xl select-none">💜</span>
-                    <div>
-                      <p className="text-base font-semibold text-foreground mb-1">Your journey starts here</p>
-                      <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">Haven is ready when you are. Log your first emotion and it will appear here.</p>
-                    </div>
-                    <Link href="/" className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
-                      Open Haven
-                    </Link>
+          ) : (
+            <AnimatePresence>
+              {emotionLogs.length === 0 ? (
+                <div className="border border-border/40 bg-card rounded-2xl p-12 flex flex-col items-center gap-4 text-center">
+                  <span className="text-5xl select-none">💜</span>
+                  <div>
+                    <p className="text-base font-semibold text-foreground mb-1">Your journey starts here</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+                      Haven is ready when you are. Log your first emotion and it will appear here.
+                    </p>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {sortedDates.map((date) => (
-                      <DailyEmotionFolder key={date} date={date} entries={groupedEntries[date]} onDeleteEntry={handleDelete} />
-                    ))}
-                  </div>
-                )}
-              </AnimatePresence>
-            )}
-          </div>
+                  <Link
+                    href="/"
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+                  >
+                    Open Haven
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {sortedDates.map((date) => (
+                    <DailyEmotionFolder
+                      key={date}
+                      date={date}
+                      entries={groupedEntries[date]}
+                      onDeleteEntry={deleteEntry}
+                    />
+                  ))}
+                </div>
+              )}
+            </AnimatePresence>
+          )}
         </motion.div>
 
       </motion.div>
-
-      {/* Inline delete confirmation */}
-      <AnimatePresence>
-        {pendingDeleteId && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            transition={{ duration: 0.2 }}
-            className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-50 bg-card border border-border/60 rounded-2xl shadow-lg px-5 py-3 flex items-center gap-4 whitespace-nowrap"
-          >
-            <span className="text-sm text-foreground">Delete this entry?</span>
-            <button onClick={confirmDelete} className="text-sm font-semibold text-rose-500 hover:text-rose-600 transition-colors">
-              Yes, delete
-            </button>
-            <button onClick={() => setPendingDeleteId(null)} className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
-              Cancel
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }

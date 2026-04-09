@@ -788,9 +788,14 @@ export default function HavenHome() {
 
       {/* ── Header ── */}
       <header className="flex items-center justify-between px-5 pt-3 pb-2 shrink-0">
-        <div className="flex items-center gap-2">
-          <img src="/havenlogo.png" alt="Haven" className="w-7 h-7 object-contain shrink-0" />
-          <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
+        <div className="flex items-center gap-2.5">
+          <img
+            src="/havenlogo.png"
+            alt="Haven"
+            className="w-10 h-10 object-contain shrink-0"
+            style={{ background: "transparent", filter: "drop-shadow(0 0 6px rgba(155,111,223,0.45))" }}
+          />
+          <span className="font-serif font-semibold text-foreground tracking-tight text-base">Haven</span>
         </div>
 
         {/* Streak badge — always renders to prevent layout shift; fades in when streak > 0 */}
@@ -820,15 +825,18 @@ export default function HavenHome() {
         </div>
       </header>
 
-      {/* ── Content — fills remaining space, no scrolling ── */}
-      <div className="flex-1 flex flex-col items-center px-4 pt-4 min-h-0">
+      {/* ── Content — flex-1 col with justify-between: top group + bottom actions ── */}
+      <div className="flex-1 flex flex-col items-center px-4 pt-2 pb-2 min-h-0 justify-between overflow-hidden">
+
+        {/* ── Top group: orb + message + widgets/chips ── */}
+        <div className="flex flex-col items-center w-full max-w-sm">
 
         {/* Orb — compact when a widget is open */}
         <motion.div
-          animate={{ width: widgetActive ? 56 : 96, height: widgetActive ? 56 : 96 }}
+          animate={{ width: widgetActive ? 56 : 88, height: widgetActive ? 56 : 88 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className={cn("relative flex items-center justify-center shrink-0 mt-2", widgetActive ? "mb-2" : "mb-4")}
-          style={{ width: widgetActive ? 56 : 96, height: widgetActive ? 56 : 96 }}
+          className={cn("relative flex items-center justify-center shrink-0 mt-1", widgetActive ? "mb-2" : "mb-3")}
+          style={{ width: widgetActive ? 56 : 88, height: widgetActive ? 56 : 88 }}
         >
           {/* Outer ambient ring */}
           <motion.span
@@ -879,10 +887,8 @@ export default function HavenHome() {
           </motion.div>
         </AnimatePresence>
 
-        {/* ── Middle zone: widgets + chips + quick actions — flex-1 fills remaining space ── */}
-        <div className="flex-1 flex flex-col items-center justify-start w-full min-h-0 overflow-y-auto">
-
-        {/* ── Embedded Widget ── */}
+        {/* ── Widgets + chips (inside top group) ── */}
+        <div className="w-full overflow-y-auto max-h-[55vh]">
         <AnimatePresence mode="wait">
 
           {/* EMOTION WIDGET */}
@@ -1279,12 +1285,12 @@ export default function HavenHome() {
 
         </AnimatePresence>
 
-        {/* ── Chips — only in greeting/chatting mode, not when a widget panel is open ── */}
+        {/* ── Chips — only in greeting/chatting mode ── */}
         {!loading && chips.length > 0 && !widgetActive && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-wrap justify-center gap-2 mb-3 w-full max-w-sm"
+            className="flex flex-wrap justify-center gap-2 mt-2 w-full"
           >
             {chips.map((chip) => (
               <button key={chip} onClick={() => sendToHaven(chip)}
@@ -1295,13 +1301,16 @@ export default function HavenHome() {
           </motion.div>
         )}
 
-        {/* ── Quick-action panel — fills empty space when no widget is active ── */}
+        </div>{/* end widgets scroll zone */}
+        </div>{/* end top group */}
+
+        {/* ── Bottom group: quick actions — anchored to bottom via justify-between ── */}
         {!loading && (mode === "greeting" || mode === "chatting") && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.4 }}
-            className="w-full max-w-sm mt-2"
+            className="w-full max-w-sm shrink-0"
           >
             {/* Primary CTA — Log Emotion */}
             {!completedToday.has("emotion") && (
@@ -1310,7 +1319,7 @@ export default function HavenHome() {
                   setMode("emotion-widget")
                   showMessage("How are you feeling right now? Pick what resonates most.")
                 }}
-                className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm mb-3 shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm mb-2.5 shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 <span className="text-base">💜</span> Log how I'm feeling
               </button>
@@ -1361,17 +1370,7 @@ export default function HavenHome() {
           </motion.div>
         )}
 
-        </div>{/* end middle zone */}
-      </div>{/* end content column */}
-
-      {/* ── Input hint bar — hidden when a widget is filling the screen ── */}
-      {!welcomeOpen && !widgetActive && (
-        <div className="shrink-0 px-3 pb-1 pt-1">
-          <p className="text-center text-[11px] text-muted-foreground/60 font-medium tracking-wide">
-            Type or speak to Haven below ↓
-          </p>
-        </div>
-      )}
+      </div>{/* end content column (justify-between) */}
 
       {/* ── Input bar ── */}
       <div className="shrink-0 px-4 pb-4 pt-1.5 border-t border-border/20 bg-background/80 backdrop-blur-md">

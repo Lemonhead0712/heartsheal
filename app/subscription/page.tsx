@@ -28,7 +28,7 @@ export default function SubscriptionPage() {
               <Heart className="w-8 h-8 text-primary fill-primary/20" />
             </div>
             <h1 className="font-serif text-3xl sm:text-4xl font-semibold text-foreground mb-3">
-              HeartsHeal is{" "}
+              Haven is{" "}
               <span className="text-primary">Free Forever</span>
             </h1>
             <p className="text-muted-foreground text-base leading-relaxed max-w-md mx-auto">

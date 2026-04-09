@@ -328,6 +328,37 @@ export function InsightsDashboard() {
               )}
             </motion.div>
 
+            {/* ── AI Journal Themes ── */}
+            <motion.div variants={anim.item}>
+              {data.totalJournalEntries >= 2 ? (
+                <div className="glass-card rounded-2xl p-5 bg-gradient-to-br from-amber-50/60 to-violet-50/40 dark:from-amber-900/15 dark:to-violet-900/10 border border-amber-200/40 dark:border-amber-800/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <BookHeart className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">Journal Themes</span>
+                  </div>
+                  {data.journalInsightLoading ? (
+                    <div className="space-y-2">
+                      {[100, 85, 65].map((w) => (
+                        <div key={w} className="h-3 bg-muted/50 rounded-full animate-pulse" style={{ width: `${w}%` }} />
+                      ))}
+                    </div>
+                  ) : data.journalInsight ? (
+                    <p className="text-sm text-foreground/90 leading-relaxed">{data.journalInsight}</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">Preparing your journal analysis…</p>
+                  )}
+                </div>
+              ) : (
+                <div className="glass-card rounded-2xl p-4 flex items-center gap-3">
+                  <BookHeart className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <p className="text-sm text-muted-foreground">
+                    Write {Math.max(0, 2 - data.totalJournalEntries)} more journal entr{2 - data.totalJournalEntries !== 1 ? "ies" : "y"} to unlock theme analysis.{" "}
+                    <Link href="/thoughts" className="text-primary hover:underline">Open Thoughts →</Link>
+                  </p>
+                </div>
+              )}
+            </motion.div>
+
             {/* ── HEALING JOURNEY MILESTONES ── */}
             {data.milestones.length > 0 && (
               <motion.div variants={anim.item}>
@@ -627,6 +658,25 @@ export function InsightsDashboard() {
                 )}
               </SectionCard>
             </motion.div>
+
+            {/* ── Haven Sessions ── */}
+            {data.havenSessions.length > 0 && (
+              <motion.div variants={anim.item}>
+                <SectionCard title="Haven Conversations" subtitle="Recent sessions with your AI companion">
+                  <div className="space-y-3">
+                    {data.havenSessions.map((s, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-background/60 border border-border/30">
+                        <span className="text-[10px] font-semibold text-muted-foreground bg-muted/60 px-2 py-1 rounded-lg whitespace-nowrap shrink-0 mt-0.5">{s.date}</span>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-semibold text-primary mb-0.5">{LOSS_LABELS[s.lossType] ?? s.lossType}</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{s.summary}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </SectionCard>
+              </motion.div>
+            )}
 
             {/* ── Quick-access footer ── */}
             <motion.div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1" variants={anim.item}>

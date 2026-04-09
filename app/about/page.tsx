@@ -23,7 +23,7 @@ export default function AboutPage() {
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <h1 className="font-serif text-2xl font-bold tracking-tight md:text-4xl text-foreground">
-              About HeartsHeal ♥
+              About Haven ♥
             </h1>
           </div>
 
@@ -38,7 +38,7 @@ export default function AboutPage() {
                 <h2 className="font-serif text-xl font-semibold text-foreground">Our Purpose</h2>
               </div>
               <p className="text-muted-foreground leading-relaxed mb-3">
-                HeartsHeal was born from a simple but powerful idea: that emotional healing deserves its own
+                Haven was born from a simple but powerful idea: that emotional healing deserves its own
                 gentle space — a place without pressure, without judgment, and filled with hope.
               </p>
               <p className="text-muted-foreground leading-relaxed">
@@ -51,7 +51,7 @@ export default function AboutPage() {
 
             {/* Who it's for */}
             <div>
-              <h2 className="font-serif text-xl font-semibold text-foreground mb-4">Who HeartsHeal is For</h2>
+              <h2 className="font-serif text-xl font-semibold text-foreground mb-4">Who Haven is For</h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {["Grief & Loss", "Heartbreak", "Divorce", "Job Loss", "Loneliness", "Family Pain", "Identity Shifts", "Trauma"].map((label) => (
                   <div key={label} className="glass-card rounded-xl px-3 py-2.5 text-center">
@@ -60,7 +60,7 @@ export default function AboutPage() {
                 ))}
               </div>
               <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-                No grief is "too small." If it hurts, it matters. HeartsHeal is here for all of it.
+                No grief is "too small." If it hurts, it matters. Haven is here for all of it.
               </p>
             </div>
 
@@ -98,7 +98,7 @@ export default function AboutPage() {
             <div>
               <h2 className="font-serif text-xl font-semibold text-foreground mb-3">About the Creator</h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
-                HeartsHeal was envisioned, designed, and developed by <strong className="text-foreground">Lamar Newsome</strong>.
+                Haven was envisioned, designed, and developed by <strong className="text-foreground">Lamar Newsome</strong>.
               </p>
               <p className="text-muted-foreground leading-relaxed mb-3">
                 Driven by personal experiences with grief, emotional loss, and the search for meaning after hardship,
@@ -106,14 +106,14 @@ export default function AboutPage() {
                 intention: to make healing more accessible, one mindful moment at a time.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                HeartsHeal reflects both a technical effort and a deep emotional purpose.
+                Haven reflects both a technical effort and a deep emotional purpose.
               </p>
             </div>
 
             {/* Closing */}
             <div className="glass-card rounded-2xl px-6 py-6 text-center">
               <p className="font-serif text-lg text-foreground/80 italic mb-3">
-                "Thank you for trusting HeartsHeal with a piece of your path."
+                "Thank you for trusting Haven with a piece of your path."
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 You are not alone. Healing is always possible —<br />

@@ -170,7 +170,15 @@ Rules for action — set the action field ANY TIME one of these is true:
 
 IMPORTANT: When the user says anything related to breathing or journaling (even implicitly), you MUST set the corresponding action. Never leave action null when breathing or writing is relevant.
 
-chips must be 3-4 short (under 6 words) response options the user can tap.
+Strong action signals — always set the action when you detect:
+- Anxiety, stress, panic, overwhelm, racing thoughts, "can't calm down" → action: "breathe"
+- Sadness, grief, heaviness, crying, "I miss them", loss → action: "journal"
+- "I want to write", "I have a lot on my mind", "process this" → action: "journal"
+- "check in", "how am I doing", "rate myself" → action: "survey"
+- "understand myself", "self-aware", "curious about" → action: "quiz"
+- "my progress", "how far have I come", "patterns" → action: "insights"
+
+chips must be 3-4 short (under 6 words) natural phrases the user would actually say next — not instructions, but words that come from the heart.
 Always lead with empathy. Never rush. One question or suggestion at a time.
 If the user just completed an activity, acknowledge it warmly before moving on.
 If self-harm is mentioned, gently include the 988 Lifeline in your message.
@@ -362,6 +370,8 @@ export default function HavenHome() {
     const logs        = readStorage<any[]>(STORAGE_KEYS.emotionLogs) ?? []
     const checkedIn   = lastCheckin === new Date().toDateString()
     const isNew       = logs.length === 0 && !checkedIn
+    const hour        = new Date().getHours()
+    const timeGreeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"
 
     let message: string
     let initChips: string[]
@@ -383,7 +393,7 @@ export default function HavenHome() {
         message   = `Yesterday you were feeling ${lastSession.emoji} ${lastSession.emotion.toLowerCase()}. How are you carrying that today?`
         initChips = ["Still the same", "A bit better", "Harder now", "Something shifted"]
       } else {
-        message   = `Good to see you${name ? ", " + name : ""}. How has today been?`
+        message   = `${timeGreeting}${name ? ", " + name : ""}. How has today been?`
         initChips = ["It's been hard", "I'm managing", "I actually feel okay", "I want to breathe"]
       }
       initAction = null
@@ -818,7 +828,7 @@ export default function HavenHome() {
         </div>
       </header>
 
-      {/* ── Content — natural flow, quick actions anchor to bottom via mt-auto ── */}
+      {/* ── Content — natural scrollable flow ── */}
       <div className="flex-1 flex flex-col items-center px-4 min-h-0 overflow-y-auto">
 
         {/* Orb — compact when a widget is open */}
@@ -1076,27 +1086,15 @@ export default function HavenHome() {
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
               className="w-full max-w-sm mb-3 rounded-2xl border border-amber-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-amber-400/15"
             >
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">
-                  {selectedEmotion ? `Reflecting on your ${selectedEmotion.toLowerCase()}` : "Write it out"}
-                </p>
-                <button
-                  onClick={generateHavenPrompt}
-                  disabled={havenPromptLoading}
-                  className="flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 disabled:opacity-50 transition-colors"
-                >
-                  {havenPromptLoading ? (
-                    <span className="inline-block w-3 h-3 border-2 border-amber-400/40 border-t-amber-500 rounded-full animate-spin" />
-                  ) : (
-                    <span>✨</span>
-                  )}
-                  {havenPromptLoading ? "Generating…" : "New prompt"}
-                </button>
-              </div>
-              <div className="bg-amber-50/60 dark:bg-amber-900/20 rounded-xl px-3.5 py-2.5 mb-3 border border-amber-200/40">
+              <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-3">
+                {selectedEmotion ? `Reflecting on your ${selectedEmotion.toLowerCase()}` : "Write it out"}
+              </p>
+
+              {/* Prompt display */}
+              <div className="bg-amber-50/60 dark:bg-amber-900/20 rounded-xl px-3.5 py-2.5 mb-2.5 border border-amber-200/40 min-h-[48px] flex items-center">
                 {havenPromptLoading ? (
-                  <div className="space-y-1.5">
-                    {[100, 80].map((w) => (
+                  <div className="space-y-1.5 w-full">
+                    {[100, 75].map((w) => (
                       <div key={w} className="h-3 bg-amber-200/50 dark:bg-amber-800/40 rounded-full animate-pulse" style={{ width: `${w}%` }} />
                     ))}
                   </div>
@@ -1104,6 +1102,20 @@ export default function HavenHome() {
                   <p className="text-sm text-foreground/80 font-serif italic leading-relaxed">"{havenAiPrompt ?? journalPrompt}"</p>
                 )}
               </div>
+
+              {/* New prompt button */}
+              <button
+                onClick={generateHavenPrompt}
+                disabled={havenPromptLoading}
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 mb-3 rounded-xl border border-amber-300/40 bg-amber-50/30 dark:bg-amber-900/15 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 disabled:opacity-50 transition-colors"
+              >
+                {havenPromptLoading
+                  ? <span className="inline-block w-3 h-3 border-2 border-amber-400/40 border-t-amber-500 rounded-full animate-spin" />
+                  : <span>✨</span>
+                }
+                {havenPromptLoading ? "Generating…" : "Generate a new prompt"}
+              </button>
+
               <textarea
                 value={journalText}
                 onChange={(e) => setJournalText(e.target.value)}
@@ -1114,10 +1126,18 @@ export default function HavenHome() {
               {journalSaved ? (
                 <p className="text-xs text-emerald-600 text-center py-1">✓ Saved to your journal</p>
               ) : (
-                <button onClick={saveJournal} disabled={!journalText.trim()}
-                  className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-40 transition-colors">
-                  Save reflection
-                </button>
+                <>
+                  <button onClick={saveJournal} disabled={!journalText.trim()}
+                    className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-40 transition-colors mb-2">
+                    Save reflection
+                  </button>
+                  <button
+                    onClick={() => reportToHaven("I decided to skip journaling for now.", "journal")}
+                    className="w-full text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors text-center py-1"
+                  >
+                    Skip for now →
+                  </button>
+                </>
               )}
             </motion.div>
           )}
@@ -1279,7 +1299,7 @@ export default function HavenHome() {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-wrap justify-center gap-2 mt-2 w-full"
+            className="flex flex-wrap justify-center gap-2 mt-3 w-full max-w-sm"
           >
             {chips.map((chip) => (
               <button key={chip} onClick={() => sendToHaven(chip)}
@@ -1290,14 +1310,39 @@ export default function HavenHome() {
           </motion.div>
         )}
 
-        {/* ── Quick actions — mt-auto floats naturally to bottom of remaining space ── */}
+        {/* ── Activity panel — shown in greeting/chatting mode ── */}
         {!loading && (mode === "greeting" || mode === "chatting") && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-            className="w-full max-w-sm mt-auto pt-4 pb-3 shrink-0"
+            transition={{ delay: 0.25, duration: 0.4 }}
+            className="w-full max-w-sm mt-5 pb-4"
           >
+            {/* Today at a Glance */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Today</span>
+                {streak > 0 && (
+                  <span className="text-[10px] text-primary font-semibold">🔥 {streak}-day streak</span>
+                )}
+              </div>
+              <div className="flex gap-1.5 flex-wrap">
+                {selectedEmotion && (
+                  <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-medium text-primary">
+                    {EMOTIONS.find(e => e.label === selectedEmotion)?.emoji} {selectedEmotion}
+                  </span>
+                )}
+                {Array.from(completedToday).map(key => (
+                  <span key={key} className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-400 capitalize">
+                    ✓ {key}
+                  </span>
+                ))}
+                {completedToday.size === 0 && !selectedEmotion && (
+                  <span className="text-xs text-muted-foreground/50 italic">Nothing logged yet — let&apos;s start</span>
+                )}
+              </div>
+            </div>
+
             {/* Primary CTA — Log Emotion */}
             {!completedToday.has("emotion") && (
               <button
@@ -1307,52 +1352,59 @@ export default function HavenHome() {
                 }}
                 className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm mb-3 shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
-                <span className="text-base">💜</span> Log how I'm feeling
+                <span className="text-base">💜</span> Log how I&apos;m feeling
               </button>
             )}
 
-            {/* Secondary quick actions */}
-            <div className="grid grid-cols-5 gap-1.5">
+            {/* 2-column activity cards */}
+            <div className="grid grid-cols-2 gap-2 mb-2">
               {[
-                {
-                  icon: "🌬️", label: "Breathe",
-                  done: completedToday.has("breathe"),
-                  onTap: () => { setMode("breathe-widget"); showMessage("Let's take a few deep breaths together.") },
-                },
-                {
-                  icon: "📖", label: "Journal",
-                  done: completedToday.has("journal"),
-                  onTap: () => { setMode("journal-widget"); showMessage("Take a moment to write what's on your mind.") },
-                },
-                {
-                  icon: "🧘", label: "Survey",
-                  done: completedToday.has("survey"),
-                  onTap: () => { setMode("survey-widget"); showMessage("Let's check in on how you're doing overall.") },
-                },
-                {
-                  icon: "🧠", label: "Quiz",
-                  done: completedToday.has("quiz"),
-                  onTap: () => { setMode("quiz-widget"); showMessage("Ready to explore a bit about yourself?") },
-                },
-                {
-                  icon: "📊", label: "Insights",
-                  done: false,
-                  onTap: () => { setMode("insights-widget") },
-                },
-              ].map(({ icon, label, done, onTap }) => (
-                <button
-                  key={label}
-                  onClick={onTap}
-                  className="flex flex-col items-center gap-1 py-2.5 rounded-2xl border border-border/40 bg-card/60 hover:border-primary/30 hover:bg-primary/5 active:scale-95 transition-all relative"
-                >
-                  {done && (
-                    <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  )}
-                  <span className="text-lg">{icon}</span>
-                  <span className="text-[9px] font-medium text-muted-foreground">{label}</span>
-                </button>
-              ))}
+                { icon: "🌬️", label: "Breathe", desc: "Guided breathing exercise", key: "breathe",
+                  onTap: () => { setMode("breathe-widget"); showMessage("Let's take a few deep breaths together.") } },
+                { icon: "📖", label: "Journal", desc: "Write & reflect on feelings", key: "journal",
+                  onTap: () => { setMode("journal-widget"); showMessage("Take a moment to write what's on your mind.") } },
+                { icon: "🧘", label: "Wellbeing Check", desc: "Rate how you're doing today", key: "survey",
+                  onTap: () => { setMode("survey-widget"); showMessage("Let's check in on how you're doing overall.") } },
+                { icon: "🧠", label: "Self-Discovery", desc: "Quiz to understand yourself", key: "quiz",
+                  onTap: () => { setMode("quiz-widget"); showMessage("Ready to explore a bit about yourself?") } },
+              ].map(({ icon, label, desc, key, onTap }) => {
+                const done = completedToday.has(key)
+                return (
+                  <button
+                    key={label}
+                    onClick={onTap}
+                    className={cn(
+                      "flex flex-col items-start gap-2 p-3 rounded-2xl border transition-all relative text-left active:scale-[0.97]",
+                      done
+                        ? "border-emerald-500/25 bg-emerald-500/5"
+                        : "border-border/40 bg-card/60 hover:border-primary/30 hover:bg-primary/5"
+                    )}
+                  >
+                    {done && <span className="absolute top-2 right-2.5 text-emerald-400 text-xs font-bold">✓</span>}
+                    <span className="text-xl">{icon}</span>
+                    <div>
+                      <p className="text-xs font-semibold text-foreground leading-tight">{label}</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{desc}</p>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
+
+            {/* Insights — full width subtle row */}
+            <button
+              onClick={() => setMode("insights-widget")}
+              className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl border border-border/30 bg-card/40 hover:border-primary/25 hover:bg-primary/5 transition-all active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-base">📊</span>
+                <div className="text-left">
+                  <p className="text-xs font-semibold text-foreground">Your Insights</p>
+                  <p className="text-[10px] text-muted-foreground">Progress, patterns & healing score</p>
+                </div>
+              </div>
+              <span className="text-muted-foreground/50 text-xs">→</span>
+            </button>
           </motion.div>
         )}
 

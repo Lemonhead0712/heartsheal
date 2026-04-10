@@ -161,26 +161,31 @@ action must be one of: null | "emotion" | "breathe" | "journal" | "survey" | "qu
 
 Rules for action — set the action field ANY TIME one of these is true:
 - "emotion" — user wants to check in, mentions a feeling, or hasn't logged today
-- "breathe" — user mentions anxiety, stress, tension, overwhelm, panic, "I can't breathe", or wants to calm down. ALSO set "breathe" when user says "I want to breathe" or "breathing" or "breathe with me"
-- "journal" — user mentions wanting to write, process, reflect, "get it out", talk about what happened, or says "I have a lot on my mind". ALSO after any breathing session completes.
-- "quiz" — IMMEDIATELY after the user says they completed a journal reflection. Also when user wants to understand themselves, mentions self-awareness, compassion, or emotional intelligence. In the guided walkthrough, quiz always follows journal.
-- "survey" — user mentions overall wellbeing, self-care, or asks "how am I doing overall"; suggest at most once per session. In the walkthrough, survey comes AFTER the quiz.
+- "breathe" — user mentions anxiety, stress, tension, overwhelm, panic, or wants to calm down
+- "journal" — user mentions wanting to write, process, reflect, or after any breathing session completes
+- "quiz" — IMMEDIATELY after the user reports completing a journal reflection. In the guided walkthrough, quiz always follows journal.
+- "survey" — user mentions overall wellbeing or self-care; suggest at most once per session. In the walkthrough, survey comes AFTER the quiz.
 - "insights" — user asks about progress, patterns, or after 2+ activities completed
 - null — casual reply only; no activity fits right now
 
-IMPORTANT: When the user says anything related to breathing or journaling (even implicitly), you MUST set the corresponding action. Never leave action null when breathing or writing is relevant.
+Walkthrough transition order (follow this when user is working through activities):
+emotion → breathe → journal → quiz → survey → (session complete)
 
-Strong action signals — always set the action when you detect:
-- Anxiety, stress, panic, overwhelm, racing thoughts, "can't calm down" → action: "breathe"
-- Sadness, grief, heaviness, crying, "I miss them", loss → action: "journal"
-- "I want to write", "I have a lot on my mind", "process this" → action: "journal"
-- "check in", "how am I doing", "rate myself" → action: "survey"
-- "understand myself", "self-aware", "curious about" → action: "quiz"
-- "my progress", "how far have I come", "patterns" → action: "insights"
+READING AND RESPONDING TO USER INPUT — this is critical:
+When the user reports completing an activity and shares what they did or felt, you MUST:
+1. First, genuinely acknowledge the specific content they shared — reference it directly, not generically
+2. Offer one brief, warm observation about what it reveals or how it makes you feel as their companion
+3. Then naturally introduce the next step
+
+Examples of how to respond to each completion:
+- After emotion log (e.g. "feeling Anxious at 8/10"): Reflect on that specific emotion and intensity. "That kind of anxious feeling at that level — it takes something out of you just to carry it." Then suggest breathing.
+- After breathing (e.g. "completed 5 rounds of Box Breathing"): Acknowledge the effort of doing all those rounds. Then suggest journaling to process what came up.
+- After journal (user shares their actual writing): Read what they wrote and respond to the content specifically — mention something they said. Don't be generic. Then move to the quiz.
+- After survey (e.g. scores: Emotional State 3/5, Self-Compassion 1/5): Notice the specific scores, especially any that are low. "Your self-compassion score stood out to me — a 1 means you're being really hard on yourself right now." Then move to insights or quiz.
+- After quiz (e.g. score 42/100 in self-compassion): Reflect on what that score might feel like to them. Connect it to their emotion earlier if relevant. Then suggest the survey.
 
 chips must be 3-4 short (under 6 words) natural phrases the user would actually say next — not instructions, but words that come from the heart.
-Always lead with empathy. Never rush. One question or suggestion at a time.
-If the user just completed an activity, acknowledge it warmly before moving on.
+Always lead with empathy. Never rush. One warm observation + one gentle next step per response.
 If self-harm is mentioned, gently include the 988 Lifeline in your message.
 
 Memory and personalization:
@@ -659,8 +664,13 @@ export default function HavenHome() {
     const usedPrompt = havenAiPrompt ?? journalPrompt
     await addJournal({ prompt: usedPrompt, entry: journalText.trim() })
     setJournalSaved(true)
+    const excerpt = journalText.trim().slice(0, 220)
+    const hasMore = journalText.trim().length > 220
     setTimeout(() => {
-      reportToHaven(`I just wrote a reflection in my journal.`, "journal")
+      reportToHaven(
+        `I just wrote in my journal. Here's what I wrote: "${excerpt}${hasMore ? "…" : ""}"`,
+        "journal"
+      )
     }, 600)
   }, [journalText, havenAiPrompt, journalPrompt, addJournal, reportToHaven])
 
@@ -696,7 +706,10 @@ export default function HavenHome() {
     setSurveySaved(true)
     const avg = ((survey.emotionalState + survey.selfConnection + survey.selfCompassion + survey.selfCare) / 4).toFixed(1)
     setTimeout(() => {
-      reportToHaven(`I completed the wellbeing check. My average score was ${avg} out of 5.`, "survey")
+      reportToHaven(
+        `I completed the wellbeing check-in. My scores: Emotional State ${survey.emotionalState}/5, Self-Connection ${survey.selfConnection}/5, Self-Compassion ${survey.selfCompassion}/5, Self-Care ${survey.selfCare}/5. Average: ${avg}/5.`,
+        "survey"
+      )
     }, 600)
   }, [survey, reportToHaven])
 
@@ -738,7 +751,13 @@ export default function HavenHome() {
         setQuizPhase("done")
         setTimeout(() => {
           const label = HAVEN_QUIZ[quizType].label
-          reportToHaven(`I just completed the ${label} self-assessment. My score was ${avgScore} out of 100.`, "quiz")
+          const catSummary = Object.entries(catScores)
+            .map(([cat, scores]) => `${cat}: ${Math.round((scores as number[]).reduce((a: number, b: number) => a + b, 0) / (scores as number[]).length)}/100`)
+            .join(", ")
+          reportToHaven(
+            `I just completed the ${label} self-assessment. Overall score: ${avgScore}/100. Category breakdown — ${catSummary}.`,
+            "quiz"
+          )
         }, 800)
       } else {
         setQuizIndex(Object.keys(next).length)

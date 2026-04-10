@@ -8,7 +8,7 @@ interface LogoProps {
 }
 
 const sizeConfig: Record<LogoSize, { img: string; text: string }> = {
-  small:  { img: "w-8 h-8 md:w-7 md:h-7",   text: "text-base md:text-sm font-semibold" },
+  small:  { img: "w-9 h-9",   text: "text-base md:text-sm font-semibold" },
   medium: { img: "w-10 h-10",                text: "text-xl font-semibold" },
   large:  { img: "w-14 h-14",                text: "text-3xl font-bold" },
 }
@@ -22,7 +22,7 @@ export function Logo({ size = "medium", className }: LogoProps) {
         src="/havenlogo.png"
         alt="Haven logo"
         className={cn(img, "flex-shrink-0 object-contain")}
-        style={{ background: "transparent", filter: "drop-shadow(0 0 5px rgba(155,111,223,0.5))" }}
+        style={{ mixBlendMode: "screen" }}
         aria-hidden="true"
       />
       <span className={cn("font-serif text-foreground", text)}>Haven</span>

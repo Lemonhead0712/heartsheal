@@ -813,10 +813,7 @@ export default function HavenHome() {
   const widgetActive = mode !== "greeting" && mode !== "chatting"
 
   return (
-    <div
-      className="flex flex-col bg-gradient-to-b from-[#16101f] via-background to-background md:flex-1 md:h-auto"
-      style={{ height: "calc(100dvh - 140px)" }}
-    >
+    <div className="flex flex-col bg-gradient-to-b from-[#16101f] via-background to-background h-[calc(100dvh-140px)] md:h-auto md:flex-1">
 
       {/* ── Header — mobile only (desktop uses DesktopNav) ── */}
       <header className="md:hidden flex items-center justify-between px-4 pt-2 pb-1 shrink-0">
@@ -848,13 +845,13 @@ export default function HavenHome() {
       </header>
 
       {/* ── Content — natural scrollable flow ── */}
-      <div className="flex-1 flex flex-col items-center px-4 min-h-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center px-4 pt-8 min-h-0 overflow-y-auto">
 
         {/* Orb — compact when a widget is open */}
         <motion.div
           animate={{ width: widgetActive ? 56 : 88, height: widgetActive ? 56 : 88 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className={cn("relative flex items-center justify-center shrink-0 mt-5", widgetActive ? "mb-2" : "mb-3")}
+          className={cn("relative flex items-center justify-center shrink-0 mt-2", widgetActive ? "mb-2" : "mb-3")}
           style={{ width: widgetActive ? 56 : 88, height: widgetActive ? 56 : 88 }}
         >
           {/* Outer ambient ring */}
@@ -1485,7 +1482,7 @@ export default function HavenHome() {
                 transition={{ delay: 0.1, duration: 0.4 }}
                 className="flex items-center gap-2 mb-6"
               >
-                <img src="/havenlogo.png" alt="Haven" className="w-8 h-8 object-contain shrink-0" />
+                <img src="/havenlogo.png" alt="Haven" className="w-8 h-8 object-contain shrink-0" style={{ mixBlendMode: "screen" }} />
                 <span className="font-serif font-semibold text-foreground tracking-tight text-lg">Haven</span>
               </motion.div>
 

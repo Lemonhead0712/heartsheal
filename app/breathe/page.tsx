@@ -269,7 +269,7 @@ export default function BreathePage() {
         <motion.div className="flex items-center justify-between mb-3" variants={item}>
           <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
             <ChevronLeft className="h-4 w-4" />
-            <img src="/havenlogo.png" alt="Haven" className="w-5 h-5 object-contain" />
+            <img src="/havenlogo.png" alt="Haven" className="w-5 h-5 object-contain" style={{ mixBlendMode: "screen" }} />
             <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <h1 className="font-serif text-lg font-semibold text-foreground">Guided Breathing</h1>

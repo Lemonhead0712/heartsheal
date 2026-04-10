@@ -38,7 +38,7 @@ export function Footer() {
           {/* Brand */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-3">
-              <img src="/havenlogo.png" alt="Haven logo" className="h-6 w-6 object-contain shrink-0" />
+              <img src="/havenlogo.png" alt="Haven logo" className="h-6 w-6 object-contain shrink-0" style={{ mixBlendMode: "screen" }} />
               <span className="font-serif text-base font-semibold text-foreground">Haven</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-4">

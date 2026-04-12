@@ -23,6 +23,7 @@ export const STORAGE_KEYS = {
   streakData:            "heartsHeal_streakData",
   journalInsight:        "heartsHeal_journalInsight",
   screenshotAnalyses:    "heartsHeal_screenshotAnalyses",
+  colorTheme:            "heartsHeal_colorTheme",
 } as const
 
 /** Read and parse a localStorage key safely. Returns null on error. */

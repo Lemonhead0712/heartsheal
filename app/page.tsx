@@ -1383,25 +1383,42 @@ export default function HavenHome() {
                   onTap: () => { setMode("survey-widget"); showMessage("Let's check in on how you're doing overall.") } },
                 { icon: "🧠", label: "Self-Discovery", desc: "Quiz to understand yourself", key: "quiz",
                   onTap: () => { setMode("quiz-widget"); showMessage("Ready to explore a bit about yourself?") } },
-              ].map(({ icon, label, desc, key, onTap }) => {
+                { icon: "📸", label: "Analyze", desc: "Read conversation patterns", key: "analyze", href: "/analyze" },
+              ].map(({ icon, label, desc, key, onTap, href }) => {
                 const done = completedToday.has(key)
-                return (
-                  <button
-                    key={label}
-                    onClick={onTap}
-                    className={cn(
-                      "flex flex-col items-start gap-2 p-3 rounded-2xl border transition-all relative text-left active:scale-[0.97]",
-                      done
-                        ? "border-emerald-500/25 bg-emerald-500/5"
-                        : "border-border/40 bg-card/60 hover:border-primary/30 hover:bg-primary/5"
-                    )}
-                  >
+                const cardClassName = cn(
+                  "flex flex-col items-start gap-2 p-3 rounded-2xl border transition-all relative text-left active:scale-[0.97]",
+                  done
+                    ? "border-emerald-500/25 bg-emerald-500/5"
+                    : "border-border/40 bg-card/60 hover:border-primary/30 hover:bg-primary/5"
+                )
+
+                const cardContent = (
+                  <>
                     {done && <span className="absolute top-2 right-2.5 text-emerald-400 text-xs font-bold">✓</span>}
                     <span className="text-xl">{icon}</span>
                     <div>
                       <p className="text-xs font-semibold text-foreground leading-tight">{label}</p>
                       <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{desc}</p>
                     </div>
+                  </>
+                )
+
+                if (href) {
+                  return (
+                    <Link key={label} href={href} className={cardClassName}>
+                      {cardContent}
+                    </Link>
+                  )
+                }
+
+                return (
+                  <button
+                    key={label}
+                    onClick={onTap}
+                    className={cardClassName}
+                  >
+                    {cardContent}
                   </button>
                 )
               })}

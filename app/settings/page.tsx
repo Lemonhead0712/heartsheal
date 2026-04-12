@@ -5,8 +5,9 @@ import Link from "next/link"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 import {
   ChevronLeft, Download, Upload, Trash2, User, Volume2,
-  CheckCircle2, AlertTriangle, Database, Heart, Shield, Cloud, LogOut, Mail, Lock
+  CheckCircle2, AlertTriangle, Database, Heart, Shield, Cloud, LogOut, Mail, Lock, Palette
 } from "lucide-react"
+import { useColorTheme, type ColorTheme } from "@/contexts/color-theme-context"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { exportUserData, importUserData, clearAllData, readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
@@ -27,6 +28,16 @@ export default function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   const { user, signIn, signUp, signOut } = useAuth()
+  const { colorTheme, setColorTheme } = useColorTheme()
+
+  const THEMES: { id: ColorTheme; label: string; from: string; to: string }[] = [
+    { id: "midnight", label: "Midnight",  from: "#9b6fdf", to: "#d472b0" },
+    { id: "ocean",    label: "Ocean",     from: "#06b6d4", to: "#3b82f6" },
+    { id: "forest",   label: "Forest",    from: "#10b981", to: "#059669" },
+    { id: "ember",    label: "Ember",     from: "#f59e0b", to: "#ef4444" },
+    { id: "blush",    label: "Blush",     from: "#f472b6", to: "#ec4899" },
+    { id: "arctic",   label: "Arctic",    from: "#60a5fa", to: "#818cf8" },
+  ]
   const [authMode, setAuthMode]   = useState<"signin" | "signup">("signin")
   const [email, setEmail]         = useState("")
   const [password, setPassword]   = useState("")
@@ -188,6 +199,37 @@ export default function SettingsPage() {
                   </button>
                 </div>
               )}
+            </div>
+
+            {/* Color Theme */}
+            <div className="glass-card rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Palette className="w-3.5 h-3.5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-sm text-foreground leading-none">Color Theme</h2>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Change the accent mood of Haven</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {THEMES.map((t) => (
+                  <button key={t.id} onClick={() => setColorTheme(t.id)}
+                    className={cn(
+                      "flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all",
+                      colorTheme === t.id
+                        ? "border-primary bg-primary/10 scale-[1.03]"
+                        : "border-border/40 hover:border-primary/30 hover:bg-card/80"
+                    )}>
+                    <div className="w-9 h-9 rounded-full shadow-sm shrink-0"
+                      style={{ background: `linear-gradient(135deg, ${t.from}, ${t.to})` }} />
+                    <span className="text-[11px] font-medium text-muted-foreground leading-none">{t.label}</span>
+                    {colorTheme === t.id && (
+                      <span className="text-[9px] font-semibold text-primary">Active</span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Preferences */}

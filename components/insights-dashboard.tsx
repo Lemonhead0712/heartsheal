@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useState } from "react"
 import { motion } from "framer-motion"
+import { ScreenshotAnalysis } from "./screenshot-analysis"
 import {
   AreaChart, Area,
   BarChart, Bar, Cell,
@@ -171,6 +172,7 @@ const MoodBarTooltip = ({ active, payload, label }: any) => {
 /* ── Main component ── */
 export function InsightsDashboard() {
   const [dateRange, setDateRange] = useState<DateRange>("30d")
+  const [activeTab, setActiveTab] = useState<"overview" | "analyses">("overview")
   const data = useInsightsData(dateRange)
 
   const anim = {
@@ -213,6 +215,31 @@ export function InsightsDashboard() {
             </Link>
           </div>
         </motion.div>
+
+        {/* Tab strip */}
+        <motion.div variants={anim.item} className="flex items-center gap-1 p-1 rounded-2xl bg-card/60 border border-border/40 mb-5 max-w-sm">
+          {(["overview", "analyses"] as const).map((t) => (
+            <button key={t} onClick={() => setActiveTab(t)}
+              className={cn(
+                "flex-1 py-2 px-4 rounded-xl text-xs font-semibold transition-all",
+                activeTab === t
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}>
+              {t === "overview" ? "Overview" : "Conversation Analysis"}
+            </button>
+          ))}
+        </motion.div>
+
+        {/* Conversation Analysis tab */}
+        {activeTab === "analyses" && (
+          <motion.div variants={anim.item}>
+            <ScreenshotAnalysis />
+          </motion.div>
+        )}
+
+        {/* Overview tab content */}
+        {activeTab === "overview" && <>
 
         {/* Loading skeleton */}
         {!data && (
@@ -696,6 +723,8 @@ export function InsightsDashboard() {
 
           </motion.div>
         )}
+
+        </> }
       </motion.div>
     </div>
   )

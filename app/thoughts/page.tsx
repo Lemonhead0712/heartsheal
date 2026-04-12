@@ -106,6 +106,8 @@ export default function ThoughtsPage() {
   const [pendingSubmit, setPendingSubmit] = useState(false)
   const [aiInterpretation, setAiInterpretation] = useState<string | null>(null)
   const [interpretationLoading, setInterpretationLoading] = useState(false)
+  const [dynamicScQs, setDynamicScQs] = useState<QuizQuestion[] | null>(null)
+  const [dynamicScLoading, setDynamicScLoading] = useState(false)
 
   /* ── Generate AI prompt ── */
   const generateAiPrompt = async () => {
@@ -143,16 +145,58 @@ export default function ThoughtsPage() {
     setTimeout(() => { setEntry(""); setActivePrompt(next); setIsAiPrompt(false); setSaved(false) }, 1200)
   }
 
+  /* ── Dynamic self-compassion question generation ── */
+  const generateDynamicScQs = async (journalExcerpt: string) => {
+    setDynamicScLoading(true)
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 700,
+          system: `You generate self-compassion quiz questions tailored to a specific journal reflection.
+Return ONLY a JSON array of exactly 5 objects, no preamble, no markdown fences:
+[{"id":"sc_d1","question":"...","options":["A","B","C","D"],"scores":[100,75,50,25],"category":"self-kindness"},...]
+Each object must have: id (string), question (string), options (4-item string array), scores ([100,75,50,25]), category (one of: self-kindness, common-humanity, mindfulness).
+Mirror the user's emotional situation and language. Keep them compassionate and non-judgmental.`,
+          messages: [{ role: "user", content: `Generate 5 self-compassion questions based on this journal entry: "${journalExcerpt.slice(0, 400)}"` }],
+        }),
+      })
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      const raw = data.content?.[0]?.text?.trim() ?? ""
+      const cleaned = raw.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim()
+      const parsed: QuizQuestion[] = JSON.parse(cleaned)
+      if (Array.isArray(parsed) && parsed.length >= 3) {
+        return parsed.slice(0, 5)
+      }
+    } catch {}
+    return null
+  }
+
   /* ── Quiz helpers ── */
-  const startQuiz = (type: QuizType) => {
+  const startQuiz = async (type: QuizType) => {
     setQuizType(type)
-    setQuestions(shuffle(QUESTIONS[type]).slice(0, 5))
     setQuestionIndex(0)
     setAnswers({})
     setPendingSubmit(false)
     setAiInterpretation(null)
     setInterpretationLoading(false)
-    setQuizPhase("questions")
+
+    // For self-compassion, try to generate questions from the most recent journal entry
+    if (type === "self-compassion" && journalEntries[0]?.entry) {
+      setDynamicScLoading(true)
+      setQuizPhase("questions")
+      const dynamic = await generateDynamicScQs(journalEntries[0].entry)
+      setDynamicScQs(dynamic)
+      setDynamicScLoading(false)
+      setQuestions(dynamic ?? shuffle(QUESTIONS[type]).slice(0, 5))
+    } else {
+      setDynamicScQs(null)
+      setQuestions(shuffle(QUESTIONS[type]).slice(0, 5))
+      setQuizPhase("questions")
+    }
   }
 
   const answerQuestion = (score: number) => {
@@ -356,11 +400,25 @@ export default function ThoughtsPage() {
                     </div>
                   )}
 
-                  {quizPhase === "questions" && questions.length > 0 && (
+                  {quizPhase === "questions" && dynamicScLoading && (
+                    <div className="glass-card rounded-2xl p-8 flex flex-col items-center gap-3">
+                      <div className="w-6 h-6 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
+                      <p className="text-sm text-muted-foreground text-center animate-pulse">
+                        Haven is personalising your questions from your journal…
+                      </p>
+                    </div>
+                  )}
+
+                  {quizPhase === "questions" && !dynamicScLoading && questions.length > 0 && (
                     <div>
                       <div className="mb-6">
                         <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                          <span>{QUIZ_META[quizType].emoji} {QUIZ_META[quizType].label}</span>
+                          <span>
+                            {QUIZ_META[quizType].emoji} {QUIZ_META[quizType].label}
+                            {dynamicScQs && quizType === "self-compassion" && (
+                              <span className="ml-2 text-primary/60">✦ personalised</span>
+                            )}
+                          </span>
                           <span>{questionIndex + 1} / {questions.length}</span>
                         </div>
                         <div className="h-1.5 w-full rounded-full bg-muted/60 overflow-hidden">

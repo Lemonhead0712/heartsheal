@@ -255,7 +255,7 @@ export default function HavenHome() {
 
   const { addEntry: addEmotion } = useEmotionLogs()
   const { addEntry: addJournal } = useJournalEntries()
-  const { speak, stop: stopSpeech, prefetch, voiceEnabled, toggleVoice } = useTTS()
+  const { speak, stop: stopSpeech, prefetch, voiceEnabled, toggleVoice, isSpeaking } = useTTS()
 
   // Show welcome screen for unauthenticated users; trigger onboarding after it closes
   useEffect(() => {
@@ -302,10 +302,12 @@ export default function HavenHome() {
   const breatheTargetRef  = useRef(3)
 
   // ── Quiz widget state ─────────────────────────────────────────────────────
-  const [quizType,    setQuizType]    = useState<QuizType>("emotional-awareness")
-  const [quizIndex,   setQuizIndex]   = useState(0)
-  const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({})
-  const [quizPhase,   setQuizPhase]   = useState<"idle" | "active" | "done">("idle")
+  const [quizType,           setQuizType]           = useState<QuizType>("emotional-awareness")
+  const [quizIndex,          setQuizIndex]          = useState(0)
+  const [quizAnswers,        setQuizAnswers]        = useState<Record<string, number>>({})
+  const [quizPhase,          setQuizPhase]          = useState<"idle" | "active" | "done">("idle")
+  const [dynamicScQuestions, setDynamicScQuestions] = useState<HavenQuizQ[] | null>(null)
+  const [dynamicQLoading,    setDynamicQLoading]    = useState(false)
 
   // ── Journal widget state ──────────────────────────────────────────────────
   const [journalText,       setJournalText]       = useState("")
@@ -698,6 +700,39 @@ export default function HavenHome() {
     }
   }, [selectedEmotion])
 
+  // ── Dynamic self-compassion question generation from journal text ─────────
+  const generateDynamicScQuestions = useCallback(async (journalExcerpt: string) => {
+    setDynamicQLoading(true)
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 700,
+          system: `You generate self-compassion quiz questions tailored to a specific journal reflection.
+Return ONLY a JSON array of exactly 5 objects, no preamble, no markdown fences:
+[{"id":"sc_d1","question":"...","options":["A","B","C","D"],"scores":[100,75,50,25],"category":"self-kindness"},...]
+Each object must have: id (string), question (string), options (4-item string array), scores ([100,75,50,25]), category (one of: self-kindness, common-humanity, mindfulness).
+Make the questions feel personally connected to the themes in the journal — mirror the user's language and emotional situation. Keep them compassionate and non-judgmental.`,
+          messages: [{ role: "user", content: `Generate 5 self-compassion questions based on this journal entry: "${journalExcerpt.slice(0, 400)}"` }],
+        }),
+      })
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      const raw  = data.content?.[0]?.text?.trim() ?? ""
+      const cleaned = raw.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim()
+      const parsed: HavenQuizQ[] = JSON.parse(cleaned)
+      if (Array.isArray(parsed) && parsed.length >= 3) {
+        setDynamicScQuestions(parsed.slice(0, 5))
+      }
+    } catch {
+      setDynamicScQuestions(null)
+    } finally {
+      setDynamicQLoading(false)
+    }
+  }, [])
+
   // ── Survey widget ─────────────────────────────────────────────────────────
   const saveSurvey = useCallback(() => {
     const record = { id: Date.now().toString(), timestamp: new Date().toISOString(), ...survey }
@@ -729,12 +764,19 @@ export default function HavenHome() {
     setQuizIndex(0)
     setQuizAnswers({})
     setQuizPhase("idle")
-  }, [mode, selectedEmotion])
+
+    // If self-compassion and user wrote in their journal this session, generate personalised questions
+    if (pickedType === "self-compassion" && journalText.trim().length > 30) {
+      void generateDynamicScQuestions(journalText.trim())
+    } else {
+      setDynamicScQuestions(null)
+    }
+  }, [mode, selectedEmotion]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleQuizAnswer = useCallback((questionId: string, score: number) => {
     setQuizAnswers((prev) => {
       const next = { ...prev, [questionId]: score }
-      const questions = HAVEN_QUIZ[quizType].questions
+      const questions = (quizType === "self-compassion" && dynamicScQuestions) ? dynamicScQuestions : HAVEN_QUIZ[quizType].questions
       if (Object.keys(next).length >= questions.length) {
         // All answered — compute + save
         const avgScore = Math.round(Object.values(next).reduce((a, b) => a + b, 0) / questions.length)
@@ -871,7 +913,7 @@ export default function HavenHome() {
           {/* Core orb */}
           <motion.div
             className="absolute inset-0 rounded-full shadow-[0_0_32px_6px] shadow-primary/25 z-10 flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #9b6fdf, #d472b0)" }}
+            style={{ background: "linear-gradient(135deg, var(--orb-from, #9b6fdf), var(--orb-to, #d472b0))" }}
             animate={loading ? { scale: [1, 1.06, 1] } : {}}
             transition={loading ? { duration: 0.8, repeat: Infinity, ease: "easeInOut" } : {}}
           >
@@ -1107,7 +1149,7 @@ export default function HavenHome() {
               </p>
 
               {/* Prompt display */}
-              <div className="bg-amber-50/60 dark:bg-amber-900/20 rounded-xl px-3.5 py-2.5 mb-2.5 border border-amber-200/40 min-h-[48px] flex items-center">
+              <div className="bg-amber-50/60 dark:bg-amber-900/20 rounded-xl px-3.5 py-2.5 mb-2.5 border border-amber-200/40 min-h-[48px] flex items-start justify-between gap-2">
                 {havenPromptLoading ? (
                   <div className="space-y-1.5 w-full">
                     {[100, 75].map((w) => (
@@ -1115,7 +1157,16 @@ export default function HavenHome() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-foreground/80 font-serif italic leading-relaxed">"{havenAiPrompt ?? journalPrompt}"</p>
+                  <>
+                    <p className="text-sm text-foreground/80 font-serif italic leading-relaxed flex-1">"{havenAiPrompt ?? journalPrompt}"</p>
+                    <button
+                      onClick={() => isSpeaking ? stopSpeech() : speak(havenAiPrompt ?? journalPrompt)}
+                      className="shrink-0 mt-0.5 p-1.5 rounded-lg text-amber-500/70 hover:text-amber-600 hover:bg-amber-100/40 dark:hover:bg-amber-900/30 transition-colors"
+                      aria-label={isSpeaking ? "Stop reading" : "Read prompt aloud"}
+                    >
+                      {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    </button>
+                  </>
                 )}
               </div>
 
@@ -1199,7 +1250,8 @@ export default function HavenHome() {
           {/* QUIZ WIDGET */}
           {mode === "quiz-widget" && !completedToday.has("quiz") && (() => {
             const quiz      = HAVEN_QUIZ[quizType]
-            const questions = quiz.questions
+            // Use AI-personalised questions when available, fall back to static pool
+            const questions = (quizType === "self-compassion" && dynamicScQuestions) ? dynamicScQuestions : quiz.questions
             const current   = questions[quizIndex]
 
             return (
@@ -1230,11 +1282,21 @@ export default function HavenHome() {
 
                 {quizPhase === "idle" && (
                   <div className="flex flex-col items-center gap-3 py-2">
-                    <p className="text-sm text-foreground/80 text-center leading-relaxed">
-                      5 questions to understand yourself more deeply. Takes about 1 minute.
-                    </p>
-                    <button onClick={() => setQuizPhase("active")}
-                      className="w-full py-2.5 rounded-xl bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-600 transition-colors">
+                    {dynamicQLoading ? (
+                      <p className="text-xs text-muted-foreground text-center animate-pulse py-1">
+                        Personalising questions from your journal…
+                      </p>
+                    ) : dynamicScQuestions && quizType === "self-compassion" ? (
+                      <p className="text-xs text-indigo-400/80 text-center py-0.5">
+                        ✦ Questions shaped by what you wrote
+                      </p>
+                    ) : (
+                      <p className="text-sm text-foreground/80 text-center leading-relaxed">
+                        5 questions to understand yourself more deeply. Takes about 1 minute.
+                      </p>
+                    )}
+                    <button onClick={() => setQuizPhase("active")} disabled={dynamicQLoading}
+                      className="w-full py-2.5 rounded-xl bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-600 disabled:opacity-50 transition-colors">
                       Begin assessment
                     </button>
                     <button onClick={skipQuiz} className="text-xs text-muted-foreground hover:text-foreground transition-colors">

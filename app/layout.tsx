@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import { DM_Sans, Cormorant_Garamond } from "next/font/google"
 import "./globals.css"
 import { ThemeProviderFixed as ThemeProvider } from "@/components/theme-provider-fixed"
+import { ColorThemeProvider } from "@/contexts/color-theme-context"
 import { BottomNav } from "@/components/bottom-nav"
 import { Toaster } from "@/components/ui/toaster"
 import { HapticProvider } from "@/contexts/haptic-context"
@@ -80,6 +81,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`h-full ${dmSans.variable} ${cormorant.variable}`} suppressHydrationWarning>
       <body className="font-sans flex min-h-full flex-col antialiased" suppressHydrationWarning>
+        <ColorThemeProvider>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           <AuthProvider>
           <HapticProvider>
@@ -96,6 +98,7 @@ export default function RootLayout({
           </HapticProvider>
           </AuthProvider>
         </ThemeProvider>
+        </ColorThemeProvider>
       </body>
     </html>
   )

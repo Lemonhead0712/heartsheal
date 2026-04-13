@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, Flame } from "lucide-react"
+import { HavenMark } from "@/components/logo-mark"
 
 type Step = 1 | 2 | 3 | 4 | 5
 
@@ -52,12 +53,7 @@ export default function BurnLetterPage() {
             className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
           >
             <ChevronLeft className="h-4 w-4" />
-            <img
-              src="/havenlogo.png"
-              alt="Haven"
-              className="w-5 h-5 object-cover"
-              style={{ objectPosition: "50% 35%" }}
-            />
+            <HavenMark className="w-5 h-5" />
             <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <div className="flex items-center gap-1.5 text-muted-foreground/60 text-sm">

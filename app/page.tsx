@@ -1446,6 +1446,8 @@ Make the questions feel personally connected to the themes in the journal — mi
                 { icon: "🧠", label: "Self-Discovery", desc: "Quiz to understand yourself", key: "quiz",
                   onTap: () => { setMode("quiz-widget"); showMessage("Ready to explore a bit about yourself?") } },
                 { icon: "📸", label: "Analyze", desc: "Read conversation patterns", key: "analyze", href: "/analyze" },
+                { icon: "📊", label: "Your Insights", desc: "Progress & patterns", key: "insights",
+                  onTap: () => { setMode("insights-widget"); showMessage("Here's your healing journey so far.") } },
               ].map(({ icon, label, desc, key, onTap, href }) => {
                 const done = completedToday.has(key)
                 const cardClassName = cn(
@@ -1486,20 +1488,6 @@ Make the questions feel personally connected to the themes in the journal — mi
               })}
             </div>
 
-            {/* Insights — full width subtle row */}
-            <button
-              onClick={() => setMode("insights-widget")}
-              className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl border border-border/30 bg-card/40 hover:border-primary/25 hover:bg-primary/5 transition-all active:scale-[0.98]"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-base">📊</span>
-                <div className="text-left">
-                  <p className="text-xs font-semibold text-foreground">Your Insights</p>
-                  <p className="text-[10px] text-muted-foreground">Progress, patterns & healing score</p>
-                </div>
-              </div>
-              <span className="text-muted-foreground/50 text-xs">→</span>
-            </button>
           </motion.div>
         )}
 
@@ -1561,7 +1549,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                 transition={{ delay: 0.1, duration: 0.4 }}
                 className="flex items-center gap-2 mb-6"
               >
-                <img src="/havenlogo.png" alt="Haven" className="w-8 h-8 object-contain shrink-0" style={{ mixBlendMode: "screen" }} />
+                <img src="/havenlogo.png" alt="Haven" className="w-8 h-8 object-contain shrink-0" />
                 <span className="font-serif font-semibold text-foreground tracking-tight text-lg">Haven</span>
               </motion.div>
 

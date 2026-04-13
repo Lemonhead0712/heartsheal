@@ -4,6 +4,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { ChevronLeft } from "lucide-react"
 import { ScreenshotAnalysis } from "@/components/screenshot-analysis"
+import { HavenMark } from "@/components/logo-mark"
 
 export default function AnalyzePage() {
   return (
@@ -16,7 +17,7 @@ export default function AnalyzePage() {
         <div className="flex items-center justify-between gap-3 mb-5">
           <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
             <ChevronLeft className="h-4 w-4" />
-            <img src="/havenlogo.png" alt="Haven" className="w-5 h-5 object-cover" style={{ objectPosition: "50% 35%" }} />
+            <HavenMark className="w-5 h-5" />
             <span className="font-serif font-semibold text-foreground tracking-tight">Back to Haven</span>
           </Link>
           <div className="text-right">

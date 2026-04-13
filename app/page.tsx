@@ -305,7 +305,8 @@ export default function HavenHome() {
   const [quizType,           setQuizType]           = useState<QuizType>("emotional-awareness")
   const [quizIndex,          setQuizIndex]          = useState(0)
   const [quizAnswers,        setQuizAnswers]        = useState<Record<string, number>>({})
-  const [quizPhase,          setQuizPhase]          = useState<"idle" | "active" | "done">("idle")
+  const [quizPhase,          setQuizPhase]          = useState<"idle" | "active" | "scoring" | "done">("idle")
+  const [quizResult,         setQuizResult]         = useState<{ score: number; catScores: Record<string, number[]> } | null>(null)
   const [dynamicScQuestions, setDynamicScQuestions] = useState<HavenQuizQ[] | null>(null)
   const [dynamicQLoading,    setDynamicQLoading]    = useState(false)
 
@@ -790,17 +791,19 @@ Make the questions feel personally connected to the themes in the journal — mi
         const result = { id: Date.now().toString(), type: quizType, score: avgScore, category_scores: catScores, created_at: new Date().toISOString() }
         const prev2 = readStorage<any[]>(STORAGE_KEYS.quizResults) ?? []
         writeStorage(STORAGE_KEYS.quizResults, [...prev2, result])
-        setQuizPhase("done")
+        setQuizResult({ score: avgScore, catScores })
+        setQuizPhase("scoring")
+        const label = HAVEN_QUIZ[quizType].label
+        const catSummary = Object.entries(catScores)
+          .map(([cat, scores]) => `${cat}: ${Math.round((scores as number[]).reduce((a: number, b: number) => a + b, 0) / (scores as number[]).length)}/100`)
+          .join(", ")
         setTimeout(() => {
-          const label = HAVEN_QUIZ[quizType].label
-          const catSummary = Object.entries(catScores)
-            .map(([cat, scores]) => `${cat}: ${Math.round((scores as number[]).reduce((a: number, b: number) => a + b, 0) / (scores as number[]).length)}/100`)
-            .join(", ")
           reportToHaven(
             `I just completed the ${label} self-assessment. Overall score: ${avgScore}/100. Category breakdown — ${catSummary}.`,
             "quiz"
           )
-        }, 800)
+          setQuizPhase("done")
+        }, 2400)
       } else {
         setQuizIndex(Object.keys(next).length)
       }
@@ -834,6 +837,27 @@ Make the questions feel personally connected to the themes in the journal — mi
     }
     const score = Math.round((survS * 0.4 + intS * 0.35 + cons * 0.25) * 100)
     const quizzes = readStorage<any[]>(STORAGE_KEYS.quizResults) ?? []
+    return { logs: logs.length, journals: journals.length, breathing: breathing.length, quizzes: quizzes.length, score }
+  })()
+
+  // Today-only snapshot for the insights walkthrough widget
+  const todayInsightsData = (() => {
+    if (typeof window === "undefined") return null
+    const todayStr  = new Date().toDateString()
+    const logs      = (readStorage<any[]>(STORAGE_KEYS.emotionLogs)      ?? []).filter((l: any) => new Date(l.timestamp).toDateString()          === todayStr)
+    const journals  = (readStorage<any[]>(STORAGE_KEYS.journalEntries)   ?? []).filter((l: any) => new Date(l.date ?? l.timestamp).toDateString() === todayStr)
+    const breathing = (readStorage<any[]>(STORAGE_KEYS.breathingHistory) ?? []).filter((l: any) => new Date(l.date ?? l.timestamp).toDateString() === todayStr)
+    const surveys   = (readStorage<any[]>(STORAGE_KEYS.surveyResponses)  ?? []).filter((l: any) => new Date(l.timestamp).toDateString()           === todayStr)
+    const quizzes   = (readStorage<any[]>(STORAGE_KEYS.quizResults)      ?? []).filter((l: any) => new Date(l.created_at).toDateString()          === todayStr)
+    const avgI   = logs.length ? logs.reduce((s: number, l: any) => s + (l.intensity ?? 5), 0) / logs.length : 5
+    const intS   = 1 - avgI / 10
+    let survS    = 0.5
+    if (surveys.length) {
+      const avg = surveys.reduce((s: number, sv: any) => s + ((sv.emotionalState + sv.selfConnection + sv.selfCompassion + sv.selfCare) / 4), 0) / surveys.length
+      survS = avg / 5
+    }
+    const cons  = logs.length > 0 ? 1 : 0
+    const score = Math.round((survS * 0.4 + intS * 0.35 + cons * 0.25) * 100)
     return { logs: logs.length, journals: journals.length, breathing: breathing.length, quizzes: quizzes.length, score }
   })()
 
@@ -1216,9 +1240,9 @@ Make the questions feel personally connected to the themes in the journal — mi
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="w-full max-w-sm mb-3 rounded-2xl border border-violet-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-violet-400/15"
+              className="w-full max-w-sm mb-3 rounded-2xl border border-primary/30 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/15"
             >
-              <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide mb-4">Wellbeing check-in</p>
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-4">Wellbeing check-in</p>
               {[
                 { key: "emotionalState",  label: "Emotional state" },
                 { key: "selfConnection",  label: "Connected to yourself" },
@@ -1233,14 +1257,43 @@ Make the questions feel personally connected to the themes in the journal — mi
                   <input type="range" min={1} max={5} step={1}
                     value={survey[key as keyof typeof survey]}
                     onChange={(e) => setSurvey((s) => ({ ...s, [key]: Number(e.target.value) }))}
-                    className="w-full accent-violet-500" />
+                    className="w-full accent-primary" />
                 </div>
               ))}
               {surveySaved ? (
-                <p className="text-xs text-emerald-600 text-center py-1">✓ Check-in saved</p>
+                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="pt-1">
+                  <p className="text-xs font-semibold text-primary/80 uppercase tracking-wide mb-3 text-center">Today's Check-in</p>
+                  <div className="flex flex-col gap-2.5">
+                    {([
+                      { key: "emotionalState",  label: "Emotional state" },
+                      { key: "selfConnection",  label: "Self-connection" },
+                      { key: "selfCompassion",  label: "Self-compassion" },
+                      { key: "selfCare",        label: "Self-care" },
+                    ] as const).map(({ key, label }, i) => {
+                      const val = survey[key]
+                      return (
+                        <div key={key}>
+                          <div className="flex justify-between text-[11px] mb-1">
+                            <span className="text-muted-foreground">{label}</span>
+                            <span className="font-semibold text-foreground">{val}/5</span>
+                          </div>
+                          <div className="w-full bg-muted/40 rounded-full h-1.5 overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${(val / 5) * 100}%` }}
+                              transition={{ duration: 0.7, ease: "easeOut", delay: i * 0.08 }}
+                              className="h-1.5 rounded-full bg-primary"
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground text-center mt-3">Haven is reflecting on your wellbeing…</p>
+                </motion.div>
               ) : (
                 <button onClick={saveSurvey}
-                  className="w-full mt-2 py-2.5 rounded-xl bg-violet-500 text-white text-sm font-semibold hover:bg-violet-600 transition-colors">
+                  className="w-full mt-2 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
                   Submit
                 </button>
               )}
@@ -1260,11 +1313,11 @@ Make the questions feel personally connected to the themes in the journal — mi
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.97 }}
                 transition={{ type: "spring", stiffness: 300, damping: 26 }}
-                className="w-full max-w-sm mb-3 rounded-2xl border border-indigo-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-indigo-400/15"
+                className="w-full max-w-sm mb-3 rounded-2xl border border-primary/30 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/15"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-primary uppercase tracking-wide">
                     {quiz.emoji} {quiz.label}
                   </p>
                   {quizPhase === "active" && (
@@ -1275,7 +1328,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                 {/* Progress bar */}
                 {quizPhase === "active" && (
                   <div className="w-full bg-muted/40 rounded-full h-1 mb-4 overflow-hidden">
-                    <div className="bg-indigo-400 h-1 rounded-full transition-all duration-500"
+                    <div className="bg-primary h-1 rounded-full transition-all duration-500"
                       style={{ width: `${((quizIndex) / questions.length) * 100}%` }} />
                   </div>
                 )}
@@ -1287,7 +1340,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                         Personalising questions from your journal…
                       </p>
                     ) : dynamicScQuestions && quizType === "self-compassion" ? (
-                      <p className="text-xs text-indigo-400/80 text-center py-0.5">
+                      <p className="text-xs text-primary/60 text-center py-0.5">
                         ✦ Questions shaped by what you wrote
                       </p>
                     ) : (
@@ -1296,7 +1349,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                       </p>
                     )}
                     <button onClick={() => setQuizPhase("active")} disabled={dynamicQLoading}
-                      className="w-full py-2.5 rounded-xl bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-600 disabled:opacity-50 transition-colors">
+                      className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors">
                       Begin assessment
                     </button>
                     <button onClick={skipQuiz} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
@@ -1315,13 +1368,44 @@ Make the questions feel personally connected to the themes in the journal — mi
                         {current.options.map((opt, i) => (
                           <button key={i}
                             onClick={() => handleQuizAnswer(current.id, current.scores[i])}
-                            className="text-left px-3.5 py-2.5 rounded-xl border border-border/50 text-xs text-foreground/80 hover:border-indigo-400/60 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 hover:text-indigo-700 dark:hover:text-indigo-300 transition-all active:scale-[0.98]">
+                            className="text-left px-3.5 py-2.5 rounded-xl border border-border/50 text-xs text-foreground/80 hover:border-primary/40 hover:bg-primary/8 hover:text-primary transition-all active:scale-[0.98]">
                             {opt}
                           </button>
                         ))}
                       </div>
                     </motion.div>
                   </AnimatePresence>
+                )}
+
+                {quizPhase === "scoring" && quizResult && (
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="py-2">
+                    <p className="text-center text-2xl mb-1">✦</p>
+                    <p className="text-sm font-semibold text-foreground text-center mb-0.5">Overall: {quizResult.score}/100</p>
+                    <p className="text-[11px] text-muted-foreground text-center mb-4">
+                      {quizResult.score >= 75 ? "Strong self-awareness" : quizResult.score >= 50 ? "Growing awareness" : "Room to explore"}
+                    </p>
+                    <div className="flex flex-col gap-2.5">
+                      {Object.entries(quizResult.catScores).map(([cat, scores]) => {
+                        const avg = Math.round((scores as number[]).reduce((a, b) => a + b, 0) / (scores as number[]).length)
+                        return (
+                          <div key={cat}>
+                            <div className="flex justify-between text-[11px] mb-1">
+                              <span className="text-muted-foreground capitalize">{cat.replace(/-/g, " ")}</span>
+                              <span className="font-semibold text-foreground">{avg}/100</span>
+                            </div>
+                            <div className="w-full bg-muted/40 rounded-full h-1.5 overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${avg}%` }}
+                                transition={{ duration: 0.8, ease: "easeOut", delay: 0.15 }}
+                                className="h-1.5 rounded-full bg-primary"
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </motion.div>
                 )}
 
                 {quizPhase === "done" && (
@@ -1345,15 +1429,16 @@ Make the questions feel personally connected to the themes in the journal — mi
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
               className="w-full max-w-sm mb-3 rounded-2xl border border-emerald-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-emerald-400/15"
             >
-              <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-4">Your progress</p>
+              <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-1">Today's snapshot</p>
+              <p className="text-[11px] text-muted-foreground mb-4">What you've done in this session</p>
               <div className="flex items-center gap-4 mb-4">
-                {insightsData && <ScoreRing score={insightsData.score} />}
+                {todayInsightsData && <ScoreRing score={todayInsightsData.score} />}
                 <div className="flex-1 grid grid-cols-4 gap-1">
                   {[
-                    { icon: "💜", val: insightsData?.logs      ?? 0, label: "Emotions" },
-                    { icon: "🌬️", val: insightsData?.breathing ?? 0, label: "Breathing" },
-                    { icon: "📖", val: insightsData?.journals  ?? 0, label: "Journal" },
-                    { icon: "🧠", val: insightsData?.quizzes   ?? 0, label: "Quizzes" },
+                    { icon: "💜", val: todayInsightsData?.logs      ?? 0, label: "Emotions" },
+                    { icon: "🌬️", val: todayInsightsData?.breathing ?? 0, label: "Breathing" },
+                    { icon: "📖", val: todayInsightsData?.journals  ?? 0, label: "Journal" },
+                    { icon: "🧠", val: todayInsightsData?.quizzes   ?? 0, label: "Quizzes" },
                   ].map(({ icon, val, label }) => (
                     <div key={label} className="text-center">
                       <p className="text-lg">{icon}</p>
@@ -1448,6 +1533,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                 { icon: "📸", label: "Analyze", desc: "Read conversation patterns", key: "analyze", href: "/analyze" },
                 { icon: "📊", label: "Your Insights", desc: "Progress & patterns", key: "insights",
                   onTap: () => { setMode("insights-widget"); showMessage("Here's your healing journey so far.") } },
+                { icon: "🔥", label: "Burn Letter", desc: "Release what you carry", key: "burn", href: "/burn" },
               ].map(({ icon, label, desc, key, onTap, href }) => {
                 const done = completedToday.has(key)
                 const cardClassName = cn(

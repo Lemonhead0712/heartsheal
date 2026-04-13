@@ -300,12 +300,12 @@
     border: 1px solid hsl(0 72% 51% / 0.20);
   }
 
-  /* ── Brand gradient utility — indigo to violet ── */
+  /* ── Brand gradient utility — follows active color theme ── */
   .brand-gradient {
-    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    background: linear-gradient(135deg, var(--orb-from, #6366F1), var(--orb-to, #8B5CF6));
   }
   .brand-gradient-text {
-    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    background: linear-gradient(135deg, var(--orb-from, #6366F1), var(--orb-to, #8B5CF6));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -390,8 +390,19 @@
   30%            { transform: translateY(-6px); opacity: 1; }
 }
 
-/* ── Color Themes ── Applied via html.theme-{name} alongside .dark ── */
+/* ── Color Themes ── html.theme-{name} = light mode; html.theme-{name}.dark = dark mode ── */
 
+/* Ocean — teal / blue */
+html.theme-ocean {
+  --primary:   191 80% 36%;        /* dark teal — readable on white */
+  --ring:      191 80% 36%;
+  --chart-1:   191 80% 36%;
+  --chart-2:   215 65% 50%;
+  --g-start:   195 30% 96%;
+  --g-mid:     210 20% 96%;
+  --orb-from:  #06b6d4;
+  --orb-to:    #3b82f6;
+}
 html.theme-ocean.dark {
   --primary:   191 90% 50%;
   --ring:      191 90% 50%;
@@ -403,6 +414,17 @@ html.theme-ocean.dark {
   --orb-to:    #3b82f6;
 }
 
+/* Forest — emerald / green */
+html.theme-forest {
+  --primary:   160 68% 30%;        /* dark emerald */
+  --ring:      160 68% 30%;
+  --chart-1:   160 68% 30%;
+  --chart-2:   145 55% 36%;
+  --g-start:   150 20% 96%;
+  --g-mid:     160 15% 96%;
+  --orb-from:  #10b981;
+  --orb-to:    #059669;
+}
 html.theme-forest.dark {
   --primary:   145 60% 45%;
   --ring:      145 60% 45%;
@@ -414,6 +436,17 @@ html.theme-forest.dark {
   --orb-to:    #059669;
 }
 
+/* Ember — amber / red */
+html.theme-ember {
+  --primary:   24 88% 40%;         /* dark amber-orange */
+  --ring:      24 88% 40%;
+  --chart-1:   24 88% 40%;
+  --chart-2:   10 75% 46%;
+  --g-start:   35 25% 96%;
+  --g-mid:     20 20% 96%;
+  --orb-from:  #f59e0b;
+  --orb-to:    #ef4444;
+}
 html.theme-ember.dark {
   --primary:   35 95% 55%;
   --ring:      35 95% 55%;
@@ -425,6 +458,17 @@ html.theme-ember.dark {
   --orb-to:    #ef4444;
 }
 
+/* Blush — pink / rose */
+html.theme-blush {
+  --primary:   330 62% 48%;        /* medium-dark pink */
+  --ring:      330 62% 48%;
+  --chart-1:   330 62% 48%;
+  --chart-2:   315 55% 52%;
+  --g-start:   340 20% 97%;
+  --g-mid:     315 15% 97%;
+  --orb-from:  #f472b6;
+  --orb-to:    #ec4899;
+}
 html.theme-blush.dark {
   --primary:   340 75% 65%;
   --ring:      340 75% 65%;
@@ -436,6 +480,17 @@ html.theme-blush.dark {
   --orb-to:    #ec4899;
 }
 
+/* Arctic — blue / indigo */
+html.theme-arctic {
+  --primary:   215 76% 48%;        /* medium blue */
+  --ring:      215 76% 48%;
+  --chart-1:   215 76% 48%;
+  --chart-2:   235 58% 56%;
+  --g-start:   220 25% 96%;
+  --g-mid:     235 20% 96%;
+  --orb-from:  #60a5fa;
+  --orb-to:    #818cf8;
+}
 html.theme-arctic.dark {
   --primary:   215 80% 62%;
   --ring:      215 80% 62%;

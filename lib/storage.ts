@@ -23,6 +23,7 @@ export const STORAGE_KEYS = {
   streakData:            "heartsHeal_streakData",
   journalInsight:        "heartsHeal_journalInsight",
   screenshotAnalyses:    "heartsHeal_screenshotAnalyses",
+  burnLetters:           "heartsHeal_burnLetters",
   colorTheme:            "heartsHeal_colorTheme",
 } as const
 

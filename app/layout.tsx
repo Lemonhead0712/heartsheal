@@ -68,7 +68,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#0d0b12" },
+    { media: "(prefers-color-scheme: light)", color: "#FAFAFA" },
     { media: "(prefers-color-scheme: dark)",  color: "#0d0b12" },
   ],
 }
@@ -82,7 +82,7 @@ export default function RootLayout({
     <html lang="en" className={`h-full ${dmSans.variable} ${cormorant.variable}`} suppressHydrationWarning>
       <body className="font-sans flex min-h-full flex-col antialiased" suppressHydrationWarning>
         <ColorThemeProvider>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
           <AuthProvider>
           <HapticProvider>
             <GuidedSessionProvider>

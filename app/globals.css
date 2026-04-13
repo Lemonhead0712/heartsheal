@@ -4,124 +4,124 @@
 
 @layer base {
   :root {
-    /* ── Core surfaces ── */
-    --background:        35 40% 98.5%;
-    --foreground:        20 15% 14%;
+    /* ── Linen Light Mode ── */
+    --background:        35 30% 95%;        /* #F2EBE0 warm linen */
+    --foreground:        28 22% 14%;        /* #2A2219 dark warm brown */
 
-    --card:              0 0% 100%;
-    --card-foreground:   20 15% 14%;
+    --card:              35 28% 99%;        /* #FBF9F5 warm white */
+    --card-foreground:   28 22% 14%;
 
-    --popover:           0 0% 100%;
-    --popover-foreground: 20 15% 14%;
+    --popover:           35 28% 99%;
+    --popover-foreground: 28 22% 14%;
 
-    /* ── Brand ── */
-    --primary:           350 56% 46%;
-    --primary-foreground: 0 0% 100%;
+    /* ── Brand — warm clay ── */
+    --primary:           25 48% 46%;        /* #B07040 warm clay/terracotta */
+    --primary-foreground: 35 30% 98%;       /* near-white */
 
     /* ── Secondary & Muted ── */
-    --secondary:         30 22% 95%;
-    --secondary-foreground: 20 15% 14%;
+    --secondary:         35 22% 91%;        /* #EADFD2 warm linen */
+    --secondary-foreground: 28 22% 14%;
 
-    --muted:             30 14% 93%;
-    --muted-foreground:  20 10% 48%;
+    --muted:             35 22% 91%;
+    --muted-foreground:  28 14% 46%;        /* #7D6E5D warm gray */
 
-    --accent:            30 22% 95%;
-    --accent-foreground: 20 15% 14%;
+    --accent:            35 22% 91%;
+    --accent-foreground: 28 22% 14%;
 
     /* ── Semantic ── */
     --destructive:       0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border:            30 14% 89%;
-    --input:             30 14% 89%;
-    --ring:              350 56% 46%;
+    --border:            32 18% 85%;        /* #DAD0C2 warm tan */
+    --input:             32 18% 85%;
+    --ring:              25 48% 46%;
 
-    --radius: 0.875rem;
+    --radius: 1rem;
 
-    /* ── Extended surface layers (glass depth) ── */
-    --surface:           35 30% 97%;
-    --surface-raised:    35 25% 96%;
-    --highlight:         350 80% 97%;
+    /* ── Extended surface layers ── */
+    --surface:           35 25% 96%;
+    --surface-raised:    35 20% 94%;
+    --highlight:         25 35% 94%;
 
     /* ── Accent – soft sage ── */
-    --sage:              158 22% 52%;
+    --sage:              150 25% 48%;
     --sage-foreground:   0 0% 100%;
 
     /* ── Chart palette ── */
-    --chart-1: 350 56% 46%;
-    --chart-2: 200 65% 48%;
-    --chart-3: 158 40% 44%;
-    --chart-4: 35 75% 52%;
+    --chart-1: 25 48% 46%;
+    --chart-2: 165 40% 44%;
+    --chart-3: 38 65% 52%;
+    --chart-4: 5 55% 50%;
 
     /* ── Gradient stops ── */
-    --g-start:  35 55% 97%;
-    --g-mid:    350 40% 97.5%;
-    --g-end:    200 35% 97%;
+    --g-start:  35 40% 95%;
+    --g-mid:    25 30% 96%;
+    --g-end:    38 25% 96%;
 
     /* ── Shadows ── */
-    --shadow-sm:  0 1px 3px 0 hsl(20 15% 14% / 0.06), 0 1px 2px -1px hsl(20 15% 14% / 0.06);
-    --shadow-md:  0 4px 12px -2px hsl(20 15% 14% / 0.08), 0 2px 6px -2px hsl(20 15% 14% / 0.05);
-    --shadow-lg:  0 12px 28px -4px hsl(20 15% 14% / 0.10), 0 4px 10px -4px hsl(20 15% 14% / 0.06);
-    --shadow-card: 0 2px 8px -1px hsl(350 56% 46% / 0.06), 0 1px 3px 0 hsl(20 15% 14% / 0.04);
+    --shadow-sm:   0 1px 3px 0 hsl(28 22% 14% / 0.06), 0 1px 2px -1px hsl(28 22% 14% / 0.06);
+    --shadow-md:   0 4px 12px -2px hsl(28 22% 14% / 0.08), 0 2px 6px -2px hsl(28 22% 14% / 0.05);
+    --shadow-lg:   0 12px 28px -4px hsl(28 22% 14% / 0.10), 0 4px 10px -4px hsl(28 22% 14% / 0.06);
+    --shadow-card: 0 2px 8px -1px hsl(25 48% 46% / 0.08), 0 1px 3px 0 hsl(28 22% 14% / 0.04);
   }
 
   .dark {
-    /* ── Obsidian surfaces ── */
-    --background:        252 20% 7%;       /* #0d0b12 */
-    --foreground:        270 43% 95%;      /* #f0eaf8 */
+    /* ── Midnight Espresso surfaces ── */
+    --background:        30 16% 7%;         /* #120F0B warm dark brown */
+    --foreground:        35 25% 93%;        /* #EDE7DC warm cream */
 
-    --card:              252 14% 17%;      /* ~#221f2e — visibly distinct from background */
-    --card-foreground:   270 43% 95%;
+    --card:              30 12% 13%;        /* #211D18 warm dark card */
+    --card-foreground:   35 25% 93%;
 
-    --popover:           252 14% 17%;
-    --popover-foreground: 270 43% 95%;
+    --popover:           30 12% 13%;
+    --popover-foreground: 35 25% 93%;
 
-    /* ── Brand: violet-rose gradient primary ── */
-    --primary:           270 58% 65%;      /* #9b6fdf violet */
-    --primary-foreground: 0 0% 100%;
+    /* ── Brand — warm sand / terracotta ── */
+    --primary:           28 52% 62%;        /* #C8986E warm sand */
+    --primary-foreground: 30 18% 9%;        /* dark brown on warm primary */
 
-    --secondary:         252 12% 20%;
-    --secondary-foreground: 270 43% 95%;
+    --secondary:         30 9% 19%;
+    --secondary-foreground: 35 25% 93%;
 
-    --muted:             252 10% 15%;
-    --muted-foreground:  270 15% 55%;      /* rgba(240,234,248,0.55) */
+    --muted:             30 9% 15%;         /* #272119 */
+    --muted-foreground:  32 12% 52%;        /* #8A7B6C warm gray */
 
-    --accent:            252 12% 20%;
-    --accent-foreground: 270 43% 95%;
+    --accent:            30 9% 19%;
+    --accent-foreground: 35 25% 93%;
 
     --destructive:       0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border:            252 12% 24%;      /* clearly visible border */
-    --input:             252 12% 22%;
-    --ring:              270 58% 65%;
+    --border:            30 11% 22%;        /* #372F27 warm dark border */
+    --input:             30 11% 20%;
+    --ring:              28 52% 62%;
 
-    --surface:           252 14% 14%;
-    --surface-raised:    252 12% 18%;
-    --highlight:         270 40% 16%;
+    --surface:           30 11% 11%;
+    --surface-raised:    30 10% 16%;
+    --highlight:         28 30% 16%;
 
-    --sage:              158 22% 44%;
+    --sage:              150 22% 44%;
     --sage-foreground:   0 0% 100%;
 
-    /* ── Chart: brand colors ── */
-    --chart-1: 270 58% 65%;   /* violet  #9b6fdf */
-    --chart-2: 315 55% 64%;   /* rose    #d472b0 */
-    --chart-3: 162 47% 58%;   /* teal    #5dcaa5 */
-    --chart-4: 35  85% 60%;   /* amber   #ef9f27 */
+    /* ── Chart palette — warm neutrals ── */
+    --chart-1: 28 52% 62%;     /* warm sand   #C8986E */
+    --chart-2: 15 50% 58%;     /* warm clay   #C4795A */
+    --chart-3: 162 40% 52%;    /* warm teal   #5DB89E */
+    --chart-4: 40 70% 58%;     /* warm amber  #D4A84E */
 
     /* ── Background gradient stops ── */
-    --g-start:  270 35% 9%;
-    --g-mid:    315 25% 8%;
-    --g-end:    252 20% 7%;
+    --g-start:  30 20% 9%;
+    --g-mid:    25 15% 8%;
+    --g-end:    30 16% 7%;
 
-    --shadow-sm:  0 1px 3px 0 hsl(0 0% 0% / 0.40), 0 1px 2px -1px hsl(0 0% 0% / 0.40);
-    --shadow-md:  0 4px 16px -2px hsl(0 0% 0% / 0.55), 0 2px 6px -2px hsl(0 0% 0% / 0.40);
-    --shadow-lg:  0 12px 32px -4px hsl(0 0% 0% / 0.65), 0 4px 10px -4px hsl(0 0% 0% / 0.45);
-    --shadow-card: 0 2px 12px -1px hsl(270 58% 65% / 0.15), 0 1px 4px 0 hsl(0 0% 0% / 0.40);
+    --shadow-sm:   0 1px 3px 0 hsl(0 0% 0% / 0.40), 0 1px 2px -1px hsl(0 0% 0% / 0.40);
+    --shadow-md:   0 4px 16px -2px hsl(0 0% 0% / 0.55), 0 2px 6px -2px hsl(0 0% 0% / 0.40);
+    --shadow-lg:   0 12px 32px -4px hsl(0 0% 0% / 0.65), 0 4px 10px -4px hsl(0 0% 0% / 0.45);
+    --shadow-card: 0 2px 12px -1px hsl(28 52% 62% / 0.14), 0 1px 4px 0 hsl(0 0% 0% / 0.40);
 
     /* Orb gradient — overridden per color theme */
-    --orb-from: #9b6fdf;
-    --orb-to:   #d472b0;
+    --orb-from: #c8986e;
+    --orb-to:   #a07050;
   }
 }
 
@@ -139,13 +139,15 @@
 
   body {
     @apply bg-background text-foreground;
+    font-size: 17px;
+    line-height: 1.65;
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Cormorant Garamond renders larger optically — scale down slightly */
+  /* Cormorant Garamond — editorial serif feel */
   .font-serif {
     font-optical-sizing: auto;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
   }
 
   a {
@@ -208,43 +210,43 @@
 
   /* ── Glass card system ── */
   .glass-card {
-    background: hsl(var(--card) / 0.80);
+    background: hsl(var(--card) / 0.82);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border: 0.5px solid rgba(255, 255, 255, 0.10);
     border-radius: 16px;
-    box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
   .dark .glass-card {
     background: hsl(var(--card) / 0.97);
     border: 1px solid hsl(var(--border) / 0.7);
-    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   .glass-card-elevated {
     background: hsl(var(--card) / 0.92);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    border: 0.5px solid rgba(255, 255, 255, 0.10);
+    border: 0.5px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
-    box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
   .dark .glass-card-elevated {
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border) / 0.8);
-    box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   }
 
   /* ── Nav glass ── */
   .glass-nav {
-    background: hsl(var(--card) / 0.88);
-    backdrop-filter: blur(28px) saturate(1.6);
-    -webkit-backdrop-filter: blur(28px) saturate(1.6);
-    border-color: rgba(255, 255, 255, 0.07);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
+    background: hsl(var(--card) / 0.90);
+    backdrop-filter: blur(28px) saturate(1.5);
+    -webkit-backdrop-filter: blur(28px) saturate(1.5);
+    border-color: hsl(var(--border) / 0.5);
+    box-shadow: 0 1px 0 hsl(var(--border) / 0.3);
   }
 
-  /* ── Feature card with accent left-border ── */
+  /* ── Feature card ── */
   .feature-card {
     @apply relative overflow-hidden rounded-2xl transition-all duration-300;
     @apply hover:-translate-y-1.5;
@@ -265,34 +267,34 @@
     background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.4), transparent);
   }
 
-/* ── Companion / Haven themed card ── */
+  /* ── Haven card — warm espresso ── */
   .haven-card {
-    background: linear-gradient(135deg, hsl(270 30% 12%) 0%, hsl(315 20% 10%) 100%);
-    border: 1px solid hsl(270 58% 65% / 0.18);
-    box-shadow: 0 2px 16px hsl(270 58% 65% / 0.10), inset 0 1px 0 hsl(270 58% 65% / 0.08);
+    background: linear-gradient(135deg, hsl(30 15% 11%) 0%, hsl(25 12% 9%) 100%);
+    border: 1px solid hsl(28 52% 62% / 0.20);
+    box-shadow: 0 2px 16px hsl(28 52% 62% / 0.10), inset 0 1px 0 hsl(28 52% 62% / 0.08);
   }
   .dark .haven-card {
-    background: linear-gradient(135deg, hsl(270 30% 12%) 0%, hsl(315 20% 10%) 100%);
-    border: 1px solid hsl(270 58% 65% / 0.18);
-    box-shadow: 0 2px 16px hsl(270 58% 65% / 0.10), inset 0 1px 0 hsl(270 58% 65% / 0.08);
+    background: linear-gradient(135deg, hsl(30 15% 11%) 0%, hsl(25 12% 9%) 100%);
+    border: 1px solid hsl(28 52% 62% / 0.20);
+    box-shadow: 0 2px 16px hsl(28 52% 62% / 0.10), inset 0 1px 0 hsl(28 52% 62% / 0.08);
   }
 
   /* ── Crisis banner ── */
   .crisis-banner {
-    background: hsl(252 18% 10%);
+    background: hsl(30 10% 10%);
     border: 1px solid hsl(0 72% 51% / 0.20);
   }
   .dark .crisis-banner {
-    background: hsl(252 18% 10%);
+    background: hsl(30 10% 10%);
     border: 1px solid hsl(0 72% 51% / 0.20);
   }
 
-  /* ── Brand gradient utility ── */
+  /* ── Brand gradient utility — warm sand to clay ── */
   .brand-gradient {
-    background: linear-gradient(135deg, #9b6fdf, #d472b0);
+    background: linear-gradient(135deg, #c8986e, #a07050);
   }
   .brand-gradient-text {
-    background: linear-gradient(135deg, #9b6fdf, #d472b0);
+    background: linear-gradient(135deg, #c8986e, #a07050);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -348,13 +350,13 @@
   50%       { opacity: 1; }
 }
 
-.animate-ping-once     { animation: ping-once 1s cubic-bezier(0,0,0.2,1) forwards; }
-.animate-pulse-slow    { animation: pulse-slow 2.5s cubic-bezier(0.4,0,0.6,1) infinite; }
-.animate-float         { animation: float 4.5s ease-in-out infinite; }
-.animate-fade-in-up    { animation: fade-in-up 0.5s ease-out forwards; }
+.animate-ping-once       { animation: ping-once 1s cubic-bezier(0,0,0.2,1) forwards; }
+.animate-pulse-slow      { animation: pulse-slow 2.5s cubic-bezier(0.4,0,0.6,1) infinite; }
+.animate-float           { animation: float 4.5s ease-in-out infinite; }
+.animate-fade-in-up      { animation: fade-in-up 0.5s ease-out forwards; }
 .animate-slide-in-bottom { animation: slide-in-bottom 0.3s ease-out forwards; }
-.animate-breathe-ring  { animation: breathe-ring 4s ease-in-out infinite; }
-.status-icon-pulse     { animation: status-pulse 2.2s infinite ease-in-out; }
+.animate-breathe-ring    { animation: breathe-ring 4s ease-in-out infinite; }
+.status-icon-pulse       { animation: status-pulse 2.2s infinite ease-in-out; }
 
 /* Shimmer loading skeleton */
 .shimmer {

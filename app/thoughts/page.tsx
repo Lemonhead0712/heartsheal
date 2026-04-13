@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
-import { ChevronLeft, BookHeart, Brain, Save, RotateCcw, CheckCircle2, ChevronRight, Sparkles, Trash2, X } from "lucide-react"
+import { ChevronLeft, BookHeart, Brain, Save, RotateCcw, CheckCircle2, ChevronRight, Sparkles, Trash2, X, Volume2, VolumeX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { useJournalEntries } from "@/hooks/use-journal-entries"
 import { HavenMark } from "@/components/logo-mark"
+import { useTTS } from "@/hooks/use-speech"
 import { supabase } from "@/lib/supabase"
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
 import type { EmotionEntry } from "@/hooks/use-emotion-logs"
@@ -109,6 +110,16 @@ export default function ThoughtsPage() {
   const [interpretationLoading, setInterpretationLoading] = useState(false)
   const [dynamicScQs, setDynamicScQs] = useState<QuizQuestion[] | null>(null)
   const [dynamicScLoading, setDynamicScLoading] = useState(false)
+
+  /* TTS */
+  const { speak, stop: stopSpeech, isSpeaking } = useTTS()
+  const [ttsText, setTtsText] = useState<string | null>(null)
+  const handleSpeak = useCallback((text: string) => {
+    if (isSpeaking && ttsText === text) { stopSpeech(); setTtsText(null) }
+    else { speak(text); setTtsText(text) }
+  }, [isSpeaking, ttsText, speak, stopSpeech])
+  // Clear ttsText when speech ends
+  useEffect(() => { if (!isSpeaking) setTtsText(null) }, [isSpeaking])
 
   /* ── Generate AI prompt ── */
   const generateAiPrompt = async () => {
@@ -347,15 +358,24 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
                         <span className="text-[10px] font-semibold text-primary/70 uppercase tracking-wide">
                           {isAiPrompt ? "AI Generated" : "Reflection Prompt"}
                         </span>
-                        <button
-                          onClick={generateAiPrompt}
-                          disabled={generatingPrompt}
-                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
-                        >
-                          {generatingPrompt
-                            ? <><RotateCcw className="w-3 h-3 animate-spin" /> Generating…</>
-                            : <><Sparkles className="w-3 h-3" /> Generate with AI</>}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleSpeak(activePrompt)}
+                            className="p-1 rounded-lg text-primary/50 hover:text-primary hover:bg-primary/10 transition-colors"
+                            aria-label={ttsText === activePrompt && isSpeaking ? "Stop reading" : "Read prompt aloud"}
+                          >
+                            {ttsText === activePrompt && isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                          </button>
+                          <button
+                            onClick={generateAiPrompt}
+                            disabled={generatingPrompt}
+                            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                          >
+                            {generatingPrompt
+                              ? <><RotateCcw className="w-3 h-3 animate-spin" /> Generating…</>
+                              : <><Sparkles className="w-3 h-3" /> Generate with AI</>}
+                          </button>
+                        </div>
                       </div>
                       <p className="text-sm text-foreground leading-relaxed font-serif italic">"{activePrompt}"</p>
                     </div>
@@ -516,9 +536,20 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
                               </div>
                             ) : (
                               <>
-                                <p className="text-[10px] font-semibold uppercase tracking-wide text-primary/60 mb-2 flex items-center gap-1.5">
-                                  <Sparkles className="w-3 h-3" /> Haven's Reflection
-                                </p>
+                                <div className="flex items-center justify-between gap-2 mb-2">
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-primary/60 flex items-center gap-1.5">
+                                    <Sparkles className="w-3 h-3" /> Haven's Reflection
+                                  </p>
+                                  {aiInterpretation && (
+                                    <button
+                                      onClick={() => handleSpeak(aiInterpretation)}
+                                      className="p-1 rounded-lg text-primary/50 hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+                                      aria-label={ttsText === aiInterpretation && isSpeaking ? "Stop" : "Read aloud"}
+                                    >
+                                      {ttsText === aiInterpretation && isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                                    </button>
+                                  )}
+                                </div>
                                 <p className="text-sm text-foreground/90 leading-relaxed font-serif italic">"{aiInterpretation}"</p>
                               </>
                             )}
@@ -706,9 +737,18 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
                   <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">{viewEntry.entry}</p>
                 </div>
                 {/* Footer */}
-                <div className="px-6 pb-5 pt-3 border-t border-border/30 flex justify-end">
+                <div className="px-6 pb-5 pt-3 border-t border-border/30 flex items-center justify-between gap-3">
                   <button
-                    onClick={() => setViewEntry(null)}
+                    onClick={() => viewEntry && handleSpeak(viewEntry.entry)}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Read entry aloud"
+                  >
+                    {ttsText === viewEntry?.entry && isSpeaking
+                      ? <><VolumeX className="w-3.5 h-3.5" /> Stop reading</>
+                      : <><Volume2 className="w-3.5 h-3.5" /> Read aloud</>}
+                  </button>
+                  <button
+                    onClick={() => { stopSpeech(); setViewEntry(null) }}
                     className="px-4 py-2 rounded-xl bg-muted/60 hover:bg-muted text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                   >
                     Close

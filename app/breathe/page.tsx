@@ -8,6 +8,7 @@ import { AiBreathingAffirmation } from "@/components/ai-breathing-affirmation"
 import { useTTS } from "@/hooks/use-speech"
 import { useAmbientSound, type SoundType } from "@/hooks/use-ambient-sound"
 import { cn } from "@/lib/utils"
+import { HavenMark } from "@/components/logo-mark"
 
 type Pattern = {
   name: string
@@ -340,7 +341,7 @@ export default function BreathePage() {
         <motion.div className="flex items-center justify-between mb-3" variants={item}>
           <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
             <ChevronLeft className="h-4 w-4" />
-            <img src="/havenlogo.png" alt="Haven" className="w-5 h-5 object-cover" style={{ objectPosition: "50% 35%" }} />
+            <HavenMark className="w-5 h-5" />
             <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <h1 className="font-serif text-lg font-semibold text-foreground">Guided Breathing</h1>

@@ -1565,7 +1565,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                 }}
                 className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm mb-3 shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
               >
-                <span className="text-base">💜</span> Log how I&apos;m feeling
+                Log how I&apos;m feeling
               </button>
             )}
 

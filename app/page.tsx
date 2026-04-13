@@ -301,6 +301,7 @@ export default function HavenHome() {
   const breatheCyclesRef  = useRef(0)
   const prevUserIdRef     = useRef<string | null | undefined>(undefined)
   const breatheTargetRef  = useRef(3)
+  const quizPendingReport = useRef<string>("")
 
   // ── Quiz widget state ─────────────────────────────────────────────────────
   const [quizType,           setQuizType]           = useState<QuizType>("emotional-awareness")
@@ -754,14 +755,8 @@ Make the questions feel personally connected to the themes in the journal — mi
     const prev = readStorage<any[]>(STORAGE_KEYS.surveyResponses) ?? []
     writeStorage(STORAGE_KEYS.surveyResponses, [...prev, record])
     setSurveySaved(true)
-    const avg = ((survey.emotionalState + survey.selfConnection + survey.selfCompassion + survey.selfCare) / 4).toFixed(1)
-    setTimeout(() => {
-      reportToHaven(
-        `I completed the wellbeing check-in. My scores: Emotional State ${survey.emotionalState}/5, Self-Connection ${survey.selfConnection}/5, Self-Compassion ${survey.selfCompassion}/5, Self-Care ${survey.selfCare}/5. Average: ${avg}/5.`,
-        "survey"
-      )
-    }, 600)
-  }, [survey, reportToHaven])
+    // reportToHaven is called when the user explicitly taps "Continue" in the scorecard
+  }, [survey])
 
   // ── Quiz widget ───────────────────────────────────────────────────────────
   // Pick quiz type: emotion-mapped first, then frequency-balance fallback
@@ -811,13 +806,8 @@ Make the questions feel personally connected to the themes in the journal — mi
         const catSummary = Object.entries(catScores)
           .map(([cat, scores]) => `${cat}: ${Math.round((scores as number[]).reduce((a: number, b: number) => a + b, 0) / (scores as number[]).length)}/100`)
           .join(", ")
-        setTimeout(() => {
-          reportToHaven(
-            `I just completed the ${label} self-assessment. Overall score: ${avgScore}/100. Category breakdown — ${catSummary}.`,
-            "quiz"
-          )
-          setQuizPhase("done")
-        }, 2400)
+        // Store the pending report — sent when user taps "Continue" in the scorecard
+        quizPendingReport.current = `I just completed the ${label} self-assessment. Overall score: ${avgScore}/100. Category breakdown — ${catSummary}.`
       } else {
         setQuizIndex(Object.keys(next).length)
       }
@@ -1303,7 +1293,18 @@ Make the questions feel personally connected to the themes in the journal — mi
                       )
                     })}
                   </div>
-                  <p className="text-[10px] text-muted-foreground text-center mt-3">Haven is reflecting on your wellbeing…</p>
+                  <button
+                    onClick={() => {
+                      const avg = ((survey.emotionalState + survey.selfConnection + survey.selfCompassion + survey.selfCare) / 4).toFixed(1)
+                      reportToHaven(
+                        `I completed the wellbeing check-in. My scores: Emotional State ${survey.emotionalState}/5, Self-Connection ${survey.selfConnection}/5, Self-Compassion ${survey.selfCompassion}/5, Self-Care ${survey.selfCare}/5. Average: ${avg}/5.`,
+                        "survey"
+                      )
+                    }}
+                    className="w-full mt-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
+                  >
+                    Continue →
+                  </button>
                 </motion.div>
               ) : (
                 <button onClick={saveSurvey}
@@ -1419,6 +1420,15 @@ Make the questions feel personally connected to the themes in the journal — mi
                         )
                       })}
                     </div>
+                    <button
+                      onClick={() => {
+                        reportToHaven(quizPendingReport.current, "quiz")
+                        setQuizPhase("done")
+                      }}
+                      className="w-full mt-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
+                    >
+                      Continue →
+                    </button>
                   </motion.div>
                 )}
 

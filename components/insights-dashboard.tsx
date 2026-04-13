@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
-import { motion } from "framer-motion"
+import { useState, useCallback, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { ScreenshotAnalysis } from "./screenshot-analysis"
 import {
   AreaChart, Area,
@@ -15,9 +15,12 @@ import {
 import {
   TrendingUp, TrendingDown, Flame, Wind, BookHeart,
   Sparkles, BarChart3, Activity, Heart, PlusCircle,
+  Volume2, VolumeX, ChevronDown, ChevronUp, Trash2, ExternalLink,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useInsightsData, type DateRange } from "@/hooks/use-insights-data"
+import { useTTS } from "@/hooks/use-speech"
+import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
 
 /* ── Palette ── */
 const SURVEY_COLORS = {
@@ -173,7 +176,32 @@ const MoodBarTooltip = ({ active, payload, label }: any) => {
 export function InsightsDashboard() {
   const [dateRange, setDateRange] = useState<DateRange>("30d")
   const [activeTab, setActiveTab] = useState<"overview" | "analyses">("overview")
+  const [analyzeOpen, setAnalyzeOpen] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const data = useInsightsData(dateRange)
+
+  /* TTS */
+  const { speak, stop: stopTTS, isSpeaking } = useTTS()
+  const [ttsText, setTtsText] = useState<string | null>(null)
+  const handleSpeak = useCallback((text: string) => {
+    if (isSpeaking && ttsText === text) { stopTTS(); setTtsText(null) }
+    else { speak(text); setTtsText(text) }
+  }, [isSpeaking, ttsText, speak, stopTTS])
+  useEffect(() => { if (!isSpeaking) setTtsText(null) }, [isSpeaking])
+
+  /* Delete an emotion log by id — setDeletingId triggers re-render; IIFEs re-read localStorage */
+  const deleteEmotionLog = useCallback((id: string) => {
+    const logs = readStorage<any[]>(STORAGE_KEYS.emotionLogs) ?? []
+    writeStorage(STORAGE_KEYS.emotionLogs, logs.filter((l: any) => l.id !== id))
+    setDeletingId(null)
+  }, [])
+
+  /* Delete a journal entry by id */
+  const deleteJournalEntry = useCallback((id: string) => {
+    const entries = readStorage<any[]>(STORAGE_KEYS.journalEntries) ?? []
+    writeStorage(STORAGE_KEYS.journalEntries, entries.filter((e: any) => e.id !== id))
+    setDeletingId(null)
+  }, [])
 
   const anim = {
     container: { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } },
@@ -188,7 +216,7 @@ export function InsightsDashboard() {
         {/* Header */}
         <motion.div className="flex items-center justify-between mb-5 gap-3 flex-wrap" variants={anim.item}>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <TrendingUp className="w-4 h-4" />
             </div>
             <div>
@@ -322,16 +350,27 @@ export function InsightsDashboard() {
               <StatCard label="Avg Intensity" icon={BarChart3}
                 value={data.avgIntensity !== null ? data.avgIntensity.toFixed(1) : "—"}
                 sub="out of 10"
-                color="text-violet-600 bg-violet-100 dark:bg-violet-900/30 dark:text-violet-400" />
+                color="text-primary bg-primary/10" />
             </motion.div>
 
             {/* ── AI Weekly Narrative ── */}
             <motion.div variants={anim.item}>
               {data.totalEmotionLogs >= 3 ? (
-                <div className="glass-card rounded-2xl p-5 bg-gradient-to-br from-violet-50/70 to-rose-50/50 dark:from-violet-900/20 dark:to-rose-900/10 border border-violet-200/40 dark:border-violet-800/30">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Sparkles className="w-4 h-4 text-violet-500 shrink-0" />
-                    <span className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide">Your Weekly Reflection</span>
+                <div className="glass-card rounded-2xl p-5 bg-gradient-to-br from-primary/5 to-rose-50/30 dark:from-primary/10 dark:to-rose-900/10 border border-primary/20">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-primary shrink-0" />
+                      <span className="text-xs font-semibold text-primary uppercase tracking-wide">Your Weekly Reflection</span>
+                    </div>
+                    {data.weeklyNarrative && (
+                      <button
+                        onClick={() => handleSpeak(data.weeklyNarrative!)}
+                        className="p-1 rounded-lg text-primary/50 hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+                        aria-label={ttsText === data.weeklyNarrative && isSpeaking ? "Stop" : "Read aloud"}
+                      >
+                        {ttsText === data.weeklyNarrative && isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                      </button>
+                    )}
                   </div>
                   {data.narrativeLoading ? (
                     <div className="space-y-2">
@@ -358,10 +397,21 @@ export function InsightsDashboard() {
             {/* ── AI Journal Themes ── */}
             <motion.div variants={anim.item}>
               {data.totalJournalEntries >= 2 ? (
-                <div className="glass-card rounded-2xl p-5 bg-gradient-to-br from-amber-50/60 to-violet-50/40 dark:from-amber-900/15 dark:to-violet-900/10 border border-amber-200/40 dark:border-amber-800/30">
-                  <div className="flex items-center gap-2 mb-3">
-                    <BookHeart className="w-4 h-4 text-amber-500 shrink-0" />
-                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">Journal Themes</span>
+                <div className="glass-card rounded-2xl p-5 bg-gradient-to-br from-amber-50/60 to-primary/5 dark:from-amber-900/15 dark:to-primary/10 border border-amber-200/40 dark:border-amber-800/30">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <BookHeart className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">Journal Themes</span>
+                    </div>
+                    {data.journalInsight && (
+                      <button
+                        onClick={() => handleSpeak(data.journalInsight!)}
+                        className="p-1 rounded-lg text-primary/50 hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+                        aria-label={ttsText === data.journalInsight && isSpeaking ? "Stop" : "Read aloud"}
+                      >
+                        {ttsText === data.journalInsight && isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                      </button>
+                    )}
                   </div>
                   {data.journalInsightLoading ? (
                     <div className="space-y-2">
@@ -704,6 +754,199 @@ export function InsightsDashboard() {
                 </SectionCard>
               </motion.div>
             )}
+
+            {/* ── Screenshot Analysis Preview (collapsible) ── */}
+            <motion.div variants={anim.item}>
+              <div className="glass-card rounded-2xl overflow-hidden">
+                <button
+                  onClick={() => setAnalyzeOpen((o) => !o)}
+                  className="w-full flex items-center justify-between px-5 py-4 hover:bg-primary/5 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <Activity className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-foreground">Conversation Analysis</p>
+                      {data.totalEmotionLogs > 0 && (
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Tied to your emotional state — {data.emotionFrequency[0]?.emotion ?? "explore"} most logged
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href="/analyze"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                    >
+                      Open <ExternalLink className="w-3 h-3" />
+                    </Link>
+                    {analyzeOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                  </div>
+                </button>
+                <AnimatePresence initial={false}>
+                  {analyzeOpen && (
+                    <motion.div
+                      key="analyze-body"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden border-t border-border/30"
+                    >
+                      <div className="p-5">
+                        {data.totalEmotionLogs >= 1 && (
+                          <div className="mb-4 p-3 rounded-xl bg-primary/5 border border-primary/15">
+                            <p className="text-[11px] font-semibold text-primary/70 uppercase tracking-wide mb-1">Emotional Context</p>
+                            <p className="text-xs text-foreground/80 leading-relaxed">
+                              Your most frequent emotion this period is{" "}
+                              <strong className="text-foreground">{data.emotionFrequency[0]?.emotion ?? "—"}</strong>
+                              {data.avgIntensity !== null && (
+                                <> with an average intensity of <strong className="text-foreground">{data.avgIntensity.toFixed(1)}/10</strong></>
+                              )}.
+                              Analyzing screenshots alongside this emotional data gives you a fuller picture of your patterns.
+                            </p>
+                          </div>
+                        )}
+                        <ScreenshotAnalysis compact />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+
+            {/* ── Recent Records — with Analyze / Burn / Delete actions ── */}
+            <motion.div variants={anim.item}>
+              <div className="glass-card rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-foreground">Recent Records</h3>
+                  <div className="flex items-center gap-2">
+                    <Link href="/emotional-log" className="text-xs text-primary hover:underline font-medium">View all →</Link>
+                  </div>
+                </div>
+
+                {/* Recent emotion logs */}
+                {(() => {
+                  const logs = (readStorage<any[]>(STORAGE_KEYS.emotionLogs) ?? [])
+                    .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                    .slice(0, 4)
+                  if (!logs.length) return (
+                    <p className="text-xs text-muted-foreground pb-2">No emotion logs yet. Start tracking in Haven →</p>
+                  )
+                  return (
+                    <div className="space-y-2 mb-4">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Emotion Logs</p>
+                      {logs.map((log: any) => (
+                        <div key={log.id} className="flex items-center gap-3 p-3 rounded-xl bg-background/60 border border-border/30 group">
+                          <span className="text-base shrink-0">{log.emoji ?? "💙"}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-foreground truncate">{log.emotion}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {new Date(log.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                              {log.intensity != null && ` · ${log.intensity}/10`}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Link
+                              href="/analyze"
+                              className="p-1.5 rounded-lg text-primary/60 hover:text-primary hover:bg-primary/10 transition-colors"
+                              title="Analyze"
+                            >
+                              <Activity className="w-3.5 h-3.5" />
+                            </Link>
+                            <button
+                              onClick={() => setDeletingId(deletingId === log.id ? null : log.id)}
+                              className="p-1.5 rounded-lg text-muted-foreground/50 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          {deletingId === log.id && (
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                onClick={() => deleteEmotionLog(log.id)}
+                                className="text-[11px] font-semibold text-rose-500 hover:text-rose-600 transition-colors"
+                              >
+                                Delete
+                              </button>
+                              <button
+                                onClick={() => setDeletingId(null)}
+                                className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+
+                {/* Recent journal entries */}
+                {(() => {
+                  const entries = (readStorage<any[]>(STORAGE_KEYS.journalEntries) ?? [])
+                    .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .slice(0, 3)
+                  if (!entries.length) return null
+                  return (
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Journal Entries</p>
+                      {entries.map((e: any) => (
+                        <div key={e.id} className="flex items-start gap-3 p-3 rounded-xl bg-background/60 border border-border/30 group">
+                          <BookHeart className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            {e.prompt && (
+                              <p className="text-[10px] text-primary/60 font-serif italic line-clamp-1 mb-0.5">"{e.prompt}"</p>
+                            )}
+                            <p className="text-xs text-foreground/80 line-clamp-1">{e.entry}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {new Date(e.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                            <Link
+                              href="/burn"
+                              className="p-1.5 rounded-lg text-orange-400/70 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+                              title="Burn Letter"
+                            >
+                              <Flame className="w-3.5 h-3.5" />
+                            </Link>
+                            <button
+                              onClick={() => setDeletingId(deletingId === e.id ? null : e.id)}
+                              className="p-1.5 rounded-lg text-muted-foreground/50 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          {deletingId === e.id && (
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                onClick={() => deleteJournalEntry(e.id)}
+                                className="text-[11px] font-semibold text-rose-500 hover:text-rose-600 transition-colors"
+                              >
+                                Delete
+                              </button>
+                              <button
+                                onClick={() => setDeletingId(null)}
+                                className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+              </div>
+            </motion.div>
 
             {/* ── Quick-access footer ── */}
             <motion.div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1" variants={anim.item}>

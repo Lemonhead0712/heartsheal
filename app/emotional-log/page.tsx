@@ -74,14 +74,14 @@ function EmotionalLog() {
   }
 
   return (
-    <div className="bg-gradient-to-b from-[#13101b] via-background to-background min-h-screen">
+    <div className="bg-gradient-to-b from-[#0e0c09] via-background to-background min-h-screen">
       <motion.div className="w-full max-w-3xl mx-auto px-4 md:px-8 py-4 md:py-6" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
         <motion.div className="flex items-center justify-between mb-6" variants={item}>
           <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
             <ChevronLeft className="h-4 w-4" />
-            <img src="/havenlogo.png" alt="Haven" className="w-5 h-5 object-contain" />
+            <img src="/havenlogo.png" alt="Haven" className="w-5 h-5 object-cover" style={{ objectPosition: "50% 35%" }} />
             <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
 

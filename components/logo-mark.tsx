@@ -14,8 +14,8 @@ export function HavenMark({ className }: { className?: string }) {
     >
       <defs>
         <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#6366F1" />
-          <stop offset="100%" stopColor="#8B5CF6" />
+          <stop offset="0%" style={{ stopColor: "var(--orb-from, #6366F1)" }} />
+          <stop offset="100%" style={{ stopColor: "var(--orb-to, #8B5CF6)" }} />
         </linearGradient>
       </defs>
       <rect x="0" y="0" width="40" height="40" rx="10" fill={`url(#${gradId})`} />

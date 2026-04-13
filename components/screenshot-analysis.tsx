@@ -92,7 +92,7 @@ function readAsDataUrl(file: File): Promise<string> {
   })
 }
 
-export function ScreenshotAnalysis() {
+export function ScreenshotAnalysis({ compact = false }: { compact?: boolean }) {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState("")
@@ -196,6 +196,74 @@ export function ScreenshotAnalysis() {
   }
 
   const currentMeta = result ? patternMeta[result.patternType] : null
+
+  /* ── Compact mode: shown inside the insights collapsible ── */
+  if (compact) {
+    const latest = history[0] ?? null
+    return (
+      <div className="space-y-3">
+        {latest ? (
+          <div className={cn("rounded-xl p-3 border bg-gradient-to-br", patternMeta[latest.patternType].accent)}>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border", patternMeta[latest.patternType].badge)}>
+                {patternMeta[latest.patternType].label}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                {new Date(latest.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              </span>
+            </div>
+            <p className="text-xs text-foreground/80 leading-relaxed line-clamp-2">{latest.emotional_impact}</p>
+            {latest.affirmation && (
+              <p className="text-[11px] text-primary/70 font-serif italic mt-2 line-clamp-1">"{latest.affirmation}"</p>
+            )}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">No analyses yet. Upload a conversation screenshot to begin.</p>
+        )}
+        <label
+          htmlFor="compact-screenshot-upload"
+          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 cursor-pointer transition-colors text-xs font-semibold text-primary"
+        >
+          <input
+            ref={inputRef}
+            id="compact-screenshot-upload"
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={(e) => void selectFile(e.target.files?.[0] ?? null)}
+          />
+          <ImagePlus className="w-3.5 h-3.5" />
+          {loading ? "Analyzing…" : selectedFile ? `Analyze "${selectedFile.name}"` : "Upload screenshot to analyze"}
+        </label>
+        {loading && (
+          <div className="flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            Haven is reading the pattern…
+          </div>
+        )}
+        {result && currentMeta && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+            className={cn("rounded-xl p-3 border bg-gradient-to-br", currentMeta.accent)}
+          >
+            <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border", currentMeta.badge)}>
+              {currentMeta.label}
+            </span>
+            <p className="text-xs text-foreground/80 leading-relaxed mt-2">{result.emotional_impact}</p>
+          </motion.div>
+        )}
+        {selectedFile && !loading && !result && (
+          <button
+            onClick={handleAnalyze}
+            className="w-full py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
+          >
+            Analyze now
+          </button>
+        )}
+        {error && <p className="text-xs text-rose-500">{error}</p>}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-5">

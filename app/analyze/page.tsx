@@ -7,7 +7,7 @@ import { ScreenshotAnalysis } from "@/components/screenshot-analysis"
 
 export default function AnalyzePage() {
   return (
-    <div className="bg-gradient-to-b from-[#0e0c09] via-background to-background min-h-screen">
+    <div className="bg-background min-h-screen">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

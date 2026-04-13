@@ -113,7 +113,7 @@ export function DesktopNav() {
                 <button
                   onClick={() => openAuth("signup")}
                   className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-white text-xs font-semibold transition-all shadow-sm"
-                  style={{ background: "linear-gradient(135deg, #9b6fdf, #d472b0)" }}
+                  style={{ background: "linear-gradient(135deg, var(--orb-from, #c8986e), var(--orb-to, #a07050))" }}
                 >
                   <Cloud className="w-3.5 h-3.5" />
                   Save Data

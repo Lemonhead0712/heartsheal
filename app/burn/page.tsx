@@ -5,6 +5,7 @@ import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, Flame } from "lucide-react"
 import { HavenMark } from "@/components/logo-mark"
+import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
 
 type Step = 1 | 2 | 3 | 4 | 5
 
@@ -36,7 +37,12 @@ export default function BurnLetterPage() {
 
   const handleEmotionPick = (label: string) => {
     setEmotion(label)
-    // Brief delay to show selection, then navigate home
+    // Save burn letter record for milestones
+    const prev = readStorage<any[]>(STORAGE_KEYS.burnLetters) ?? []
+    writeStorage(STORAGE_KEYS.burnLetters, [
+      ...prev,
+      { id: Date.now().toString(), completedAt: new Date().toISOString(), emotion: label },
+    ])
     setTimeout(() => {
       window.location.href = "/"
     }, 900)

@@ -325,17 +325,24 @@ export function useInsightsData(dateRange: DateRange) {
       : null
 
     // ── All-time milestone data ──
-    const allQuizAll = readStorage<QuizResult[]>(STORAGE_KEYS.quizResults) ?? []
+    const allQuizAll      = readStorage<QuizResult[]>(STORAGE_KEYS.quizResults)      ?? []
+    const allAnalyses     = readStorage<any[]>(STORAGE_KEYS.screenshotAnalyses)       ?? []
+    const allBurnLetters  = readStorage<any[]>(STORAGE_KEYS.burnLetters)              ?? []
     const milestones: { date: string; label: string; icon: string }[] = []
-    const firstLog     = allEmotionLogs[allEmotionLogs.length - 1]
-    const firstJ       = allJournalEntries[allJournalEntries.length - 1]
-    const firstBreath  = allBreathing[allBreathing.length - 1]
-    const firstQuiz    = allQuizAll[allQuizAll.length - 1]
-    if (firstLog)    milestones.push({ date: toDateStr(firstLog.timestamp),                                  label: "First emotion logged",         icon: "💜" })
-    if (firstJ)      milestones.push({ date: toDateStr(firstJ.date),                                         label: "First journal entry",          icon: "📖" })
-    if (firstBreath) milestones.push({ date: toDateStr(firstBreath.timestamp),                               label: "First breathing session",      icon: "🌬️" })
-    if (firstQuiz)   milestones.push({ date: toDateStr(firstQuiz.created_at ?? firstQuiz.timestamp ?? new Date().toISOString()), label: "First self-reflection quiz", icon: "🧠" })
-    if (longestStreak >= 3) milestones.push({ date: "Record", label: `${longestStreak}-day streak`,         icon: "🔥" })
+    const firstLog      = allEmotionLogs[allEmotionLogs.length - 1]
+    const firstJ        = allJournalEntries[allJournalEntries.length - 1]
+    const firstBreath   = allBreathing[allBreathing.length - 1]
+    const firstQuiz     = allQuizAll[allQuizAll.length - 1]
+    const firstAnalysis = allAnalyses[allAnalyses.length - 1]
+    const firstBurn     = allBurnLetters[allBurnLetters.length - 1]
+    if (firstLog)      milestones.push({ date: toDateStr(firstLog.timestamp),       label: "First emotion logged",       icon: "💜" })
+    if (firstJ)        milestones.push({ date: toDateStr(firstJ.date),              label: "First journal entry",        icon: "📖" })
+    if (firstBreath)   milestones.push({ date: toDateStr(firstBreath.timestamp),    label: "First breathing session",    icon: "🌬️" })
+    if (firstQuiz)     milestones.push({ date: toDateStr(firstQuiz.created_at ?? firstQuiz.timestamp ?? new Date().toISOString()), label: "First self-reflection quiz", icon: "🧠" })
+    if (firstAnalysis) milestones.push({ date: toDateStr(firstAnalysis.createdAt),  label: "First conversation analysis", icon: "🔍" })
+    if (firstBurn)     milestones.push({ date: toDateStr(firstBurn.completedAt),    label: "First burn letter",          icon: "🔥" })
+    if (allBurnLetters.length >= 3) milestones.push({ date: toDateStr(allBurnLetters[2].completedAt), label: "3 burn letters released", icon: "✨" })
+    if (longestStreak >= 3) milestones.push({ date: "Record", label: `${longestStreak}-day streak`,  icon: "⚡" })
     if (allEmotionLogs.length >= 10) milestones.push({ date: toDateStr(allEmotionLogs[allEmotionLogs.length - 10].timestamp), label: "10 emotions logged", icon: "⭐" })
     if (allEmotionLogs.length >= 25) milestones.push({ date: toDateStr(allEmotionLogs[allEmotionLogs.length - 25].timestamp), label: "25 emotions logged", icon: "🌟" })
     milestones.sort((a, b) => (a.date === "Record" ? 1 : b.date === "Record" ? -1 : a.date.localeCompare(b.date)))

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { useJournalEntries } from "@/hooks/use-journal-entries"
+import { HavenMark } from "@/components/logo-mark"
 import { supabase } from "@/lib/supabase"
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
 import type { EmotionEntry } from "@/hooks/use-emotion-logs"
@@ -308,7 +309,7 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
         <motion.div className="flex items-center justify-between mb-3" variants={item}>
           <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
             <ChevronLeft className="h-4 w-4" />
-            <img src="/havenlogo.png" alt="Haven" className="w-5 h-5 object-cover" style={{ objectPosition: "50% 35%" }} />
+            <HavenMark className="w-5 h-5" />
             <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <h1 className="font-serif text-lg font-semibold text-foreground">Thoughts & Reflection</h1>

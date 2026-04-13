@@ -21,7 +21,8 @@ export function Logo({ size = "medium", className }: LogoProps) {
       <img
         src="/havenlogo.png"
         alt="Haven logo"
-        className={cn(img, "flex-shrink-0 object-contain")}
+        className={cn(img, "flex-shrink-0 object-cover")}
+        style={{ objectPosition: "50% 35%" }}
         aria-hidden="true"
       />
       <span className={cn("font-serif text-foreground", text)}>Haven</span>

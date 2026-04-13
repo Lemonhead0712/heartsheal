@@ -506,6 +506,20 @@ export default function HavenHome() {
         else if (!completedToday.has("quiz"))     parsed.action = "quiz"
         else if (!completedToday.has("insights")) parsed.action = "insights"
       }
+      // Hard override: journal skipped → route to next incomplete step
+      if (/skipped journaling/.test(userText)) {
+        if (!completedToday.has("breathe"))       parsed.action = "breathe"
+        else if (!completedToday.has("survey"))   parsed.action = "survey"
+        else if (!completedToday.has("quiz"))     parsed.action = "quiz"
+        else if (!completedToday.has("insights")) parsed.action = "insights"
+      }
+      // Hard override: quiz skipped → route to next incomplete step
+      if (/skipped the self-assessment/.test(userText)) {
+        if (!completedToday.has("breathe"))       parsed.action = "breathe"
+        else if (!completedToday.has("journal"))  parsed.action = "journal"
+        else if (!completedToday.has("survey"))   parsed.action = "survey"
+        else if (!completedToday.has("insights")) parsed.action = "insights"
+      }
       // Hard override: journal just completed → quiz must follow
       if (/just wrote a reflection in my journal/.test(userText) && !completedToday.has("quiz")) {
         parsed.action = "quiz"
@@ -817,8 +831,13 @@ Make the questions feel personally connected to the themes in the journal — mi
 
   const skipQuiz = useCallback(() => {
     setQuizPhase("idle")
-    reportToHaven("I skipped the self-assessment for now.", "quiz")
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    const done = completedToday
+    const nextStep = !done.has("breathe") ? "breathe" : !done.has("journal") ? "journal" : !done.has("survey") ? "survey" : null
+    const hint = nextStep
+      ? ` What should I do next? (suggest ${nextStep})`
+      : " What would you suggest I do next?"
+    reportToHaven(`I skipped the self-assessment for now.${hint}`, "quiz")
+  }, [completedToday]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Insights widget data ──────────────────────────────────────────────────
   const insightsData = (() => {
@@ -1227,7 +1246,14 @@ Make the questions feel personally connected to the themes in the journal — mi
                     Save reflection
                   </button>
                   <button
-                    onClick={() => reportToHaven("I decided to skip journaling for now.", "journal")}
+                    onClick={() => {
+                      const done = completedToday
+                      const nextStep = !done.has("breathe") ? "breathe" : !done.has("survey") ? "survey" : !done.has("quiz") ? "quiz" : null
+                      const hint = nextStep
+                        ? ` What should I do next? (suggest ${nextStep})`
+                        : " What would you suggest I do next?"
+                      reportToHaven(`I decided to skip journaling for now.${hint}`, "journal")
+                    }}
                     className="w-full text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors text-center py-1"
                   >
                     Skip for now →

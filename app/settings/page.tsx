@@ -31,7 +31,7 @@ export default function SettingsPage() {
   const { colorTheme, setColorTheme } = useColorTheme()
 
   const THEMES: { id: ColorTheme; label: string; from: string; to: string }[] = [
-    { id: "midnight", label: "Midnight",  from: "#c8986e", to: "#a07050" },
+    { id: "midnight", label: "Silk",       from: "#6366F1", to: "#8B5CF6" },
     { id: "ocean",    label: "Ocean",     from: "#06b6d4", to: "#3b82f6" },
     { id: "forest",   label: "Forest",    from: "#10b981", to: "#059669" },
     { id: "ember",    label: "Ember",     from: "#f59e0b", to: "#ef4444" },

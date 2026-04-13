@@ -21,10 +21,10 @@ import { useInsightsData, type DateRange } from "@/hooks/use-insights-data"
 
 /* ── Palette ── */
 const SURVEY_COLORS = {
-  emotionalState: "#d472b0",   // rose brand
-  selfConnection:  "#9b6fdf",  // violet brand
-  selfCompassion:  "#5dcaa5",  // teal
-  selfCare:        "#ef9f27",  // amber
+  emotionalState: "#c8986e",   // warm sand
+  selfConnection:  "#a07050",  // warm clay
+  selfCompassion:  "#5db89e",  // warm teal
+  selfCare:        "#d4a84e",  // warm amber
 }
 
 const LOSS_LABELS: Record<string, string> = {
@@ -48,31 +48,31 @@ function emotionPillColor(avgIntensity: number) {
 
 /* ── Bar color by valence (for mood bar chart) ── */
 function barColor(v: number) {
-  if (v >= 2)    return "#5dcaa5"   // teal — lighter/calmer feelings
-  if (v >= 0.5)  return "#9b6fdf"   // violet — mildly positive
-  if (v >= -0.5) return "#6b7280"   // neutral gray
-  if (v >= -2)   return "#d472b0"   // rose — heavier feelings
+  if (v >= 2)    return "#5db89e"   // warm teal — lighter/calmer feelings
+  if (v >= 0.5)  return "#c8986e"   // warm sand — mildly positive
+  if (v >= -0.5) return "#8a7b6c"   // warm gray — neutral
+  if (v >= -2)   return "#c4795a"   // warm clay — heavier feelings
   return "#e24b4a"                   // red — intense weight
 }
 
 /* ── Intensity progress bar color ── */
 function intensityBarColor(avg: number) {
-  if (avg >= 7.5) return "bg-[#d472b0]"   // rose brand
-  if (avg >= 5)   return "bg-[#9b6fdf]"   // violet brand
-  return "bg-[#5dcaa5]"                    // teal calm
+  if (avg >= 7.5) return "bg-[#c8986e]"   // warm sand
+  if (avg >= 5)   return "bg-[#a07050]"   // warm clay
+  return "bg-[#5db89e]"                    // warm teal calm
 }
 
 /* ── Reusable shell components ── */
 function ScoreRing({ score }: { score: number }) {
   const r = 20; const circ = 2 * Math.PI * r
   // Brand gradient colors: violet at high, rose at medium, muted at low
-  const color = score >= 70 ? "#9b6fdf" : score >= 45 ? "#d472b0" : "#6b7280"
+  const color = score >= 70 ? "#c8986e" : score >= 45 ? "#a07050" : "#8a7b6c"
   return (
     <svg width="50" height="50" viewBox="0 0 50 50" className="shrink-0">
       <defs>
         <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#9b6fdf" />
-          <stop offset="100%" stopColor="#d472b0" />
+          <stop offset="0%" stopColor="#c8986e" />
+          <stop offset="100%" stopColor="#a07050" />
         </linearGradient>
       </defs>
       <circle cx="25" cy="25" r={r} fill="none" stroke="currentColor" strokeWidth="4" className="text-border/20" />

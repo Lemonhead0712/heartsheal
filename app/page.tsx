@@ -12,6 +12,7 @@ import { useJournalEntries } from "@/hooks/use-journal-entries"
 import { useAuth } from "@/contexts/auth-context"
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
 import { cn } from "@/lib/utils"
+import { HavenMark } from "@/components/logo-mark"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type HavenMode =
@@ -497,6 +498,13 @@ export default function HavenHome() {
           parsed.action = "quiz"
         }
       }
+      // Hard override: breathing skipped → route to the next incomplete step
+      if (/skipped the breathing/.test(userText)) {
+        if (!completedToday.has("journal"))       parsed.action = "journal"
+        else if (!completedToday.has("survey"))   parsed.action = "survey"
+        else if (!completedToday.has("quiz"))     parsed.action = "quiz"
+        else if (!completedToday.has("insights")) parsed.action = "insights"
+      }
       // Hard override: journal just completed → quiz must follow
       if (/just wrote a reflection in my journal/.test(userText) && !completedToday.has("quiz")) {
         parsed.action = "quiz"
@@ -643,8 +651,14 @@ export default function HavenHome() {
   const skipBreathing = useCallback(() => {
     if (breatheInterval.current) { clearInterval(breatheInterval.current); breatheInterval.current = null }
     setBreathePhase("idle")
-    reportToHaven("I skipped the breathing exercise for now.", "breathe")
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    // Pass completedToday snapshot so the routing logic below picks the right next step
+    const done = completedToday
+    const nextStep = !done.has("journal") ? "journal" : !done.has("survey") ? "survey" : !done.has("quiz") ? "quiz" : null
+    const hint = nextStep
+      ? ` What should I do next? (suggest ${nextStep})`
+      : " What would you suggest I do next?"
+    reportToHaven(`I skipped the breathing exercise for now.${hint}`, "breathe")
+  }, [completedToday]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => () => { if (breatheInterval.current) clearInterval(breatheInterval.current) }, [])
 
@@ -1635,7 +1649,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                 transition={{ delay: 0.1, duration: 0.4 }}
                 className="flex items-center gap-2 mb-6"
               >
-                <img src="/havenlogo.png" alt="Haven" className="w-8 h-8 object-cover shrink-0" style={{ objectPosition: "50% 35%" }} />
+                <HavenMark className="w-8 h-8" />
                 <span className="font-serif font-semibold text-foreground tracking-tight text-lg">Haven</span>
               </motion.div>
 

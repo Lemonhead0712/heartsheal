@@ -333,7 +333,7 @@ export default function BreathePage() {
   }
 
   return (
-    <div className="bg-gradient-to-b from-[#0e0c09] via-background to-background min-h-screen">
+    <div className="bg-background min-h-screen">
       <motion.div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-3 md:py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}

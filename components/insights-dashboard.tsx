@@ -14,7 +14,7 @@ import {
 import {
   TrendingUp, TrendingDown, Flame, Wind, BookHeart,
   Sparkles, BarChart3, Activity, Heart, PlusCircle,
-  Volume2, VolumeX,
+  Volume2, VolumeX, ScanSearch,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useInsightsData, type DateRange } from "@/hooks/use-insights-data"
@@ -738,19 +738,45 @@ export function InsightsDashboard() {
             )}
 
             {/* ── Quick-access footer ── */}
-            <motion.div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1" variants={anim.item}>
-              {[
-                { href: "/emotional-log", label: "History",       icon: BarChart3, color: "text-primary" },
-                { href: "/breathe",       label: "Breathe",       icon: Wind,       color: "text-sky-500" },
-                { href: "/thoughts",      label: "Journal",       icon: BookHeart,  color: "text-amber-500" },
-                { href: "/",              label: "Talk to Haven", icon: Sparkles,   color: "text-rose-500" },
-              ].map(({ href, label, icon: Icon, color }) => (
-                <Link key={href} href={href}
-                  className="glass-card rounded-2xl p-3 flex flex-col items-center gap-2 hover:border-primary/20 transition-colors group">
-                  <Icon className={cn("w-5 h-5 transition-transform group-hover:scale-110", color)} />
-                  <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
+            <motion.div className="space-y-3 pt-1" variants={anim.item}>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { href: "/emotional-log", label: "History",       icon: BarChart3, color: "text-primary" },
+                  { href: "/breathe",       label: "Breathe",       icon: Wind,       color: "text-sky-500" },
+                  { href: "/thoughts",      label: "Journal",       icon: BookHeart,  color: "text-amber-500" },
+                  { href: "/",              label: "Talk to Haven", icon: Sparkles,   color: "text-rose-500" },
+                ].map(({ href, label, icon: Icon, color }) => (
+                  <Link key={href} href={href}
+                    className="glass-card rounded-2xl p-3 flex flex-col items-center gap-2 hover:border-primary/20 transition-colors group">
+                    <Icon className={cn("w-5 h-5 transition-transform group-hover:scale-110", color)} />
+                    <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
+                  </Link>
+                ))}
+              </div>
+
+              {/* ── Release & Reflect tools ── */}
+              <div className="grid grid-cols-2 gap-3">
+                <Link href="/burn"
+                  className="glass-card rounded-2xl p-4 flex items-center gap-3 hover:border-orange-400/30 hover:bg-orange-50/30 dark:hover:bg-orange-900/10 transition-all group">
+                  <div className="w-9 h-9 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-500 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Flame className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground leading-none mb-0.5">Burn Letter</p>
+                    <p className="text-[11px] text-muted-foreground leading-snug">Write it. Release it.</p>
+                  </div>
                 </Link>
-              ))}
+                <Link href="/analyze"
+                  className="glass-card rounded-2xl p-4 flex items-center gap-3 hover:border-primary/30 hover:bg-primary/5 transition-all group">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <ScanSearch className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground leading-none mb-0.5">Analyze</p>
+                    <p className="text-[11px] text-muted-foreground leading-snug">Reflect on conversations.</p>
+                  </div>
+                </Link>
+              </div>
             </motion.div>
 
           </motion.div>

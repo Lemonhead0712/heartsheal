@@ -1,0 +1,78 @@
+{
+  "name": "HavenMark",
+  "version": "2.0.0",
+  "description": "The Haven logomark. A stylised lowercase 'h' whose crossbar forms a smooth arch — evoking shelter, safety, and a doorway home. Rendered entirely in SVG.",
+  "canvas": {
+    "width": 40,
+    "height": 40,
+    "viewBox": "0 0 40 40"
+  },
+  "background": {
+    "type": "rounded-rect",
+    "x": 0,
+    "y": 0,
+    "width": 40,
+    "height": 40,
+    "rx": 10,
+    "fill": {
+      "type": "linear-gradient",
+      "direction": "135deg",
+      "x1": "0%",
+      "y1": "0%",
+      "x2": "100%",
+      "y2": "100%",
+      "stops": [
+        { "offset": "0%",   "color": "#6366F1", "label": "indigo-500" },
+        { "offset": "100%", "color": "#8B5CF6", "label": "violet-500" }
+      ]
+    }
+  },
+  "marks": [
+    {
+      "id": "left-stem",
+      "type": "line",
+      "description": "Vertical left stroke of the 'h' letterform",
+      "x1": 13, "y1": 9,
+      "x2": 13, "y2": 31,
+      "stroke": "#FFFFFF",
+      "strokeOpacity": 0.95,
+      "strokeWidth": 2.5,
+      "strokeLinecap": "round"
+    },
+    {
+      "id": "arch-right-stem",
+      "type": "path",
+      "description": "The arch crossbar and right descending stem. The cubic bezier creates the doorway arch shape.",
+      "d": "M 13 20 C 13 13 27 13 27 20 L 27 31",
+      "stroke": "#FFFFFF",
+      "strokeOpacity": 0.95,
+      "strokeWidth": 2.5,
+      "strokeLinecap": "round",
+      "strokeLinejoin": "round",
+      "fill": "none"
+    },
+    {
+      "id": "accent-dot",
+      "type": "circle",
+      "description": "Small accent circle at the top of the right stem — echoes the ✦ sparkle motif used throughout the app",
+      "cx": 27,
+      "cy": 9,
+      "r": 2,
+      "fill": "#FFFFFF",
+      "fillOpacity": 0.7
+    }
+  ],
+  "sizingNotes": {
+    "small":  "w-9 h-9  (36px) — nav bar",
+    "medium": "w-10 h-10 (40px) — default inline",
+    "large":  "w-14 h-14 (56px) — hero / loading"
+  },
+  "colorThemes": {
+    "default": { "from": "#6366F1", "to": "#8B5CF6" },
+    "ocean":   { "from": "#06B6D4", "to": "#3B82F6" },
+    "forest":  { "from": "#10B981", "to": "#059669" },
+    "ember":   { "from": "#F59E0B", "to": "#EF4444" },
+    "blush":   { "from": "#F472B6", "to": "#EC4899" },
+    "arctic":  { "from": "#60A5FA", "to": "#818CF8" }
+  }
+}

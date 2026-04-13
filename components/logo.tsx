@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import { HavenMark } from "@/components/logo-mark"
 
 type LogoSize = "small" | "medium" | "large"
 
@@ -18,13 +19,7 @@ export function Logo({ size = "medium", className }: LogoProps) {
 
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <img
-        src="/havenlogo.png"
-        alt="Haven logo"
-        className={cn(img, "flex-shrink-0 object-cover")}
-        style={{ objectPosition: "50% 35%" }}
-        aria-hidden="true"
-      />
+      <HavenMark className={img} />
       <span className={cn("font-serif text-foreground", text)}>Haven</span>
     </div>
   )

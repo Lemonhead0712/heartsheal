@@ -29,7 +29,7 @@ const patterns: Pattern[] = [
     inhale: 4, hold1: 4, exhale: 4, hold2: 4,
     color: "from-sky-100 to-sky-50 dark:from-sky-900/30 dark:to-sky-950/20",
     benefit: "Reduces stress, improves focus",
-    intro: "Let's begin box breathing. Find a comfortable position, relax your shoulders, and let your hands rest gently in your lap. This technique will calm your mind and bring you back to center. Just follow my voice, and we'll breathe together.",
+    intro: "Welcome. Let's breathe together. Find a comfortable position — you can sit, lie down, or stand. Let your shoulders drop away from your ears, and rest your hands somewhere that feels natural. Close your eyes if that feels right, or soften your gaze. We are going to use box breathing — four counts in, four counts to hold, four counts out, and four counts to hold again. Like tracing the four sides of a square, each breath is equal, steady, and grounding. There is nothing you need to do right now except follow the rhythm. I will guide you. Let's begin.",
   },
   {
     name: "4-7-8 Breathing",
@@ -37,7 +37,7 @@ const patterns: Pattern[] = [
     inhale: 4, hold1: 7, exhale: 8, hold2: 0,
     color: "from-violet-100 to-violet-50 dark:from-violet-900/30 dark:to-violet-950/20",
     benefit: "Promotes sleep, calms anxiety",
-    intro: "Welcome to 4-7-8 breathing. This gentle technique is wonderful for calming anxiety and easing your body toward rest. Settle in somewhere comfortable, soften your jaw, and let your body follow each breath. There is nowhere else to be right now.",
+    intro: "Welcome. You've made a gentle choice coming here. This technique — four, seven, eight — was designed to quiet an anxious nervous system and ease the body toward rest. Settle in. Let your jaw soften, let your belly be loose. Breathe in through your nose for four counts, hold for seven, then let the breath go slowly through your mouth for eight. The long exhale is where the magic happens — it activates your body's natural relaxation response. You don't have to fix anything right now. Just breathe. I'll be right here with you.",
   },
   {
     name: "Relaxing Breath",
@@ -45,7 +45,7 @@ const patterns: Pattern[] = [
     inhale: 4, hold1: 0, exhale: 6, hold2: 0,
     color: "from-rose-100 to-rose-50 dark:from-rose-900/30 dark:to-rose-950/20",
     benefit: "Activates the parasympathetic system",
-    intro: "Let's practice relaxing breath together. This simple rhythm activates your body's natural calm response. Take a moment to arrive here. Let your shoulders drop, unclench your hands, and soften your gaze. You are safe. Breathe with me.",
+    intro: "Welcome. I'm glad you're here. This is one of the simplest, most powerful things you can do for your body right now. A slow, extended exhale tells your nervous system that you are safe — that you can let go. We'll breathe in for four counts, and out for six. The exhale is a little longer than the inhale — that's intentional. Each breath out, your body softens a little more. Wherever you are, however you're feeling, that's okay. Let's just breathe together, one breath at a time.",
   },
   {
     name: "Equal Breathing",
@@ -53,7 +53,7 @@ const patterns: Pattern[] = [
     inhale: 5, hold1: 0, exhale: 5, hold2: 0,
     color: "from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-950/20",
     benefit: "Balances the nervous system",
-    intro: "Welcome to equal breathing. This balancing technique brings harmony to your nervous system. Find stillness wherever you are. Let each breath be an anchor, grounding you gently in this moment. I will guide you every step of the way.",
+    intro: "Welcome. Equal breathing is one of the oldest breathing practices — and for good reason. When the breath in matches the breath out, the nervous system finds balance. Five counts in, five counts out. Simple, steady, like a tide coming and going. Let your body be easy. Release any tension you're holding in your face, your shoulders, your hands. You don't need to be anywhere else, do anything else, or feel any different than you do right now. Just breathe with me, and let the rhythm do its work.",
   },
 ]
 
@@ -71,23 +71,27 @@ const phaseLabel: Record<Phase, string> = {
 
 const phaseCue: Record<Phase, string> = {
   inhale: "Breathe in",
-  hold1:  "Hold",
-  exhale: "Breathe out",
-  hold2:  "Hold",
+  hold1:  "Hold gently",
+  exhale: "Breathe out slowly",
+  hold2:  "Rest and hold",
   rest:   "",
   idle:   "",
 }
 
 // Encouraging words spoken between cycles
 const CYCLE_ENCOURAGEMENTS: Record<number, string> = {
-  1: "Wonderful. Take a gentle rest.",
-  2: "You're doing beautifully. Rest for a moment.",
-  4: "Stay with it. Your body is responding beautifully.",
-  6: "Keep breathing. You are calm and steady. Rest now.",
-  9: "Almost there. You're doing wonderfully.",
+  1: "Beautiful. Your nervous system is already listening. Rest here for a moment.",
+  2: "You're doing so well. Notice how your breath has started to settle. Let that feeling deepen.",
+  3: "Three cycles. Something is shifting — even if you can't fully feel it yet, your body is responding. Rest.",
+  4: "You're halfway through. Stay right here with me. Each breath is doing something good.",
+  5: "Five cycles. You're finding your rhythm now. Let the breath carry you. Just rest.",
+  6: "You're doing beautifully. The body knows how to let go — you're just giving it permission. Rest a moment.",
+  7: "Seven cycles. This is real care you're giving yourself. Stay with it.",
+  8: "Almost there. One more round. You are calm. You are steady.",
+  9: "Last one. Breathe fully into this final cycle. You deserve to feel this.",
 }
 
-const REST_DURATION = 3 // seconds of rest between cycles
+const REST_DURATION = 4 // seconds of rest between cycles
 
 const POST_EMOTIONS = [
   { emoji: "😌", label: "Calmer" },
@@ -181,12 +185,22 @@ export default function BreathePage() {
     if (voiceEnabledRef.current) {
       const n = cyclesRef.current
       const closureMap: Record<number, string> = {
-        1: "That's one complete breath cycle. A beautiful start. Notice the stillness in your body right now. How are you feeling?",
-        2: "Two full cycles — well done. Your nervous system is responding. Take a moment to notice any shift in how you feel.",
-        3: "Three cycles complete. You've done something kind for yourself today. Sit with that stillness. What do you notice?",
+        1: "That's one complete cycle — and it matters. You chose to pause, to breathe, to come back to yourself. That is not a small thing. Sit here for a moment. Notice the quality of the air in your chest, the weight of your hands, the quiet behind your thoughts. You are more settled than when you started. When you're ready, consider writing down how you feel — even one sentence. It's worth capturing.",
+        2: "Two cycles complete. Your breath has been your anchor, and you stayed with it. Right now, your nervous system is in a different place than when you began. That shift is real. Notice it. You deserve to feel it. When you carry this stillness into your day, it will ripple outward in ways you might not even see. Take a moment before you move on — and if something came up during the breathing, the journal is a wonderful place to let it land.",
+        3: "Three full cycles. You gave yourself something real today. Feel the steadiness in your body — that's not luck, that's your own breath doing its work. This is what care for yourself looks like in practice. Not perfect, not dramatic — just showing up, one breath at a time. I want you to carry this feeling forward. If you'd like to go deeper, the journal is waiting. Or simply rest here a little longer. You've earned it.",
+        4: "Four cycles. That took presence. That took patience. And you did it. Your heart rate has slowed, your mind has quieted, and your body has been heard. These are not small gifts. Take a breath now — your own breath, not guided — and notice what it feels like to breathe freely. You are grounded. You are here. When you're ready, consider writing or talking to Haven about what you're feeling in this moment. This is a good place to start from.",
+        5: "Five cycles — that's a full session, and you stayed the whole way through. That means something. Breathwork takes trust — trust in the process, trust in yourself. You've just demonstrated both. Right now, in this stillness, you are not the same as when you started. Let that be enough. Let it be more than enough. When you're ready to keep going, the journal is a beautiful next step. Or come back to Haven — there's always more to explore.",
       }
-      const msg = closureMap[n] ?? `${n} breath cycles complete. You've done beautifully. Take a moment to notice how your body feels right now — any tension released, any calm that arrived. How are you feeling?`
-      await speak(msg, { rate: 0.8, pitch: 0.9 })
+      const affirmations = [
+        "You are not broken. You are healing. And healing takes exactly the kind of courage you just showed.",
+        "The fact that you showed up for yourself today — that's everything. Don't underestimate it.",
+        "Stillness is not emptiness. It's the space where healing lives. You've just created some of it.",
+        "You are worthy of peace. Not one day — right now, exactly as you are.",
+        "Every time you breathe with intention, you are rewiring the way your body holds stress. You are changing, quietly and completely.",
+      ]
+      const fallback = `${n} breath cycles. You stayed present through all of it, and that is something to honor. Right now, in this quiet after the breath, you are holding something precious — a moment of stillness you created for yourself. ${affirmations[n % affirmations.length]} When you're ready, the journal is a beautiful place to let what surfaced today find its words.`
+      const msg = closureMap[n] ?? fallback
+      await speak(msg, { rate: 0.78, pitch: 0.88 })
     }
     setClosureSpoken(true)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -205,7 +219,7 @@ export default function BreathePage() {
 
   const speakPhase = async (p: Phase) => {
     if (!voiceEnabledRef.current || !phaseCue[p]) return
-    await speak(phaseCue[p], { rate: 0.82, pitch: 0.9 })
+    await speak(phaseCue[p], { rate: 0.78, pitch: 0.88 })
   }
 
   const tick = () => {
@@ -219,7 +233,15 @@ export default function BreathePage() {
         cyclesRef.current += 1
         setCycles(cyclesRef.current)
 
-        const encouragement = CYCLE_ENCOURAGEMENTS[cyclesRef.current] ?? "Rest for a moment."
+        const ONGOING_ENCOURAGEMENTS = [
+          "Stay with it. You're doing beautifully.",
+          "Each breath is a gift you're giving yourself.",
+          "You are calm. You are steady. You are here.",
+          "Let the breath carry you. There's nothing to hold onto.",
+          "Presence is the practice. You have it.",
+        ]
+        const encouragement = CYCLE_ENCOURAGEMENTS[cyclesRef.current]
+          ?? ONGOING_ENCOURAGEMENTS[(cyclesRef.current - 1) % ONGOING_ENCOURAGEMENTS.length]
 
         // Show rest visually
         phaseRef.current = "rest"
@@ -232,7 +254,7 @@ export default function BreathePage() {
 
           // Speak encouragement during the visual rest pause
           if (voiceEnabledRef.current) {
-            await speak(encouragement, { rate: 0.8, pitch: 0.9 })
+            await speak(encouragement, { rate: 0.78, pitch: 0.88 })
           }
 
           if (abortedRef.current) return
@@ -299,10 +321,11 @@ export default function BreathePage() {
     if (voiceEnabledRef.current) {
       // Warm TTS cache for all phase cues
       prefetch("Breathe in")
-      prefetch("Hold")
-      prefetch("Breathe out")
-      await speak(selectedPattern.intro, { rate: 0.82, pitch: 0.9 })
-      await new Promise<void>((res) => setTimeout(res, 400))
+      prefetch("Hold gently")
+      prefetch("Breathe out slowly")
+      prefetch("Rest and hold")
+      await speak(selectedPattern.intro, { rate: 0.78, pitch: 0.88 })
+      await new Promise<void>((res) => setTimeout(res, 600))
     }
 
     if (abortedRef.current) return
@@ -411,8 +434,8 @@ export default function BreathePage() {
                     </p>
                     <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
                       {selectedPattern.name} · {closureSpoken
-                        ? "Take a moment to notice how you feel."
-                        : "Reflecting on your session…"}
+                        ? "Take a moment to sit with how you feel."
+                        : "A word before you go…"}
                     </p>
                   </div>
 
@@ -425,7 +448,7 @@ export default function BreathePage() {
                       className="w-full max-w-sm"
                     >
                       <p className="text-sm font-medium text-foreground mb-3">How are you feeling now?</p>
-                      <div className="flex flex-wrap justify-center gap-2 mb-6">
+                      <div className="flex flex-wrap justify-center gap-2 mb-5">
                         {POST_EMOTIONS.map(({ emoji, label }) => (
                           <button
                             key={label}
@@ -444,19 +467,34 @@ export default function BreathePage() {
                       </div>
 
                       {postEmotion && (
-                        <motion.p
+                        <motion.div
                           key={postEmotion}
                           initial={{ opacity: 0, y: 6 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="text-xs text-muted-foreground italic mb-4"
+                          className="mb-5 px-4 py-3 rounded-2xl bg-primary/5 border border-primary/15 text-center"
                         >
-                          {postEmotion === "Still anxious"
-                            ? "That's okay — your body heard you. Another round may help, or simply rest."
-                            : `${postEmotion} — that's your body responding to your care.`}
-                        </motion.p>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {postEmotion === "Still anxious"
+                              ? "That's okay — and it's honest. Anxiety doesn't always lift in one session. What matters is you showed up for yourself. Another round may help soften the edges, or you can simply rest here. Your body heard you, even if it doesn't feel like it yet."
+                              : postEmotion === "Calmer"
+                              ? "That calm is real — your breath created it. Carry it gently. If you'd like to capture what came up during your session, the journal is right here waiting for you."
+                              : postEmotion === "Lighter"
+                              ? "Something lifted. That happens when we stop holding our breath and finally let it move. Write about it if you can — what felt heavy before that feels a little less so now?"
+                              : postEmotion === "Grateful"
+                              ? "Gratitude after breathwork is a sign your nervous system has truly settled. That shift from tension to thankfulness — hold onto it. It's yours."
+                              : "Clarity is a gift. When the noise quiets, what's real rises to the surface. This is a good moment to write — even one sentence before the clarity fades."
+                            }
+                          </p>
+                        </motion.div>
                       )}
 
                       <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                        <Link
+                          href="/thoughts"
+                          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all"
+                        >
+                          <Heart className="w-4 h-4" /> Journal this feeling
+                        </Link>
                         <button
                           onClick={() => {
                             setSessionState("idle")
@@ -465,16 +503,10 @@ export default function BreathePage() {
                             setPostEmotion(null)
                             setClosureSpoken(false)
                           }}
-                          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all"
-                        >
-                          <RefreshCw className="w-4 h-4" /> Another round
-                        </button>
-                        <Link
-                          href="/?mode=journal"
                           className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full border border-border/50 text-foreground font-semibold text-sm hover:bg-muted/40 transition-all"
                         >
-                          <Heart className="w-4 h-4" /> Journal this
-                        </Link>
+                          <RefreshCw className="w-4 h-4" /> Breathe again
+                        </button>
                         <Link
                           href="/"
                           className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full border border-border/30 text-muted-foreground text-sm hover:bg-muted/30 transition-all"
@@ -538,11 +570,11 @@ export default function BreathePage() {
                     <AnimatePresence mode="wait">
                       {isIntro ? (
                         <motion.div key="intro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-1">
-                          <p className="text-white font-semibold text-sm drop-shadow leading-tight">Settling in…</p>
+                          <p className="text-white font-semibold text-sm drop-shadow leading-tight">Arriving…</p>
                           <div className="flex gap-1 mt-1">
                             {[0, 1, 2].map((i) => (
                               <motion.div key={i} className="w-1 h-1 rounded-full bg-white/70"
-                                animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.4 }} />
+                                animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.45 }} />
                             ))}
                           </div>
                         </motion.div>

@@ -879,7 +879,7 @@ Make the questions feel personally connected to the themes in the journal — mi
   const widgetActive = mode !== "greeting" && mode !== "chatting"
 
   return (
-    <div className="flex flex-col bg-gradient-to-b from-[#0e0c09] via-background to-background h-[calc(100dvh-140px)] md:h-auto md:flex-1">
+    <div className="flex flex-col bg-background h-[calc(100dvh-140px)] md:h-auto md:flex-1">
 
       {/* ── Header — mobile only (desktop uses DesktopNav) ── */}
       <header className="md:hidden flex items-center justify-between px-4 pt-2 pb-1 shrink-0">
@@ -1044,22 +1044,22 @@ Make the questions feel personally connected to the themes in the journal — mi
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="w-full max-w-sm mb-3 rounded-2xl border border-sky-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-sky-400/15 flex flex-col items-center"
+              className="w-full max-w-sm mb-3 rounded-2xl border border-primary/20 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/10 flex flex-col items-center"
             >
-              <p className="text-xs font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wide mb-1">
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">
                 {havenBreathePattern.name} · {havenBreathePattern.description}
               </p>
               <p className="text-[11px] text-muted-foreground mb-4">{havenBreathePattern.benefit}</p>
 
               {/* Animated orb */}
               <div className="relative w-36 h-36 flex items-center justify-center mb-4">
-                <motion.div className="absolute rounded-full bg-sky-100 dark:bg-sky-900/30"
+                <motion.div className="absolute rounded-full bg-primary/10"
                   style={{ width: "100%", height: "100%" }}
                   animate={{ scale: breathePhase !== "idle" && breathePhase !== "done" ? breatheCircleScale : 1 }}
                   transition={{ duration: breatheDuration, ease: breathePhase === "inhale" ? "easeIn" : breathePhase === "exhale" ? "easeOut" : "linear" }}
                 />
-                <motion.div className="rounded-full bg-gradient-to-br from-sky-300 to-sky-500 shadow-lg z-10"
-                  style={{ width: "72px", height: "72px" }}
+                <motion.div className="rounded-full shadow-lg z-10"
+                  style={{ width: "72px", height: "72px", background: "linear-gradient(135deg, var(--orb-from, #6366F1), var(--orb-to, #8B5CF6))" }}
                   animate={{ scale: breathePhase !== "idle" && breathePhase !== "done" ? breatheCircleScale : 1 }}
                   transition={{ duration: breatheDuration, ease: breathePhase === "inhale" ? "easeIn" : breathePhase === "exhale" ? "easeOut" : "linear" }}
                 />
@@ -1088,8 +1088,8 @@ Make the questions feel personally connected to the themes in the journal — mi
                         className={cn(
                           "flex flex-col items-start px-2.5 py-2 rounded-xl border text-left transition-all",
                           havenBreathePattern.id === p.id
-                            ? "border-sky-400 bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300"
-                            : "border-border/40 text-muted-foreground hover:border-sky-300 hover:text-foreground"
+                            ? "border-primary/60 bg-primary/8 text-primary"
+                            : "border-border/40 text-muted-foreground hover:border-primary/30 hover:text-foreground"
                         )}>
                         <span className="text-[11px] font-semibold leading-tight">{p.name}</span>
                         <span className="text-[10px] opacity-70">{p.description}</span>
@@ -1103,15 +1103,15 @@ Make the questions feel personally connected to the themes in the journal — mi
                         className={cn(
                           "w-10 h-10 rounded-full text-sm font-bold border transition-all",
                           breatheTargetRounds === r
-                            ? "bg-sky-500 text-white border-sky-500"
-                            : "border-border/50 text-muted-foreground hover:border-sky-400 hover:text-sky-500"
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "border-border/50 text-muted-foreground hover:border-primary/40 hover:text-primary"
                         )}>
                         {r}
                       </button>
                     ))}
                   </div>
                   <button onClick={() => startBreathing(breatheTargetRounds, havenBreathePattern)}
-                    className="w-full py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition-colors mb-2">
+                    className="w-full py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all duration-200 mb-2">
                     Start {breatheTargetRounds} rounds
                   </button>
                   <button onClick={skipBreathing}
@@ -1129,7 +1129,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                     {Array.from({ length: breatheTargetRounds }).map((_, i) => (
                       <span key={i} className={cn(
                         "w-2 h-2 rounded-full transition-all duration-300",
-                        i < breatheCyclesDone ? "bg-sky-500" : "bg-sky-200 dark:bg-sky-800"
+                        i < breatheCyclesDone ? "bg-primary" : "bg-primary/20"
                       )} />
                     ))}
                     <span className="text-[11px] text-muted-foreground ml-1">
@@ -1137,7 +1137,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                     </span>
                   </div>
                   <button onClick={endBreathingEarly}
-                    className="text-xs text-muted-foreground hover:text-sky-500 transition-colors">
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors">
                     End session early
                   </button>
                 </div>
@@ -1146,7 +1146,7 @@ Make the questions feel personally connected to the themes in the journal — mi
               {/* DONE */}
               {breathePhase === "done" && (
                 <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center gap-2 w-full">
-                  <p className="text-sm text-sky-600 dark:text-sky-400 font-medium">
+                  <p className="text-sm text-primary font-medium">
                     {breatheCyclesDone} round{breatheCyclesDone !== 1 ? "s" : ""} complete ✦
                   </p>
                   <button
@@ -1166,18 +1166,18 @@ Make the questions feel personally connected to the themes in the journal — mi
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="w-full max-w-sm mb-3 rounded-2xl border border-amber-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-amber-400/15"
+              className="w-full max-w-sm mb-3 rounded-2xl border border-primary/20 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/10"
             >
-              <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-3">
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-3">
                 {selectedEmotion ? `Reflecting on your ${selectedEmotion.toLowerCase()}` : "Write it out"}
               </p>
 
               {/* Prompt display */}
-              <div className="bg-amber-50/60 dark:bg-amber-900/20 rounded-xl px-3.5 py-2.5 mb-2.5 border border-amber-200/40 min-h-[48px] flex items-start justify-between gap-2">
+              <div className="bg-primary/5 rounded-xl px-3.5 py-2.5 mb-2.5 border border-primary/10 min-h-[48px] flex items-start justify-between gap-2">
                 {havenPromptLoading ? (
                   <div className="space-y-1.5 w-full">
                     {[100, 75].map((w) => (
-                      <div key={w} className="h-3 bg-amber-200/50 dark:bg-amber-800/40 rounded-full animate-pulse" style={{ width: `${w}%` }} />
+                      <div key={w} className="h-3 bg-muted rounded-full animate-pulse" style={{ width: `${w}%` }} />
                     ))}
                   </div>
                 ) : (
@@ -1185,7 +1185,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                     <p className="text-sm text-foreground/80 font-serif italic leading-relaxed flex-1">"{havenAiPrompt ?? journalPrompt}"</p>
                     <button
                       onClick={() => isSpeaking ? stopSpeech() : speak(havenAiPrompt ?? journalPrompt)}
-                      className="shrink-0 mt-0.5 p-1.5 rounded-lg text-amber-500/70 hover:text-amber-600 hover:bg-amber-100/40 dark:hover:bg-amber-900/30 transition-colors"
+                      className="shrink-0 mt-0.5 p-1.5 rounded-lg text-primary/50 hover:text-primary hover:bg-primary/10 transition-colors"
                       aria-label={isSpeaking ? "Stop reading" : "Read prompt aloud"}
                     >
                       {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
@@ -1198,10 +1198,10 @@ Make the questions feel personally connected to the themes in the journal — mi
               <button
                 onClick={generateHavenPrompt}
                 disabled={havenPromptLoading}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 mb-3 rounded-xl border border-amber-300/40 bg-amber-50/30 dark:bg-amber-900/15 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 disabled:opacity-50 transition-colors"
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 mb-3 rounded-xl border border-primary/20 bg-primary/5 text-xs font-semibold text-primary hover:bg-primary/10 disabled:opacity-50 transition-colors"
               >
                 {havenPromptLoading
-                  ? <span className="inline-block w-3 h-3 border-2 border-amber-400/40 border-t-amber-500 rounded-full animate-spin" />
+                  ? <span className="inline-block w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
                   : <span>✨</span>
                 }
                 {havenPromptLoading ? "Generating…" : "Generate a new prompt"}
@@ -1215,7 +1215,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                 className="w-full rounded-xl border border-border/40 bg-background px-3.5 py-2.5 text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3"
               />
               {journalSaved ? (
-                <p className="text-xs text-emerald-600 text-center py-1">✓ Saved to your journal</p>
+                <p className="text-xs text-primary text-center py-1">✓ Saved to your journal</p>
               ) : (
                 <>
                   <button onClick={saveJournal} disabled={!journalText.trim()}
@@ -1427,9 +1427,9 @@ Make the questions feel personally connected to the themes in the journal — mi
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="w-full max-w-sm mb-3 rounded-2xl border border-emerald-300/60 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-emerald-400/15"
+              className="w-full max-w-sm mb-3 rounded-2xl border border-primary/20 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/10"
             >
-              <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-1">Today's snapshot</p>
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">Today's snapshot</p>
               <p className="text-[11px] text-muted-foreground mb-4">What you've done in this session</p>
               <div className="flex items-center gap-4 mb-4">
                 {todayInsightsData && <ScoreRing score={todayInsightsData.score} />}
@@ -1449,7 +1449,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                 </div>
               </div>
               <Link href="/insights"
-                className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 transition-colors">
+                className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all duration-200">
                 See full insights <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </motion.div>
@@ -1496,7 +1496,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                   </span>
                 )}
                 {Array.from(completedToday).map(key => (
-                  <span key={key} className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-400 capitalize">
+                  <span key={key} className="px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-medium text-primary capitalize">
                     ✓ {key}
                   </span>
                 ))}
@@ -1513,7 +1513,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                   setMode("emotion-widget")
                   showMessage("How are you feeling right now? Pick what resonates most.")
                 }}
-                className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm mb-3 shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm mb-3 shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <span className="text-base">💜</span> Log how I&apos;m feeling
               </button>
@@ -1539,13 +1539,13 @@ Make the questions feel personally connected to the themes in the journal — mi
                 const cardClassName = cn(
                   "flex flex-col items-start gap-2 p-3 rounded-2xl border transition-all relative text-left active:scale-[0.97]",
                   done
-                    ? "border-emerald-500/25 bg-emerald-500/5"
+                    ? "border-primary/20 bg-primary/5"
                     : "border-border/40 bg-card/60 hover:border-primary/30 hover:bg-primary/5"
                 )
 
                 const cardContent = (
                   <>
-                    {done && <span className="absolute top-2 right-2.5 text-emerald-400 text-xs font-bold">✓</span>}
+                    {done && <span className="absolute top-2 right-2.5 text-primary text-xs font-bold">✓</span>}
                     <span className="text-xl">{icon}</span>
                     <div>
                       <p className="text-xs font-semibold text-foreground leading-tight">{label}</p>
@@ -1588,7 +1588,7 @@ Make the questions feel personally connected to the themes in the journal — mi
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendToHaven(input) } }}
             placeholder="Type or speak to Haven…"
             rows={1}
-            className="flex-1 resize-none bg-card border border-border/40 rounded-full px-5 py-2.5 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30 leading-relaxed"
+            className="flex-1 resize-none bg-[#F3F4F6] border-0 rounded-full px-5 py-2.5 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 leading-relaxed transition-all duration-200 dark:bg-card dark:border dark:border-border/40 dark:focus:bg-card"
             style={{ minHeight: "42px", maxHeight: "80px" }}
           />
           {sttStatus !== "unsupported" && (
@@ -1623,7 +1623,7 @@ Make the questions feel personally connected to the themes in the journal — mi
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.45, ease: "easeInOut" }}
-            className="fixed inset-0 z-[60] flex flex-col bg-gradient-to-b from-[#0e0c09] via-background to-background overflow-y-auto"
+            className="fixed inset-0 z-[60] flex flex-col bg-gradient-to-b from-white via-background to-background overflow-y-auto"
           >
             {/* Mirrors Haven's exact layout: header → orb → message → actions */}
             <div className="flex flex-col items-center flex-1 px-5 pt-8 pb-6">
@@ -1658,7 +1658,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                   animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.2, 0.5] }}
                   transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
                 />
-                <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full shadow-[0_0_48px_10px] shadow-primary/25 z-10 flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--orb-from, #c8986e), var(--orb-to, #a07050))" }}>
+                <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full shadow-[0_0_48px_10px] shadow-primary/25 z-10 flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--orb-from, #6366F1), var(--orb-to, #8B5CF6))" }}>
                   <span className="text-white text-2xl md:text-3xl select-none">✦</span>
                 </div>
               </motion.div>
@@ -1713,7 +1713,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                 <button
                   onClick={() => { setAuthModalMode("signup"); setAuthModalOpen(true) }}
                   className="w-full py-3.5 rounded-full text-white font-semibold text-sm transition-all shadow-lg active:scale-[0.98]"
-                  style={{ background: "linear-gradient(135deg, var(--orb-from, #c8986e), var(--orb-to, #a07050))", boxShadow: "0 4px 20px rgba(200,152,110,0.35)" }}
+                  style={{ background: "linear-gradient(135deg, var(--orb-from, #6366F1), var(--orb-to, #8B5CF6))", boxShadow: "0 4px 20px rgba(99,102,241,0.30)" }}
                 >
                   ✦ Begin with Haven
                 </button>

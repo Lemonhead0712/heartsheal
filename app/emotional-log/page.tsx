@@ -7,6 +7,7 @@ import { motion, AnimatePresence, type Variants } from "framer-motion"
 
 import { useEmotionLogs } from "@/hooks/use-emotion-logs"
 import { useJournalEntries, type JournalEntry } from "@/hooks/use-journal-entries"
+import { HavenMark } from "@/components/logo-mark"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useRealTimeUpdate } from "@/hooks/use-real-time-update"
@@ -81,7 +82,7 @@ function EmotionalLog() {
         <motion.div className="flex items-center justify-between mb-6" variants={item}>
           <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
             <ChevronLeft className="h-4 w-4" />
-            <img src="/havenlogo.png" alt="Haven" className="w-5 h-5 object-cover" style={{ objectPosition: "50% 35%" }} />
+            <HavenMark className="w-5 h-5" />
             <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
 

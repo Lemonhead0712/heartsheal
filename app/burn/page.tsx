@@ -42,7 +42,7 @@ export default function BurnLetterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0e0c09] via-background to-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <div className="w-full max-w-lg mx-auto px-4 py-6 flex flex-col flex-1">
 
         {/* Header */}

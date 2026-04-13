@@ -855,7 +855,7 @@ Make the questions feel personally connected to the themes in the journal — mi
   const widgetActive = mode !== "greeting" && mode !== "chatting"
 
   return (
-    <div className="flex flex-col bg-gradient-to-b from-[#16101f] via-background to-background h-[calc(100dvh-140px)] md:h-auto md:flex-1">
+    <div className="flex flex-col bg-gradient-to-b from-[#0e0c09] via-background to-background h-[calc(100dvh-140px)] md:h-auto md:flex-1">
 
       {/* ── Header — mobile only (desktop uses DesktopNav) ── */}
       <header className="md:hidden flex items-center justify-between px-4 pt-2 pb-1 shrink-0">
@@ -1537,7 +1537,7 @@ Make the questions feel personally connected to the themes in the journal — mi
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.45, ease: "easeInOut" }}
-            className="fixed inset-0 z-[60] flex flex-col bg-gradient-to-b from-[#16101f] via-background to-background overflow-y-auto"
+            className="fixed inset-0 z-[60] flex flex-col bg-gradient-to-b from-[#0e0c09] via-background to-background overflow-y-auto"
           >
             {/* Mirrors Haven's exact layout: header → orb → message → actions */}
             <div className="flex flex-col items-center flex-1 px-5 pt-8 pb-6">
@@ -1549,7 +1549,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                 transition={{ delay: 0.1, duration: 0.4 }}
                 className="flex items-center gap-2 mb-6"
               >
-                <img src="/havenlogo.png" alt="Haven" className="w-8 h-8 object-contain shrink-0" />
+                <img src="/havenlogo.png" alt="Haven" className="w-8 h-8 object-cover shrink-0" style={{ objectPosition: "50% 35%" }} />
                 <span className="font-serif font-semibold text-foreground tracking-tight text-lg">Haven</span>
               </motion.div>
 
@@ -1572,7 +1572,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                   animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.2, 0.5] }}
                   transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
                 />
-                <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full shadow-[0_0_48px_10px] shadow-primary/25 z-10 flex items-center justify-center" style={{ background: "linear-gradient(135deg, #9b6fdf, #d472b0)" }}>
+                <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full shadow-[0_0_48px_10px] shadow-primary/25 z-10 flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--orb-from, #c8986e), var(--orb-to, #a07050))" }}>
                   <span className="text-white text-2xl md:text-3xl select-none">✦</span>
                 </div>
               </motion.div>
@@ -1627,7 +1627,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                 <button
                   onClick={() => { setAuthModalMode("signup"); setAuthModalOpen(true) }}
                   className="w-full py-3.5 rounded-full text-white font-semibold text-sm transition-all shadow-lg active:scale-[0.98]"
-                  style={{ background: "linear-gradient(135deg, #9b6fdf, #d472b0)", boxShadow: "0 4px 20px rgba(155,111,223,0.35)" }}
+                  style={{ background: "linear-gradient(135deg, var(--orb-from, #c8986e), var(--orb-to, #a07050))", boxShadow: "0 4px 20px rgba(200,152,110,0.35)" }}
                 >
                   ✦ Begin with Haven
                 </button>

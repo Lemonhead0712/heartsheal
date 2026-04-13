@@ -22,7 +22,6 @@ export function Logo({ size = "medium", className }: LogoProps) {
         src="/havenlogo.png"
         alt="Haven logo"
         className={cn(img, "flex-shrink-0 object-contain")}
-        style={{ mixBlendMode: "screen" }}
         aria-hidden="true"
       />
       <span className={cn("font-serif text-foreground", text)}>Haven</span>

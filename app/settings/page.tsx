@@ -8,6 +8,7 @@ import {
   CheckCircle2, AlertTriangle, Database, Heart, Shield, Cloud, LogOut, Mail, Lock, Palette
 } from "lucide-react"
 import { useColorTheme, type ColorTheme } from "@/contexts/color-theme-context"
+import { HavenMark } from "@/components/logo-mark"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { exportUserData, importUserData, clearAllData, readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
@@ -157,7 +158,7 @@ export default function SettingsPage() {
         <motion.div className="flex items-center justify-between mb-5" variants={item}>
           <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
             <ChevronLeft className="h-4 w-4" />
-            <img src="/havenlogo.png" alt="Haven" className="w-5 h-5 object-cover" style={{ objectPosition: "50% 35%" }} />
+            <HavenMark className="w-5 h-5" />
             <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <h1 className="font-serif text-lg font-semibold text-foreground">Settings & Data</h1>

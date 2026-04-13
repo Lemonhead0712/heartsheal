@@ -31,7 +31,7 @@ export default function SettingsPage() {
   const { colorTheme, setColorTheme } = useColorTheme()
 
   const THEMES: { id: ColorTheme; label: string; from: string; to: string }[] = [
-    { id: "midnight", label: "Midnight",  from: "#9b6fdf", to: "#d472b0" },
+    { id: "midnight", label: "Midnight",  from: "#c8986e", to: "#a07050" },
     { id: "ocean",    label: "Ocean",     from: "#06b6d4", to: "#3b82f6" },
     { id: "forest",   label: "Forest",    from: "#10b981", to: "#059669" },
     { id: "ember",    label: "Ember",     from: "#f59e0b", to: "#ef4444" },
@@ -157,7 +157,7 @@ export default function SettingsPage() {
         <motion.div className="flex items-center justify-between mb-5" variants={item}>
           <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
             <ChevronLeft className="h-4 w-4" />
-            <img src="/havenlogo.png" alt="Haven" className="w-5 h-5 object-contain" />
+            <img src="/havenlogo.png" alt="Haven" className="w-5 h-5 object-cover" style={{ objectPosition: "50% 35%" }} />
             <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <h1 className="font-serif text-lg font-semibold text-foreground">Settings & Data</h1>

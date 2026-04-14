@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 import {
   ChevronLeft, Wind, Play, Pause, RotateCcw, Volume2, VolumeX,
@@ -13,6 +14,8 @@ import { useAmbientSound, type SoundType } from "@/hooks/use-ambient-sound"
 import { cn } from "@/lib/utils"
 import { HavenMark } from "@/components/logo-mark"
 import { readStorage, STORAGE_KEYS } from "@/lib/storage"
+import { readHavenFlow, advanceHavenFlow, TOOL_HREFS } from "@/lib/haven-flow"
+import { HavenFlowNav } from "@/components/haven-flow-nav"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Pattern = {
@@ -233,6 +236,7 @@ const POST_EMOTIONS = [
 
 // ── Component ──────────────────────────────────────────────────────────────
 export default function BreathePage() {
+  const router = useRouter()
   const [selectedPattern, setSelectedPattern] = useState<Pattern>(patterns[0])
   const [sessionState, setSessionState]       = useState<SessionState>("idle")
   const [phase, setPhase]         = useState<Phase>("idle")
@@ -364,8 +368,17 @@ export default function BreathePage() {
       await speak(msg, { rate: 0.78, pitch: 0.88 })
     }
     setClosureSpoken(true)
+
+    // Advance Haven flow if this session is part of an active flow
+    const flow = readHavenFlow()
+    if (flow && flow.sequence[flow.currentIndex] === "breathe") {
+      setTimeout(() => {
+        const next = advanceHavenFlow()
+        router.push(next ? TOOL_HREFS[next] : "/insights?flow=done")
+      }, 2500)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [speak, stopSpeech, sessionCtx])
+  }, [speak, stopSpeech, sessionCtx, router])
 
   useEffect(() => { completeSessionRef.current = completeSession }, [completeSession])
 
@@ -1000,6 +1013,8 @@ export default function BreathePage() {
         </motion.div>
 
       </motion.div>
+
+      <HavenFlowNav currentTool="breathe" showContinue={false} />
     </div>
   )
 }

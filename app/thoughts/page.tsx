@@ -12,8 +12,6 @@ import { HavenMark } from "@/components/logo-mark"
 import { useTTS } from "@/hooks/use-speech"
 import { supabase } from "@/lib/supabase"
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
-import { readHavenFlow, advanceHavenFlow, TOOL_HREFS } from "@/lib/haven-flow"
-import { HavenFlowNav } from "@/components/haven-flow-nav"
 import type { EmotionEntry } from "@/hooks/use-emotion-logs"
 
 /* ─── Types ─── */
@@ -156,16 +154,6 @@ export default function ThoughtsPage() {
     addJournalEntry({ prompt: activePrompt, entry: entry.trim() })
     setSaved(true)
     const next = JOURNAL_PROMPTS[Math.floor(Math.random() * JOURNAL_PROMPTS.length)]
-
-    // Advance Haven flow if active for journal
-    const flow = readHavenFlow()
-    if (flow && flow.sequence[flow.currentIndex] === "journal") {
-      const nextTool = advanceHavenFlow()
-      const nextHref = nextTool ? TOOL_HREFS[nextTool] : "/insights?flow=done"
-      setTimeout(() => { window.location.href = nextHref }, 1400)
-      return
-    }
-
     setTimeout(() => { setEntry(""); setActivePrompt(next); setIsAiPrompt(false); setSaved(false) }, 1200)
   }
 
@@ -771,9 +759,6 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
           </>
         )}
       </AnimatePresence>
-
-      {/* Haven Flow Navigation */}
-      <HavenFlowNav currentTool="journal" />
     </div>
   )
 }

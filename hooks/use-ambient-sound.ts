@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback } from "react"
 
-export type SoundType = "none" | "rain" | "ocean" | "bowl" | "forest"
+export type SoundType = "none" | "meditation" | "rain" | "ocean" | "bowl" | "forest"
 
 // ── Synthetic reverb (programmatic impulse response) ──────────────────────────
 function createReverb(ctx: AudioContext, duration = 3, decay = 2): ConvolverNode {
@@ -279,6 +279,58 @@ function buildForest(ctx: AudioContext): { node: AudioNode; cleanup: () => void 
   }
 }
 
+// ── MEDITATION PAD ───────────────────────────────────────────────────────────
+// Warm harmonic drone: C major pentatonic partial stack with slow LFO breathing
+function buildMeditation(ctx: AudioContext): { node: AudioNode; cleanup: () => void } {
+  const master = ctx.createGain()
+  master.gain.value = 1.0
+
+  const reverb  = createReverb(ctx, 7, 0.8)
+  const wetGain = ctx.createGain(); wetGain.gain.value = 0.68
+  const dryGain = ctx.createGain(); dryGain.gain.value = 0.32
+
+  // C major harmonic stack: C2→B3 with gradually decreasing volume per partial
+  const harmonics = [
+    { freq: 65.41,  vol: 0.17, lfoRate: 0.034 },  // C2 — deep root
+    { freq: 98.00,  vol: 0.13, lfoRate: 0.041 },  // G2 — fifth
+    { freq: 130.81, vol: 0.11, lfoRate: 0.052 },  // C3 — octave
+    { freq: 164.81, vol: 0.08, lfoRate: 0.037 },  // E3 — major third
+    { freq: 196.00, vol: 0.06, lfoRate: 0.046 },  // G3 — fifth
+    { freq: 246.94, vol: 0.04, lfoRate: 0.031 },  // B3 — major seventh shimmer
+  ]
+
+  harmonics.forEach(({ freq, vol, lfoRate }) => {
+    // Detuned pair for warmth (choir/pad feel)
+    const osc  = ctx.createOscillator(); osc.type = "sine"; osc.frequency.value = freq
+    const osc2 = ctx.createOscillator(); osc2.type = "sine"; osc2.frequency.value = freq * 1.0019
+
+    // Slow amplitude LFO — gives each partial a gentle "breathing" motion
+    const ampEnv  = ctx.createGain(); ampEnv.gain.value = 0
+    const lfo     = ctx.createOscillator(); lfo.type = "sine"; lfo.frequency.value = lfoRate
+    const lfoGain = ctx.createGain(); lfoGain.gain.value = vol * 0.44
+    const dcGain  = ctx.createGain(); dcGain.gain.value  = vol * 0.56  // DC keeps gain positive
+
+    lfo.connect(lfoGain); lfoGain.connect(ampEnv.gain)
+    dcGain.connect(ampEnv.gain)
+
+    osc.connect(ampEnv); osc2.connect(ampEnv)
+    ampEnv.connect(dryGain); ampEnv.connect(reverb)
+
+    osc.start(); osc2.start(); lfo.start()
+  })
+
+  // Very soft high shimmer (triangle wave at C5) for air
+  const shimmer = ctx.createOscillator(); shimmer.type = "triangle"; shimmer.frequency.value = 523.25
+  const shimGain = ctx.createGain(); shimGain.gain.value = 0.018
+  shimmer.connect(shimGain); shimGain.connect(reverb)
+  shimmer.start()
+
+  dryGain.connect(master)
+  reverb.connect(wetGain); wetGain.connect(master)
+
+  return { node: master, cleanup: () => {} }
+}
+
 // ── Hook ─────────────────────────────────────────────────────────────────────
 export function useAmbientSound() {
   const ctxRef     = useRef<AudioContext | null>(null)
@@ -317,10 +369,11 @@ export function useAmbientSound() {
     destRef.current = dest
 
     const { node, cleanup } =
-      type === "rain"   ? buildRain(ctx)   :
-      type === "ocean"  ? buildOcean(ctx)  :
-      type === "bowl"   ? buildBowl(ctx)   :
-                          buildForest(ctx)
+      type === "meditation" ? buildMeditation(ctx) :
+      type === "rain"       ? buildRain(ctx)        :
+      type === "ocean"      ? buildOcean(ctx)       :
+      type === "bowl"       ? buildBowl(ctx)        :
+                              buildForest(ctx)
 
     cleanupRef.current = cleanup
     node.connect(dest)

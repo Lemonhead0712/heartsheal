@@ -1587,18 +1587,15 @@ Make the questions feel personally connected to the themes in the journal — mi
             {/* 2-column activity cards */}
             <div className="grid grid-cols-2 gap-2 mb-2">
               {[
-                { icon: "🌬️", label: "Breathe", desc: "Guided breathing exercise", key: "breathe",
-                  onTap: () => { setMode("breathe-widget"); showMessage("Let's take a few deep breaths together.") } },
-                { icon: "📖", label: "Journal", desc: "Write & reflect on feelings", key: "journal",
-                  onTap: () => { setMode("journal-widget"); showMessage("Take a moment to write what's on your mind.") } },
+                { icon: "🌬️", label: "Breathe",        desc: "Guided breathing exercise",  key: "breathe",  href: "/breathe" },
+                { icon: "📖", label: "Journal",         desc: "Write & reflect on feelings", key: "journal",  href: "/thoughts" },
                 { icon: "🧘", label: "Wellbeing Check", desc: "Rate how you're doing today", key: "survey",
                   onTap: () => { setMode("survey-widget"); showMessage("Let's check in on how you're doing overall.") } },
-                { icon: "🧠", label: "Self-Discovery", desc: "Quiz to understand yourself", key: "quiz",
+                { icon: "🧠", label: "Self-Discovery",  desc: "Quiz to understand yourself", key: "quiz",
                   onTap: () => { setMode("quiz-widget"); showMessage("Ready to explore a bit about yourself?") } },
-                { icon: "📸", label: "Analyze", desc: "Read conversation patterns", key: "analyze", href: "/analyze" },
-                { icon: "📊", label: "Your Insights", desc: "Progress & patterns", key: "insights",
-                  onTap: () => { setMode("insights-widget"); showMessage("Here's your healing journey so far.") } },
-                { icon: "🔥", label: "Burn Letter", desc: "Release what you carry", key: "burn", href: "/burn" },
+                { icon: "📸", label: "Analyze",         desc: "Read conversation patterns",  key: "analyze",  href: "/analyze" },
+                { icon: "📊", label: "Your Insights",   desc: "Progress & patterns",         key: "insights", href: "/insights" },
+                { icon: "🔥", label: "Burn Letter",     desc: "Release what you carry",      key: "burn",     href: "/burn" },
               ].map(({ icon, label, desc, key, onTap, href }) => {
                 const done = completedToday.has(key)
                 const cardClassName = cn(

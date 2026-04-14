@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, Flame } from "lucide-react"
+import { ChevronLeft, Flame, Sparkles } from "lucide-react"
 import { HavenMark } from "@/components/logo-mark"
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
 import { readHavenFlow, advanceHavenFlow, TOOL_HREFS } from "@/lib/haven-flow"
@@ -21,11 +21,21 @@ const EMOTIONS = [
 ]
 
 export default function BurnLetterPage() {
-  const router                = useRouter()
-  const [step,    setStep]    = useState<Step>(1)
-  const [letter,  setLetter]  = useState("")
-  const [emotion, setEmotion] = useState<string | null>(null)
-  const textareaRef           = useRef<HTMLTextAreaElement>(null)
+  const router                 = useRouter()
+  const [step,     setStep]    = useState<Step>(1)
+  const [letter,   setLetter]  = useState("")
+  const [emotion,  setEmotion] = useState<string | null>(null)
+  const [inFlow,   setInFlow]  = useState(false)
+  const textareaRef            = useRef<HTMLTextAreaElement>(null)
+
+  // Detect flow mode on mount — if Haven flow is active for this tool, skip intro
+  useEffect(() => {
+    const flow = readHavenFlow()
+    if (flow && flow.sequence[flow.currentIndex] === "burn") {
+      setInFlow(true)
+      setStep(2) // jump straight to write
+    }
+  }, [])
 
   // Autofocus textarea when step 2 mounts
   useEffect(() => {
@@ -60,10 +70,10 @@ export default function BurnLetterPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="w-full max-w-lg mx-auto px-4 py-6 flex flex-col flex-1">
+      <div className={`w-full max-w-lg mx-auto px-4 py-6 flex flex-col flex-1 ${inFlow ? "pb-20" : ""}`}>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
@@ -78,10 +88,25 @@ export default function BurnLetterPage() {
           </div>
         </div>
 
+        {/* Flow context banner — shown when inside Haven's guided flow */}
+        {inFlow && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="flex items-center gap-2 bg-primary/8 border border-primary/20 rounded-2xl px-4 py-3 mb-5"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+            <p className="text-xs text-primary/80 leading-relaxed">
+              <span className="font-semibold">Haven's flow.</span> Write whatever you need to release — it stays between you and the flame.
+            </p>
+          </motion.div>
+        )}
+
         <AnimatePresence mode="wait">
 
-          {/* ── Step 1: Intro ── */}
-          {step === 1 && (
+          {/* ── Step 1: Intro (standalone only) ── */}
+          {step === 1 && !inFlow && (
             <motion.div
               key="step-1"
               initial={{ opacity: 0, y: 16 }}
@@ -147,10 +172,14 @@ export default function BurnLetterPage() {
               transition={{ duration: 0.35, ease: "easeOut" }}
               className="flex flex-col flex-1"
             >
-              <div className="mb-5">
-                <h2 className="font-serif text-xl font-semibold text-foreground mb-1">Your letter</h2>
+              <div className="mb-4">
+                <h2 className="font-serif text-xl font-semibold text-foreground mb-1">
+                  {inFlow ? "Write your letter" : "Your letter"}
+                </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Write to whoever or whatever you need to release. No judgment, no filter.
+                  {inFlow
+                    ? "Say what you need to say. No filter, no rules — just you and the page."
+                    : "Write to whoever or whatever you need to release. No judgment, no filter."}
                 </p>
               </div>
 
@@ -159,10 +188,10 @@ export default function BurnLetterPage() {
                 value={letter}
                 onChange={(e) => setLetter(e.target.value)}
                 placeholder="Dear…"
-                className="flex-1 w-full min-h-[280px] bg-card/60 border border-border/40 rounded-2xl p-5 text-sm text-foreground placeholder:text-muted-foreground/50 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                className="flex-1 w-full min-h-[260px] bg-card/60 border border-border/40 rounded-2xl p-5 text-sm text-foreground placeholder:text-muted-foreground/50 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
               />
 
-              <div className="flex items-center justify-between mt-3 mb-6">
+              <div className="flex items-center justify-between mt-3 mb-5">
                 <span className="text-xs text-muted-foreground/60">{letter.length} characters</span>
                 {letter.trim().length > 0 && (
                   <span className="text-xs text-muted-foreground/60">Take your time</span>
@@ -170,12 +199,14 @@ export default function BurnLetterPage() {
               </div>
 
               <div className="flex gap-3">
-                <button
-                  onClick={() => setStep(1)}
-                  className="px-5 py-2.5 rounded-2xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
-                >
-                  ← Back
-                </button>
+                {!inFlow && (
+                  <button
+                    onClick={() => setStep(1)}
+                    className="px-5 py-2.5 rounded-2xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+                  >
+                    ← Back
+                  </button>
+                )}
                 <button
                   onClick={() => setStep(3)}
                   disabled={!letter.trim()}
@@ -202,7 +233,7 @@ export default function BurnLetterPage() {
                 <p className="text-sm text-muted-foreground">Are you ready to let this go?</p>
               </div>
 
-              <div className="flex-1 bg-card/60 border border-border/40 rounded-2xl p-5 mb-6 overflow-y-auto max-h-[340px]">
+              <div className="flex-1 bg-card/60 border border-border/40 rounded-2xl p-5 mb-6 overflow-y-auto max-h-[320px]">
                 <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap font-serif italic">
                   {letter}
                 </p>
@@ -277,7 +308,7 @@ export default function BurnLetterPage() {
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="flex flex-col flex-1"
             >
-              <div className="text-center mb-10 mt-8">
+              <div className="text-center mb-8 mt-6">
                 <motion.div
                   initial={{ scale: 0.7, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -292,7 +323,7 @@ export default function BurnLetterPage() {
                 </p>
               </div>
 
-              <div className="mb-8">
+              <div className="mb-6">
                 <p className="text-xs text-muted-foreground text-center mb-4 uppercase tracking-wide">How do you feel right now?</p>
                 <div className="flex flex-wrap justify-center gap-2.5">
                   {EMOTIONS.map(({ label, emoji }) => (
@@ -312,14 +343,16 @@ export default function BurnLetterPage() {
                 </div>
               </div>
 
-              <div className="mt-auto">
-                <Link
-                  href="/"
-                  className="w-full flex items-center justify-center py-3 rounded-2xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
-                >
-                  Back to Haven
-                </Link>
-              </div>
+              {!inFlow && (
+                <div className="mt-auto">
+                  <Link
+                    href="/"
+                    className="w-full flex items-center justify-center py-3 rounded-2xl border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+                  >
+                    Back to Haven
+                  </Link>
+                </div>
+              )}
             </motion.div>
           )}
 

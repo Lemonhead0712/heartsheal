@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { motion } from "framer-motion"
 import { ChevronRight, Home, Sparkles } from "lucide-react"
 import {
@@ -58,7 +57,14 @@ export function HavenFlowNav({
     else doNavigate()
   }
 
+  // Skip = advance to next exercise (stay in the flow)
   const handleSkip = () => {
+    const next = advanceHavenFlow()
+    router.push(next ? TOOL_HREFS[next] : "/insights?flow=done")
+  }
+
+  // Exit = leave the flow entirely, go to dashboard
+  const handleExit = () => {
     clearHavenFlow()
     router.push("/")
   }
@@ -74,7 +80,7 @@ export function HavenFlowNav({
 
       <div className="relative w-full max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3">
 
-        {/* Left: step + next */}
+        {/* Left: step + next + exit */}
         <div className="flex items-center gap-2 min-w-0">
           <div className="flex items-center gap-1 shrink-0">
             <Sparkles className="w-3.5 h-3.5 text-primary/70" />
@@ -86,24 +92,22 @@ export function HavenFlowNav({
           <span className="text-xs text-muted-foreground truncate hidden sm:block">
             Next: <span className="font-medium text-foreground">{nextLabel}</span>
           </span>
+          <button
+            onClick={handleExit}
+            className="text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors ml-1 flex items-center gap-0.5 shrink-0"
+          >
+            <Home className="w-3 h-3" />
+            <span className="hidden sm:inline">Exit</span>
+          </button>
         </div>
 
-        {/* Right: actions */}
+        {/* Right: skip + continue */}
         <div className="flex items-center gap-2 shrink-0">
-          <Link
-            href="/"
-            onClick={() => clearHavenFlow()}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-muted/40 flex items-center gap-1"
-          >
-            <Home className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Dashboard</span>
-          </Link>
-
           <button
             onClick={handleSkip}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-xl border border-border/50 hover:bg-muted/40"
           >
-            Skip
+            Skip →
           </button>
 
           {showContinue && (

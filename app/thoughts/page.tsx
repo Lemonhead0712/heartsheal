@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 import { ChevronLeft, BookHeart, Brain, Save, RotateCcw, CheckCircle2, ChevronRight, Sparkles, Trash2, X, Volume2, VolumeX } from "lucide-react"
+import { HavenFlowNav } from "@/components/haven-flow-nav"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
@@ -759,6 +760,8 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
           </>
         )}
       </AnimatePresence>
+
+      <HavenFlowNav currentTool="journal" />
     </div>
   )
 }

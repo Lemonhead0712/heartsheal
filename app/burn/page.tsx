@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, Flame } from "lucide-react"
 import { HavenMark } from "@/components/logo-mark"
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
+import { readHavenFlow, advanceHavenFlow, TOOL_HREFS } from "@/lib/haven-flow"
+import { HavenFlowNav } from "@/components/haven-flow-nav"
 
 type Step = 1 | 2 | 3 | 4 | 5
 
@@ -44,7 +46,14 @@ export default function BurnLetterPage() {
       { id: Date.now().toString(), completedAt: new Date().toISOString(), emotion: label },
     ])
     setTimeout(() => {
-      window.location.href = "/"
+      // If a Haven flow is active, advance to the next tool
+      const flow = readHavenFlow()
+      if (flow && flow.sequence[flow.currentIndex] === "burn") {
+        const nextTool = advanceHavenFlow()
+        window.location.href = nextTool ? TOOL_HREFS[nextTool] : "/insights?flow=done"
+      } else {
+        window.location.href = "/"
+      }
     }, 900)
   }
 
@@ -315,6 +324,9 @@ export default function BurnLetterPage() {
 
         </AnimatePresence>
       </div>
+
+      {/* Haven Flow Navigation */}
+      <HavenFlowNav currentTool="burn" />
     </div>
   )
 }

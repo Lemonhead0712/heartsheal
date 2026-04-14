@@ -13,7 +13,6 @@ import { useAmbientSound, type SoundType } from "@/hooks/use-ambient-sound"
 import { cn } from "@/lib/utils"
 import { HavenMark } from "@/components/logo-mark"
 import { readStorage, STORAGE_KEYS } from "@/lib/storage"
-import { HavenFlowNav } from "@/components/haven-flow-nav"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Pattern = {
@@ -1001,9 +1000,6 @@ export default function BreathePage() {
         </motion.div>
 
       </motion.div>
-
-      {/* Haven Flow Navigation — fixed bottom bar shown when a guided session flow is active */}
-      <HavenFlowNav currentTool="breathe" className="pb-safe" />
     </div>
   )
 }

@@ -2,10 +2,13 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, Flame } from "lucide-react"
 import { HavenMark } from "@/components/logo-mark"
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
+import { readHavenFlow, advanceHavenFlow, TOOL_HREFS } from "@/lib/haven-flow"
+import { HavenFlowNav } from "@/components/haven-flow-nav"
 
 type Step = 1 | 2 | 3 | 4 | 5
 
@@ -18,6 +21,7 @@ const EMOTIONS = [
 ]
 
 export default function BurnLetterPage() {
+  const router                = useRouter()
   const [step,    setStep]    = useState<Step>(1)
   const [letter,  setLetter]  = useState("")
   const [emotion, setEmotion] = useState<string | null>(null)
@@ -44,7 +48,13 @@ export default function BurnLetterPage() {
       { id: Date.now().toString(), completedAt: new Date().toISOString(), emotion: label },
     ])
     setTimeout(() => {
-      window.location.href = "/"
+      const flow = readHavenFlow()
+      if (flow && flow.sequence[flow.currentIndex] === "burn") {
+        const next = advanceHavenFlow()
+        router.push(next ? TOOL_HREFS[next] : "/insights?flow=done")
+      } else {
+        router.push("/")
+      }
     }, 900)
   }
 
@@ -315,6 +325,8 @@ export default function BurnLetterPage() {
 
         </AnimatePresence>
       </div>
+
+      <HavenFlowNav currentTool="burn" showContinue={false} />
     </div>
   )
 }

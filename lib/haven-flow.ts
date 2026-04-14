@@ -8,7 +8,16 @@
 
 export type FlowTool = "breathe" | "burn" | "journal" | "analyze"
 
+// Flow-specific routes — separate from standalone pages
 export const TOOL_HREFS: Record<FlowTool, string> = {
+  breathe: "/flow/breathe",
+  burn:    "/flow/burn",
+  journal: "/flow/journal",
+  analyze: "/flow/analyze",
+}
+
+// Standalone page routes — for direct/dashboard access
+export const STANDALONE_HREFS: Record<FlowTool, string> = {
   breathe: "/breathe",
   burn:    "/burn",
   journal: "/thoughts",

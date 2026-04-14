@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { ChevronLeft } from "lucide-react"
 import { ScreenshotAnalysis } from "@/components/screenshot-analysis"
 import { HavenMark } from "@/components/logo-mark"
+import { HavenFlowNav } from "@/components/haven-flow-nav"
 
 export default function AnalyzePage() {
   return (
@@ -28,6 +29,8 @@ export default function AnalyzePage() {
 
         <ScreenshotAnalysis />
       </motion.div>
+
+      <HavenFlowNav currentTool="analyze" />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { Mic, MicOff, Send, TrendingUp, Volume2, VolumeX, ChevronRight, Sparkles, Wind, BookHeart, BarChart3 } from "lucide-react"
@@ -11,6 +12,7 @@ import { useEmotionLogs } from "@/hooks/use-emotion-logs"
 import { useJournalEntries } from "@/hooks/use-journal-entries"
 import { useAuth } from "@/contexts/auth-context"
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
+import { startHavenFlow, TOOL_HREFS } from "@/lib/haven-flow"
 import { cn } from "@/lib/utils"
 import { HavenMark } from "@/components/logo-mark"
 
@@ -246,6 +248,7 @@ function ScoreRing({ score }: { score: number }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function HavenHome() {
+  const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
   const [welcomeOpen, setWelcomeOpen]     = useState(false)
   const welcomeOpenRef = useRef(false)   // sync ref so audio guards don't need re-render
@@ -601,11 +604,23 @@ export default function HavenHome() {
     // Update streak immediately on first activity so badge feels live
     const liveStreak = saveStreak()
     setStreak(liveStreak)
+
+    // Start Haven navigation flow: compute personalised tool sequence and
+    // navigate to the first tool after a short delay (lets Haven respond first)
+    const lossCtx = readStorage<string[]>(STORAGE_KEYS.lossContext) ?? []
+    const flowState = startHavenFlow(label, intensity, lossCtx[0])
+    const firstHref = TOOL_HREFS[flowState.sequence[0]]
+
     setTimeout(() => {
       setPickedEmotion(null)
       reportToHaven(`I just logged that I'm feeling ${label} ${emoji} at intensity ${intensity}/10.`, "emotion")
     }, 500)
-  }, [addEmotion, reportToHaven])
+
+    // Navigate to first tool after Haven's response has had time to show
+    setTimeout(() => {
+      router.push(firstHref)
+    }, 2400)
+  }, [addEmotion, reportToHaven, router])
 
   // ── Breathing widget ──────────────────────────────────────────────────────
   const saveBreatheSession = useCallback((cycles: number, pattern: HavenPattern) => {

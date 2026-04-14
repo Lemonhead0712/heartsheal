@@ -12,7 +12,7 @@ import { useEmotionLogs } from "@/hooks/use-emotion-logs"
 import { useJournalEntries } from "@/hooks/use-journal-entries"
 import { useAuth } from "@/contexts/auth-context"
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
-import { startHavenFlow, TOOL_HREFS } from "@/lib/haven-flow"
+import { startHavenFlow, readHavenFlow, TOOL_HREFS } from "@/lib/haven-flow"
 import { cn } from "@/lib/utils"
 import { HavenMark } from "@/components/logo-mark"
 
@@ -531,7 +531,9 @@ export default function HavenHome() {
       setApiMessages([...nextMessages, { role: "assistant", content: raw }])
       setChips(parsed.chips ?? [])
       setActiveAction(parsed.action)
-      if (parsed.action) setMode(`${parsed.action}-widget` as HavenMode)
+      if (parsed.action && !readHavenFlow()) {
+        setMode(`${parsed.action}-widget` as HavenMode)
+      }
       showMessage(parsed.message)
     } catch {
       showMessage("I'm here with you — something went quiet on my end. Take a breath and try again.")

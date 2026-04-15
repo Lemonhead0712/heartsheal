@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 import {
-  ChevronLeft, Wind, Play, Pause, RotateCcw, Volume2, VolumeX,
+  Wind, Play, Pause, RotateCcw, Volume2, VolumeX,
   Heart, RefreshCw, Home, BookOpen, Flame, BarChart3, MessageCircle,
 } from "lucide-react"
 import { AiBreathingAffirmation } from "@/components/ai-breathing-affirmation"
@@ -547,10 +547,9 @@ export default function BreathePage() {
         {/* Header */}
         <motion.div className="flex items-center justify-between mb-3" variants={item}>
           <Link href="/"
-            className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
-            <ChevronLeft className="h-4 w-4" />
-            <HavenMark className="w-5 h-5" />
-            <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+            <HavenMark className="w-6 h-6" />
+            <span className="font-serif text-[15px] font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <h1 className="font-serif text-lg font-semibold text-foreground">Guided Breathing</h1>
           <Link href="/"

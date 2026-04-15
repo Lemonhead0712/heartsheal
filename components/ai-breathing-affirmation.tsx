@@ -8,6 +8,8 @@ import { useTTS } from "@/hooks/use-speech"
 interface Props {
   breathingPattern?: string
   className?: string
+  /** When true, suppresses auto-speak — used during Haven flow where HavenFlowGuide handles audio */
+  suppressAutoSpeak?: boolean
 }
 
 const staticAffirmations = [

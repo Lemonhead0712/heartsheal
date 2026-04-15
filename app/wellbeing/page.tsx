@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, Heart, Sparkles, CheckCircle2 } from "lucide-react"
+import { Heart, Sparkles, CheckCircle2 } from "lucide-react"
 import { HavenMark } from "@/components/logo-mark"
 import { HavenFlowGuide } from "@/components/haven-flow-guide"
 import { readHavenFlow } from "@/lib/haven-flow"
@@ -72,12 +72,18 @@ export default function WellbeingPage() {
   }, [])
 
   const handleSave = () => {
-    const checkin = {
-      date: new Date().toISOString(),
-      scores,
+    // Save to surveyResponses (same schema + key as the dashboard widget and insights system)
+    const record = {
+      id: Date.now().toString(),
+      timestamp: new Date().toISOString(),
+      ...scores,
     }
-    const prev = readStorage<typeof checkin[]>(STORAGE_KEYS.wellbeingCheckins) ?? []
-    writeStorage(STORAGE_KEYS.wellbeingCheckins, [...prev, checkin])
+    const prev = readStorage<typeof record[]>(STORAGE_KEYS.surveyResponses) ?? []
+    writeStorage(STORAGE_KEYS.surveyResponses, [...prev, record])
+    // Also save to wellbeingCheckins for dedicated wellbeing history
+    const checkin = { date: record.timestamp, scores }
+    const prevCheckins = readStorage<typeof checkin[]>(STORAGE_KEYS.wellbeingCheckins) ?? []
+    writeStorage(STORAGE_KEYS.wellbeingCheckins, [...prevCheckins, checkin])
     setSaved(true)
   }
 
@@ -97,11 +103,10 @@ export default function WellbeingPage() {
         <div className="flex items-center justify-between mb-6">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ChevronLeft className="h-4 w-4" />
-            <HavenMark className="w-5 h-5" />
-            <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
+            <HavenMark className="w-6 h-6" />
+            <span className="font-serif text-[15px] font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <div className="flex items-center gap-1.5 text-muted-foreground/60 text-sm">
             <Heart className="w-4 h-4" />

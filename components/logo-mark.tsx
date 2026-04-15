@@ -18,7 +18,7 @@ export function HavenMark({ className }: { className?: string }) {
           <stop offset="100%" style={{ stopColor: "var(--orb-to, #8B5CF6)" }} />
         </linearGradient>
       </defs>
-      <rect x="0" y="0" width="40" height="40" rx="10" fill={`url(#${gradId})`} />
+      <rect x="0" y="0" width="40" height="40" rx="9" fill={`url(#${gradId})`} />
       <line
         x1="13" y1="9" x2="13" y2="31"
         stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeOpacity="0.95"
@@ -28,7 +28,7 @@ export function HavenMark({ className }: { className?: string }) {
         stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
         fill="none" strokeOpacity="0.95"
       />
-      <circle cx="27" cy="9" r="2" fill="white" fillOpacity="0.7" />
+      <circle cx="27" cy="9" r="2" fill="white" fillOpacity="0.9" />
     </svg>
   )
 }

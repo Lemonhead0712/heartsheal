@@ -79,7 +79,7 @@ export function BottomNav() {
                 {/* Label */}
                 <span
                   className={cn(
-                    "relative z-10 text-[11px] font-medium leading-none tracking-wide",
+                    "relative z-10 text-xs font-medium leading-none tracking-wide",
                     active ? "text-primary" : "",
                   )}
                 >

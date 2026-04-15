@@ -26,6 +26,7 @@ export const STORAGE_KEYS = {
   burnLetters:           "heartsHeal_burnLetters",
   colorTheme:            "heartsHeal_colorTheme",
   havenFlow:             "haven_flow",
+  wellbeingCheckins:     "haven_wellbeing_checkins",
 } as const
 
 /** Read and parse a localStorage key safely. Returns null on error. */

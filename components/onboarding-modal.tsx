@@ -48,9 +48,11 @@ function getPersonalizedMessage(firstChip: string | undefined): string {
   }
 }
 
+export type OnboardingEmotionData = { label: string; emoji: string; intensity: number }
+
 interface OnboardingModalProps {
   open: boolean
-  onComplete: (name?: string) => void
+  onComplete: (name?: string, emotion?: OnboardingEmotionData) => void
 }
 
 export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
@@ -58,11 +60,12 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const [name, setName]               = useState("")
   const [selected, setSelected]       = useState<string[]>([])
   const [emotionPicked, setEmotionPicked] = useState<string | null>(null)
+  const [pickedEmotionData, setPickedEmotionData] = useState<OnboardingEmotionData | null>(null)
   const { addEntry }                  = useEmotionLogs()
 
   const dismiss = () => {
     writeStorage(STORAGE_KEYS.welcomeSeen, true)
-    onComplete(name.trim() || undefined)
+    onComplete(name.trim() || undefined, pickedEmotionData ?? undefined)
   }
 
   const goStep1 = () => {
@@ -84,6 +87,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const pickEmotion = async (emotion: typeof EMOTIONS[0]) => {
     if (emotionPicked) return
     setEmotionPicked(emotion.label)
+    setPickedEmotionData({ label: emotion.label, emoji: emotion.emoji, intensity: emotion.intensity })
     await addEntry({ emotion: emotion.label, emoji: emotion.emoji, intensity: emotion.intensity, notes: "" })
     writeStorage(STORAGE_KEYS.lastCheckin, new Date().toDateString())
     setTimeout(() => setStep(3), 400)
@@ -280,13 +284,13 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
                     </p>
                     <div className="flex flex-col gap-2.5">
                       <button
-                        onClick={() => { writeStorage(STORAGE_KEYS.welcomeSeen, true); onComplete(name.trim() || undefined) }}
+                        onClick={() => { writeStorage(STORAGE_KEYS.welcomeSeen, true); onComplete(name.trim() || undefined, pickedEmotionData ?? undefined) }}
                         className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all"
                       >
                         Talk to Haven →
                       </button>
                       <button
-                        onClick={() => { writeStorage(STORAGE_KEYS.welcomeSeen, true); onComplete(name.trim() || undefined) }}
+                        onClick={() => { writeStorage(STORAGE_KEYS.welcomeSeen, true); onComplete(name.trim() || undefined, pickedEmotionData ?? undefined) }}
                         className="w-full py-3 rounded-2xl border border-border/60 text-muted-foreground font-semibold text-sm hover:text-foreground hover:border-border transition-all"
                       >
                         Try a breathing session

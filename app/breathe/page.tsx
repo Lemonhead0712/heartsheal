@@ -570,7 +570,7 @@ export default function BreathePage() {
             {/* Affirmation — idle only */}
             {sessionState === "idle" && (
               <div className="mb-5">
-                <AiBreathingAffirmation breathingPattern={selectedPattern.name} />
+                <AiBreathingAffirmation breathingPattern={selectedPattern.name} suppressAutoSpeak={inFlow} />
               </div>
             )}
 

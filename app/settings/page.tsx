@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 import {
-  ChevronLeft, Download, Upload, Trash2, User, Volume2,
+  Download, Upload, Trash2, User, Volume2,
   CheckCircle2, AlertTriangle, Database, Heart, Shield, Cloud, LogOut, Mail, Lock, Palette
 } from "lucide-react"
 import { useColorTheme, type ColorTheme } from "@/contexts/color-theme-context"
@@ -156,10 +156,9 @@ export default function SettingsPage() {
 
         {/* Header */}
         <motion.div className="flex items-center justify-between mb-5" variants={item}>
-          <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
-            <ChevronLeft className="h-4 w-4" />
-            <HavenMark className="w-5 h-5" />
-            <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
+          <Link href="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+            <HavenMark className="w-6 h-6" />
+            <span className="font-serif text-[15px] font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <h1 className="font-serif text-lg font-semibold text-foreground">Settings & Data</h1>
           <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">

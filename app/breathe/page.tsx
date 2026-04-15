@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils"
 import { HavenMark } from "@/components/logo-mark"
 import { readStorage, STORAGE_KEYS } from "@/lib/storage"
 import { readHavenFlow, advanceHavenFlow, TOOL_HREFS } from "@/lib/haven-flow"
-import { HavenFlowNav } from "@/components/haven-flow-nav"
+import { HavenFlowGuide } from "@/components/haven-flow-guide"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Pattern = {
@@ -237,6 +237,7 @@ const POST_EMOTIONS = [
 // ── Component ──────────────────────────────────────────────────────────────
 export default function BreathePage() {
   const router = useRouter()
+  const [inFlow, setInFlow] = useState(false)
   const [selectedPattern, setSelectedPattern] = useState<Pattern>(patterns[0])
   const [sessionState, setSessionState]       = useState<SessionState>("idle")
   const [phase, setPhase]         = useState<Phase>("idle")
@@ -275,7 +276,7 @@ export default function BreathePage() {
   useEffect(() => { patternNameRef.current = selectedPattern.name }, [selectedPattern])
   useEffect(() => { voiceEnabledRef.current = voiceEnabled }, [voiceEnabled])
 
-  // ── Read user context on mount ────────────────────────────────────────────
+  // ── Read user context + detect Haven flow on mount ──────────────────────────
   useEffect(() => {
     try {
       const name    = readStorage<string>(STORAGE_KEYS.userName) ?? undefined
@@ -289,6 +290,8 @@ export default function BreathePage() {
         lossType:  lossCtx?.lossType  ?? undefined,
       })
     } catch { /* silently fail */ }
+    const flow = readHavenFlow()
+    if (flow && flow.sequence[flow.currentIndex] === "breathe") setInFlow(true)
   }, [])
 
   // ── Timer helpers ─────────────────────────────────────────────────────────
@@ -535,7 +538,7 @@ export default function BreathePage() {
   ]
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className={`bg-background min-h-screen ${inFlow ? "pb-52" : ""}`}>
       <motion.div
         className="w-full max-w-4xl mx-auto px-4 md:px-8 py-3 md:py-5"
         variants={container} initial="hidden" animate="show"
@@ -556,9 +559,9 @@ export default function BreathePage() {
           </Link>
         </motion.div>
 
-        {/* Two-column grid */}
+        {/* Two-column grid — single column in flow mode */}
         <motion.div
-          className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-8 items-start"
+          className={`grid grid-cols-1 gap-6 lg:gap-8 items-start ${inFlow ? "" : "lg:grid-cols-[1fr_320px]"}`}
           variants={item}
         >
 
@@ -1014,7 +1017,11 @@ export default function BreathePage() {
 
       </motion.div>
 
-      <HavenFlowNav currentTool="breathe" showContinue={false} />
+      <HavenFlowGuide
+        currentTool="breathe"
+        showContinue={false}
+        exerciseData={postEmotion ? `User felt ${postEmotion} after ${cycles} breathing cycles.` : undefined}
+      />
     </div>
   )
 }

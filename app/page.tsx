@@ -27,7 +27,7 @@ type HavenMode =
   | "quiz-widget"
   | "insights-widget"
 
-type HavenAction = "emotion" | "breathe" | "journal" | "survey" | "quiz" | "insights" | null
+type HavenAction = "emotion" | "breathe" | "journal" | "survey" | "quiz" | "insights" | `go:${string}` | null
 type QuizType    = "emotional-awareness" | "self-compassion"
 
 type HavenResponse = {
@@ -160,7 +160,7 @@ You guide the user through their healing by proactively suggesting embedded acti
 Your response MUST always be valid JSON in this exact shape:
 {"message":"What you say to the user (plain conversational text, no markdown)","action":null,"chips":["chip 1","chip 2","chip 3"]}
 
-action must be one of: null | "emotion" | "breathe" | "journal" | "survey" | "quiz" | "insights"
+action must be one of: null | "emotion" | "breathe" | "journal" | "survey" | "quiz" | "insights" | "go:breathe" | "go:journal" | "go:burn" | "go:quiz" | "go:survey" | "go:analyze" | "go:insights" | "go:emotional-log" | "go:settings"
 
 Rules for action — set the action field ANY TIME one of these is true:
 - "emotion" — user wants to check in, mentions a feeling, or hasn't logged today
@@ -170,6 +170,7 @@ Rules for action — set the action field ANY TIME one of these is true:
 - "survey" — user mentions overall wellbeing or self-care; suggest at most once per session. In the walkthrough, survey comes AFTER the quiz.
 - "insights" — user asks about progress, patterns, or after 2+ activities completed
 - null — casual reply only; no activity fits right now
+- "go:X" — user is asking to visit a specific page or tool. Set this when the user says things like "take me to", "open", "show me", "I want to do", or asks about a specific tool by name. Available destinations: go:breathe (breathing), go:journal (journal/writing), go:burn (burn letter / release), go:quiz (self-discovery quiz), go:survey (wellbeing check-in), go:analyze (conversation analysis), go:insights (progress & insights), go:emotional-log (emotion history), go:settings (settings)
 
 Walkthrough transition order (follow this when user is working through activities):
 emotion → breathe → journal → quiz → survey → (session complete)
@@ -555,6 +556,28 @@ export default function HavenHome() {
       // Hard override: journal just completed → quiz must follow
       if (/just wrote a reflection in my journal/.test(userText) && !completedToday.has("quiz")) {
         parsed.action = "quiz"
+      }
+
+      // Navigation intent — Haven sends the user to a page
+      if (typeof parsed.action === "string" && parsed.action.startsWith("go:")) {
+        const PAGE_HREFS: Record<string, string> = {
+          breathe:        "/breathe",
+          journal:        "/thoughts",
+          burn:           "/burn",
+          quiz:           "/self-discovery",
+          survey:         "/wellbeing",
+          analyze:        "/analyze",
+          insights:       "/insights",
+          "emotional-log": "/emotional-log",
+          settings:       "/settings",
+        }
+        const dest = parsed.action.replace("go:", "")
+        const href = PAGE_HREFS[dest] ?? "/"
+        showMessage(parsed.message)
+        setChips([])
+        setLoading(false)
+        setTimeout(() => router.push(href), 1600)
+        return
       }
 
       setApiMessages([...nextMessages, { role: "assistant", content: raw }])
@@ -1022,7 +1045,7 @@ Make the questions feel personally connected to the themes in the journal — mi
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className={cn("w-full max-w-sm text-center shrink-0", widgetActive ? "mb-2" : "mb-3")}
+            className={cn("w-full max-w-lg text-center shrink-0", widgetActive ? "mb-2" : "mb-3")}
           >
             {loading ? (
               <div className="flex justify-center gap-1.5">
@@ -1048,7 +1071,7 @@ Make the questions feel personally connected to the themes in the journal — mi
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="w-full max-w-sm mb-3 rounded-2xl border border-primary/40 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/15"
+              className="w-full max-w-lg mb-3 rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-5"
             >
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2.5 text-center">How are you feeling right now?</p>
               {!intensityStep && (
@@ -1113,7 +1136,7 @@ Make the questions feel personally connected to the themes in the journal — mi
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="w-full max-w-sm mb-3 rounded-2xl border border-primary/20 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/10 flex flex-col items-center"
+              className="w-full max-w-lg mb-3 rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-5 flex flex-col items-center"
             >
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">
                 {havenBreathePattern.name} · {havenBreathePattern.description}
@@ -1235,7 +1258,7 @@ Make the questions feel personally connected to the themes in the journal — mi
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="w-full max-w-sm mb-3 rounded-2xl border border-primary/20 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/10"
+              className="w-full max-w-lg mb-3 rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-5"
             >
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-3">
                 {selectedEmotion ? `Reflecting on your ${selectedEmotion.toLowerCase()}` : "Write it out"}
@@ -1316,7 +1339,7 @@ Make the questions feel personally connected to the themes in the journal — mi
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="w-full max-w-sm mb-3 rounded-2xl border border-primary/30 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/15"
+              className="w-full max-w-lg mb-3 rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-5"
             >
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-4">Wellbeing check-in</p>
               {[
@@ -1400,7 +1423,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.97 }}
                 transition={{ type: "spring", stiffness: 300, damping: 26 }}
-                className="w-full max-w-sm mb-3 rounded-2xl border border-primary/30 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/15"
+                className="w-full max-w-lg mb-3 rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-5"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-3">
@@ -1523,7 +1546,7 @@ Make the questions feel personally connected to the themes in the journal — mi
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="w-full max-w-sm mb-3 rounded-2xl border border-primary/20 bg-card/80 backdrop-blur-sm p-4 shadow-[0_0_20px_2px] shadow-primary/10"
+              className="w-full max-w-lg mb-3 rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm p-5"
             >
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">Today's snapshot</p>
               <p className="text-[11px] text-muted-foreground mb-4">What you've done in this session</p>
@@ -1558,7 +1581,7 @@ Make the questions feel personally connected to the themes in the journal — mi
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-wrap justify-center gap-2 mt-3 w-full max-w-sm"
+            className="flex flex-wrap justify-center gap-2 mt-3 w-full max-w-lg"
           >
             {chips.map((chip) => (
               <button key={chip} onClick={() => sendToHaven(chip)}
@@ -1575,7 +1598,7 @@ Make the questions feel personally connected to the themes in the journal — mi
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, duration: 0.4 }}
-            className="w-full max-w-sm mt-5 pb-4"
+            className="w-full max-w-lg mt-5 pb-4"
           >
             {/* Today at a Glance */}
             <div className="mb-4">
@@ -1609,7 +1632,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                   setMode("emotion-widget")
                   showMessage("How are you feeling right now? Pick what resonates most.")
                 }}
-                className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm mb-3 shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm mb-3 shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
               >
                 Log how I&apos;m feeling
               </button>
@@ -1673,15 +1696,15 @@ Make the questions feel personally connected to the themes in the journal — mi
       </div>{/* end content column */}
 
       {/* ── Input bar ── */}
-      <div className="shrink-0 px-4 pb-4 pt-1.5 border-t border-border/20 bg-background/80 backdrop-blur-md">
-        <div className="flex gap-2 items-center max-w-sm mx-auto">
+      <div className="shrink-0 px-4 pb-4 pt-2 border-t border-border/40 bg-background/90 backdrop-blur-xl">
+        <div className="flex gap-2 items-center max-w-lg mx-auto">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendToHaven(input) } }}
             placeholder="Type or speak to Haven…"
             rows={1}
-            className="flex-1 resize-none bg-[#F3F4F6] border-0 rounded-full px-5 py-2.5 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 leading-relaxed transition-all duration-200 dark:bg-card dark:border dark:border-border/40 dark:focus:bg-card"
+            className="flex-1 resize-none rounded-2xl bg-muted/50 border border-border/40 px-4 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/25 leading-relaxed transition-all"
             style={{ minHeight: "42px", maxHeight: "80px" }}
           />
           {sttStatus !== "unsupported" && (
@@ -1691,7 +1714,7 @@ Make the questions feel personally connected to the themes in the journal — mi
                 "p-2.5 rounded-2xl border transition-all shrink-0",
                 sttStatus === "listening"
                   ? "bg-rose-100 dark:bg-rose-900/30 border-rose-300 text-rose-600 animate-pulse"
-                  : "bg-card border-border/40 text-muted-foreground hover:text-foreground"
+                  : "border-border/40 bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               )}
               aria-label={sttStatus === "listening" ? "Stop" : "Speak"}>
               {sttStatus === "listening" ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -1700,7 +1723,7 @@ Make the questions feel personally connected to the themes in the journal — mi
           <button
             onClick={() => sendToHaven(input)}
             disabled={!input.trim() || loading}
-            className="p-2.5 rounded-2xl bg-primary text-primary-foreground disabled:opacity-40 hover:opacity-90 transition-opacity shrink-0"
+            className="p-2.5 rounded-2xl bg-primary text-primary-foreground disabled:opacity-40 hover:bg-primary/90 transition-colors shrink-0"
             aria-label="Send">
             <Send className="w-4 h-4" />
           </button>

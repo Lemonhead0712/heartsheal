@@ -22,7 +22,7 @@ const staticAffirmations = [
   "This moment belongs only to you. Breathe in. Breathe out. You're doing beautifully.",
 ]
 
-export function AiBreathingAffirmation({ breathingPattern, className }: Props) {
+export function AiBreathingAffirmation({ breathingPattern, className, suppressAutoSpeak }: Props) {
   const [affirmation, setAffirmation] = useState<string>("")
   const [isLoading, setIsLoading]     = useState(false)
   const [useAI, setUseAI]             = useState(false)
@@ -35,11 +35,11 @@ export function AiBreathingAffirmation({ breathingPattern, className }: Props) {
     setAffirmation(random)
   }, [])
 
-  // Auto-speak whenever affirmation text changes
+  // Auto-speak whenever affirmation text changes (suppressed during Haven flow)
   useEffect(() => {
-    if (affirmation) speak(affirmation)
+    if (affirmation && !suppressAutoSpeak) speak(affirmation)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [affirmation])
+  }, [affirmation, suppressAutoSpeak])
 
   const handleToggleSpeech = useCallback(() => {
     if (isSpeaking) stopSpeech()

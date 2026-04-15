@@ -6,7 +6,7 @@ import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { Mic, MicOff, Send, TrendingUp, Volume2, VolumeX, ChevronRight, Sparkles, Wind, BookHeart, BarChart3 } from "lucide-react"
 import { AuthModal } from "@/components/auth-modal"
-import { OnboardingModal } from "@/components/onboarding-modal"
+import { OnboardingModal, type OnboardingEmotionData } from "@/components/onboarding-modal"
 import { useTTS, useSTT } from "@/hooks/use-speech"
 import { useEmotionLogs } from "@/hooks/use-emotion-logs"
 import { useJournalEntries } from "@/hooks/use-journal-entries"
@@ -344,29 +344,58 @@ export default function HavenHome() {
   // ── Post-auth onboarding reset ────────────────────────────────────────────
   const handlePostAuth = useCallback(() => {
     setCompletedToday(new Set())
+    setChips([])
+    setInput("")
+    stopSpeech()
+
+    // If the onboarding modal is about to open, let it handle the first emotion
+    // capture — don't show the emotion widget here or reset lastCheckin
+    const onboardingWillOpen = welcomeShownRef.current && !readStorage(STORAGE_KEYS.welcomeSeen)
+    if (onboardingWillOpen) {
+      setMode("greeting")
+      return
+    }
+
+    // Returning user sign-in: run the normal post-auth setup sequence
     setApiMessages([{
       role: "user",
       content: "[ONBOARDING] The user just signed in or created an account. Guide them through a complete setup sequence in order: 1) emotion check-in, 2) breathing session, 3) journal reflection, 4) wellbeing survey, 5) self-assessment quiz, 6) show insights summary. After each activity is reported complete, immediately suggest the next one. Be warm and encouraging, 2 sentences max per response.",
     }])
     setMode("emotion-widget")
     setChips(["I'm ready", "What are we doing?", "Let's go"])
-    setInput("")
-    stopSpeech()
     writeStorage(STORAGE_KEYS.lastCheckin, null)
     const name = readStorage<string>(STORAGE_KEYS.userName)
     const msg = name
-      ? `Welcome, ${name} — I'm so glad you're here. Let's take a few minutes together to get your healing space set up.`
-      : `Welcome — I'm Haven, your healing companion. Let's take a few minutes to personalize your space and get everything ready.`
+      ? `Welcome back, ${name} — I'm glad you're here. How are you feeling today?`
+      : `Welcome back — I'm Haven. How are you feeling today?`
     setTimeout(() => showMessage(msg), 400)
   }, [stopSpeech, showMessage]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── After onboarding completes: greet with name if collected ─────────────
-  const handleOnboardingComplete = useCallback((collectedName?: string) => {
+  // ── After onboarding completes: start Haven flow with the emotion they picked ─
+  const handleOnboardingComplete = useCallback((collectedName?: string, emotionData?: OnboardingEmotionData) => {
     setOnboardingOpen(false)
-    if (collectedName) {
-      setTimeout(() => showMessage(`Nice to meet you, ${collectedName}. I'm Haven — I'm here whenever you need me.`), 300)
+    setMode("chatting")
+
+    const greeting = collectedName
+      ? `Welcome, ${collectedName} — I'm so glad you're here. I've set up your journey based on how you're feeling. Let's begin.`
+      : `Welcome — I'm Haven. I've set up your journey based on how you're feeling. Let's begin.`
+
+    if (emotionData) {
+      // Emotion was logged during onboarding — start Haven flow immediately
+      const lossCtx = readStorage<string[]>(STORAGE_KEYS.lossContext) ?? []
+      const flowState = startHavenFlow(emotionData.label, emotionData.intensity, lossCtx[0])
+      const firstHref = TOOL_HREFS[flowState.sequence[0]]
+      showMessage(greeting)
+      setTimeout(() => router.push(firstHref), 2000)
+    } else {
+      // No emotion picked in onboarding (user skipped step 2) — show emotion widget
+      setMode("emotion-widget")
+      showMessage(collectedName
+        ? `Nice to meet you, ${collectedName}. Before we begin, how are you feeling right now?`
+        : `Welcome — I'm Haven. Before we begin, how are you feeling right now?`
+      )
     }
-  }, [showMessage])
+  }, [showMessage, router]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (authLoading) return

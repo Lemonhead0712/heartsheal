@@ -156,12 +156,12 @@ export default function SettingsPage() {
 
         {/* Header */}
         <motion.div className="flex items-center justify-between mb-5" variants={item}>
-          <Link href="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/" className="md:hidden inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <HavenMark className="w-6 h-6" />
             <span className="font-serif text-[15px] font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <h1 className="font-serif text-lg font-semibold text-foreground">Settings & Data</h1>
-          <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">
+          <Link href="/" className="md:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">
             💜 Talk to Haven
           </Link>
         </motion.div>

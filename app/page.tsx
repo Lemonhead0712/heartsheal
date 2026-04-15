@@ -1010,7 +1010,7 @@ Make the questions feel personally connected to the themes in the journal — mi
             animate={loading ? { scale: [1, 1.06, 1] } : {}}
             transition={loading ? { duration: 0.8, repeat: Infinity, ease: "easeInOut" } : {}}
           >
-            <span className={cn("text-white select-none", widgetActive ? "text-lg" : "text-2xl md:text-3xl")}>✦</span>
+            <Sparkles className={cn("text-white", widgetActive ? "w-5 h-5" : "w-7 h-7")} />
           </motion.div>
         </motion.div>
 

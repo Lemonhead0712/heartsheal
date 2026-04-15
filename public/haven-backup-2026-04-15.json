@@ -1,0 +1,368 @@
+{
+  "exportedAt": "2026-04-15T03:43:59.300Z",
+  "version": 1,
+  "emotionLogs": [
+    {
+      "id": "2a97bcc8-e250-402b-b050-9ba698ce0e8f",
+      "emotion": "Numb",
+      "emoji": "😶",
+      "intensity": 7,
+      "notes": "",
+      "timestamp": "2026-04-15T03:32:03.17+00:00"
+    },
+    {
+      "id": "f57584b4-5199-408b-8942-834f3970d500",
+      "emotion": "Sad",
+      "emoji": "😔",
+      "intensity": 5,
+      "notes": "",
+      "timestamp": "2026-04-15T03:08:15.441+00:00"
+    },
+    {
+      "id": "9885ae3d-2278-4dc3-9392-efa5d5eabff3",
+      "emotion": "Sad",
+      "emoji": "😔",
+      "intensity": 5,
+      "notes": "",
+      "timestamp": "2026-04-15T02:52:32.035+00:00"
+    },
+    {
+      "id": "7b427178-922e-4be1-8134-439aa91644ed",
+      "emotion": "Sad",
+      "emoji": "😔",
+      "intensity": 8,
+      "notes": "",
+      "timestamp": "2026-04-15T02:50:46.479+00:00"
+    },
+    {
+      "id": "680952af-0f13-4c24-9cd0-7af3af944cda",
+      "emotion": "Angry",
+      "emoji": "😤",
+      "intensity": 5,
+      "notes": "",
+      "timestamp": "2026-04-14T16:29:49.625+00:00"
+    },
+    {
+      "id": "aa40a8a9-e965-42d3-9780-4b6a332bf956",
+      "emotion": "Numb",
+      "emoji": "😶",
+      "intensity": 5,
+      "notes": "",
+      "timestamp": "2026-04-14T16:26:02.333+00:00"
+    },
+    {
+      "id": "07ee29ab-cd6b-4c92-b13d-e4eaa46d2df0",
+      "emotion": "Sad",
+      "emoji": "😔",
+      "intensity": 5,
+      "notes": "",
+      "timestamp": "2026-04-14T16:24:14.896+00:00"
+    },
+    {
+      "id": "ecd87917-d84e-41d6-877f-c727ec03f4eb",
+      "emotion": "Sad",
+      "emoji": "😔",
+      "intensity": 5,
+      "notes": "",
+      "timestamp": "2026-04-14T15:54:20.443+00:00"
+    },
+    {
+      "id": "386056ae-b2df-4c1b-a0a3-b15ed86b9a5c",
+      "emotion": "Sad",
+      "emoji": "😔",
+      "intensity": 5,
+      "notes": "",
+      "timestamp": "2026-04-14T15:53:29.745+00:00"
+    },
+    {
+      "id": "70368a38-78ee-4eaa-a666-9b68e160b442",
+      "emotion": "Sad",
+      "emoji": "😔",
+      "intensity": 5,
+      "notes": "",
+      "timestamp": "2026-04-14T15:30:47.935+00:00"
+    },
+    {
+      "id": "9cc644bb-0f16-4704-95c7-b7fb60e16620",
+      "emotion": "Grateful",
+      "emoji": "🙏",
+      "intensity": 7,
+      "notes": "",
+      "timestamp": "2026-04-14T15:27:06.955+00:00"
+    },
+    {
+      "id": "11623659-fa37-425e-9040-620753d4db9a",
+      "emotion": "Numb",
+      "emoji": "😶",
+      "intensity": 7,
+      "notes": "",
+      "timestamp": "2026-04-14T15:23:24.546+00:00"
+    },
+    {
+      "id": "e56760dd-fbd9-4bfe-9390-55a799601afd",
+      "emotion": "Sad",
+      "emoji": "😔",
+      "intensity": 5,
+      "notes": "",
+      "timestamp": "2026-04-14T13:59:59.452+00:00"
+    },
+    {
+      "id": "25a1a5b0-1bb0-4e5c-8cd4-eac874e2dcc2",
+      "emotion": "Sad",
+      "emoji": "😔",
+      "intensity": 5,
+      "notes": "",
+      "timestamp": "2026-04-14T13:59:19.093+00:00"
+    },
+    {
+      "id": "8bf68b03-df4a-4e21-ac80-bdd806d9b379",
+      "emotion": "Sad",
+      "emoji": "😔",
+      "intensity": 10,
+      "notes": "",
+      "timestamp": "2026-04-14T04:09:08.226+00:00"
+    },
+    {
+      "id": "44d61d1c-2802-4f79-b662-330c38371564",
+      "emotion": "Sad",
+      "emoji": "😔",
+      "intensity": 8,
+      "notes": "",
+      "timestamp": "2026-04-13T16:19:26.407+00:00"
+    },
+    {
+      "id": "4e5d52c3-0dc2-4677-bfba-68765f7eeff5",
+      "emotion": "Sad",
+      "emoji": "😔",
+      "intensity": 6,
+      "notes": "",
+      "timestamp": "2026-04-13T16:19:07.307+00:00"
+    }
+  ],
+  "journalEntries": [
+    {
+      "id": "64328c35-1df7-441a-8d68-ef100a379cbd",
+      "prompt": "List three things — however small — that brought you even a moment of ease or beauty today.",
+      "entry": "getting a text from my daughter\nbreathing the fresh air\nbeing embraced and greeted from my dog",
+      "date": "2026-04-15T02:54:13.37+00:00"
+    },
+    {
+      "id": "06620023-fa53-4937-8319-7f28f8f8951f",
+      "prompt": "What feeling is taking up the most space in you right now? Describe where you feel it in your body.",
+      "entry": "Thanks",
+      "date": "2026-04-14T16:26:19.322+00:00"
+    },
+    {
+      "id": "1cc10f5e-4d7b-405b-b424-3d4e8cc26446",
+      "prompt": "You're carrying something heavy right now. What would feel like relief, even just for a moment? Let it out here.",
+      "entry": "To focus truly in on myself",
+      "date": "2026-04-13T16:21:25.819+00:00"
+    }
+  ],
+  "quizResults": [
+    {
+      "id": "1775531782840",
+      "type": "emotional-awareness",
+      "score": 60,
+      "category_scores": {
+        "recognition": [
+          50,
+          50
+        ],
+        "regulation": [
+          75,
+          75
+        ],
+        "expression": [
+          50
+        ]
+      },
+      "created_at": "2026-04-07T03:16:22.840Z"
+    },
+    {
+      "id": "1775795066351",
+      "type": "self-compassion",
+      "score": 75,
+      "category_scores": {
+        "self-kindness": [
+          100,
+          75
+        ],
+        "common-humanity": [
+          75
+        ],
+        "mindfulness": [
+          50,
+          75
+        ]
+      },
+      "created_at": "2026-04-10T04:24:26.351Z"
+    },
+    {
+      "id": "1776011660046",
+      "type": "self-compassion",
+      "score": 55,
+      "category_scores": {
+        "self-kindness": [
+          75,
+          50
+        ],
+        "common-humanity": [
+          75
+        ],
+        "mindfulness": [
+          50,
+          25
+        ]
+      },
+      "created_at": "2026-04-12T16:34:20.046Z"
+    },
+    {
+      "id": "1776221795926",
+      "type": "emotional-awareness",
+      "score": 85,
+      "category_scores": {
+        "expression": [
+          100,
+          75
+        ],
+        "regulation": [
+          75,
+          75
+        ],
+        "recognition": [
+          100
+        ]
+      },
+      "created_at": "2026-04-15T02:56:35.926Z"
+    }
+  ],
+  "userName": "Lamar",
+  "voice": null,
+  "haptic": null,
+  "welcomeSeen": true,
+  "lastCheckin": "Tue Apr 14 2026",
+  "lastSession": null,
+  "surveyResponses": [
+    {
+      "id": "1775790146543",
+      "timestamp": "2026-04-10T03:02:26.543Z",
+      "emotionalState": 4,
+      "selfConnection": 2,
+      "selfCompassion": 3,
+      "selfCare": 4
+    },
+    {
+      "id": "1776012107980",
+      "timestamp": "2026-04-12T16:41:47.980Z",
+      "emotionalState": 2,
+      "selfConnection": 3,
+      "selfCompassion": 4,
+      "selfCare": 2
+    },
+    {
+      "id": "1776175436088",
+      "timestamp": "2026-04-14T14:03:56.088Z",
+      "emotionalState": 3,
+      "selfConnection": 3,
+      "selfCompassion": 3,
+      "selfCare": 3
+    }
+  ],
+  "breathingHistory": [
+    {
+      "id": "1775531582511",
+      "timestamp": "2026-04-07T03:13:02.511Z",
+      "pattern": "Box Breathing (4-4-4-2)",
+      "cycles": 3
+    },
+    {
+      "id": "1775794783767",
+      "timestamp": "2026-04-10T04:19:43.767Z",
+      "pattern": "Box Breathing",
+      "cycles": 3
+    },
+    {
+      "id": "1776011482161",
+      "timestamp": "2026-04-12T16:31:22.161Z",
+      "pattern": "4-7-8 Breathing",
+      "cycles": 3
+    },
+    {
+      "id": "1776175409119",
+      "timestamp": "2026-04-14T14:03:29.119Z",
+      "pattern": "Box Breathing",
+      "cycles": 3
+    }
+  ],
+  "weeklyNarrative": {
+    "text": "This week you carried something really heavy—grief and sadness that sat at 7.6 out of 10—but you also showed up for yourself in the gentler ways that matter most. Your seven journal entries reveal someone consciously working through the pain of loss, and those moments like feeling the wind while crying and connecting with friends show that even in numbness, you're finding small pockets of presence and care. What stands out most is your self-care score of 4/5 and your willingness to rest when you needed it; that's real healing, even",
+    "week": "2026-W16"
+  },
+  "lossContext": [
+    "breakup"
+  ],
+  "sessionHistory": null,
+  "guidedSession": {
+    "triggered": true,
+    "phase": "intro",
+    "steps": [
+      {
+        "id": "emotion-checkin",
+        "status": "not_started"
+      },
+      {
+        "id": "breathe",
+        "status": "not_started"
+      },
+      {
+        "id": "journal",
+        "status": "not_started"
+      },
+      {
+        "id": "insights",
+        "status": "not_started"
+      }
+    ]
+  },
+  "streakData": {
+    "lastDate": "Tue Apr 14 2026",
+    "count": 3
+  },
+  "journalInsight": {
+    "text": "I'm noticing a powerful movement through your entries—you're oscillating between protective numbness and moments of genuine feeling, and that's actually where healing lives. The numbness you describe isn't weakness; it's your mind's way of managing the weight of repeated loss and self-blame, but I see you breaking through it already when you felt the wind while crying, when you reached out to friends, when you allowed yourself to be acknowledged. What stands out most is this underlying current of self-compassion trying to emerge: you're beginning to see how ego and insecurity affected both of you, not just blame yourself, and you're actively reaching toward small anchors—rest, connection, presence—that keep you tethered to life beyond the grief. The phrase \"let",
+    "week": "2026-W16"
+  },
+  "screenshotAnalyses": [
+    {
+      "patternType": "breadcrumbing",
+      "pattern": "This conversation shows a classic breadcrumbing pattern where one person says they can't move on while simultaneously saying dismissive phrases like 'good luck or whatever.' The mix of declarations of love followed by emotional distance creates confusion — warm words paired with cold energy. This push-pull dynamic keeps you emotionally engaged while the other person maintains control of the connection without real commitment.",
+      "emotional_impact": "Receiving these mixed messages likely left you feeling emotionally whiplashed — moments of hope when they express love, followed by confusion and hurt when they pull away with dismissive language. Your nervous system may feel exhausted from riding this emotional rollercoaster, never quite knowing which version of them will show up next.",
+      "exercise": "Try this grounding exercise: Place both feet flat on the floor. Take a slow breath in for 4 counts, hold for 4, exhale for 6. As you breathe, say internally: 'I release what isn't mine to carry.' Do this 5 times. Then write down one concrete thing you know to be true about yourself that has nothing to do with this relationship — remind yourself of the solid ground beneath you that no one else can shake.",
+      "affirmation": "You deserved clarity and consistency, not confusion disguised as love — and recognizing the difference between the two is a profound act of self-protection and growth.",
+      "id": "1776011299165",
+      "createdAt": "2026-04-12T16:28:19.165Z",
+      "fileName": "Screenshot_20260405-025140.png"
+    }
+  ],
+  "burnLetters": [
+    {
+      "id": "1776221744969",
+      "completedAt": "2026-04-15T02:55:44.969Z",
+      "emotion": "Relieved"
+    }
+  ],
+  "colorTheme": null,
+  "havenFlow": null,
+  "wellbeingCheckins": [
+    {
+      "date": "2026-04-15T02:57:39.255Z",
+      "scores": {
+        "emotionalState": 2,
+        "selfConnection": 4,
+        "selfCompassion": 5,
+        "selfCare": 5
+      }
+    }
+  ]
+}

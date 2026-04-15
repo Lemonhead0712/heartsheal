@@ -520,13 +520,13 @@ export default function BreathePage() {
         {/* Header */}
         <motion.div className="flex items-center justify-between mb-3" variants={item}>
           <Link href="/"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+            className="md:hidden inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <HavenMark className="w-6 h-6" />
             <span className="font-serif text-[15px] font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <h1 className="font-serif text-lg font-semibold text-foreground">Guided Breathing</h1>
           <Link href="/"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">
+            className="md:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">
             Talk to Haven
           </Link>
         </motion.div>
@@ -543,7 +543,7 @@ export default function BreathePage() {
             {/* Affirmation — idle only */}
             {sessionState === "idle" && (
               <div className="mb-5">
-                <AiBreathingAffirmation breathingPattern={selectedPattern.name} suppressAutoSpeak={inFlow} />
+                <AiBreathingAffirmation breathingPattern={selectedPattern.name} suppressAutoSpeak={true} />
               </div>
             )}
 

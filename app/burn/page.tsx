@@ -8,7 +8,7 @@ import { ChevronLeft, Flame, Sparkles } from "lucide-react"
 import { HavenMark } from "@/components/logo-mark"
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
 import { readHavenFlow, advanceHavenFlow, TOOL_HREFS } from "@/lib/haven-flow"
-import { HavenFlowNav } from "@/components/haven-flow-nav"
+import { HavenFlowGuide } from "@/components/haven-flow-guide"
 
 type Step = 1 | 2 | 3 | 4 | 5
 
@@ -70,7 +70,7 @@ export default function BurnLetterPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className={`w-full max-w-lg mx-auto px-4 py-6 flex flex-col flex-1 ${inFlow ? "pb-20" : ""}`}>
+      <div className={`w-full max-w-lg mx-auto px-4 py-6 flex flex-col flex-1 ${inFlow ? "pb-52" : ""}`}>
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -359,7 +359,11 @@ export default function BurnLetterPage() {
         </AnimatePresence>
       </div>
 
-      <HavenFlowNav currentTool="burn" showContinue={false} />
+      <HavenFlowGuide
+        currentTool="burn"
+        showContinue={false}
+        exerciseData={emotion ? `User felt ${emotion} after writing and burning their letter.` : undefined}
+      />
     </div>
   )
 }

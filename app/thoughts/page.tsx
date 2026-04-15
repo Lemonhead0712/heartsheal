@@ -128,6 +128,11 @@ export default function ThoughtsPage() {
   }, [isSpeaking, ttsText, speak, stopSpeech])
   // Clear ttsText when speech ends
   useEffect(() => { if (!isSpeaking) setTtsText(null) }, [isSpeaking])
+  // Auto-speak AI interpretation when it arrives
+  useEffect(() => {
+    if (aiInterpretation) { speak(aiInterpretation); setTtsText(aiInterpretation) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiInterpretation])
 
   /* ── Generate AI prompt ── */
   const generateAiPrompt = async () => {

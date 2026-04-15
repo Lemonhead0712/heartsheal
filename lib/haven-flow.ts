@@ -39,10 +39,42 @@ export interface HavenFlowState {
 
 const STORAGE_KEY = "haven_flow"
 
-// ── Fixed sequence — same every session ───────────────────────────────────────
+// ── Dynamic sequence — tailored to emotion and intensity ──────────────────────
 
-function computeFlowSequence(): FlowTool[] {
-  return ["breathe", "journal", "burn", "quiz", "survey", "analyze"]
+function computeFlowSequence(emotion?: string, intensity?: number): FlowTool[] {
+  const level = intensity ?? 5
+
+  // High-release emotions (anger, grief) — prioritise physical release + processing
+  if (emotion === "Angry" || emotion === "Grief") {
+    if (level >= 7) return ["breathe", "burn", "journal", "quiz", "survey", "analyze"]
+    if (level >= 4) return ["breathe", "burn", "journal", "survey"]
+    return ["breathe", "journal", "survey"]
+  }
+
+  // Anxiety — lead with calm, then reflection
+  if (emotion === "Anxious") {
+    if (level >= 7) return ["breathe", "journal", "burn", "survey", "analyze"]
+    if (level >= 4) return ["breathe", "journal", "survey"]
+    return ["breathe", "journal"]
+  }
+
+  // Numb / Sad — gentle grounding before expression
+  if (emotion === "Numb" || emotion === "Sad") {
+    if (level >= 7) return ["breathe", "journal", "burn", "survey", "analyze"]
+    if (level >= 4) return ["breathe", "journal", "burn", "survey"]
+    return ["breathe", "journal", "survey"]
+  }
+
+  // Positive emotions — reflective, insight-focused
+  if (emotion === "Calm" || emotion === "Hopeful" || emotion === "Grateful") {
+    if (level >= 7) return ["journal", "quiz", "survey", "analyze"]
+    return ["journal", "quiz", "survey"]
+  }
+
+  // Default by intensity tier
+  if (level >= 8) return ["breathe", "journal", "burn", "quiz", "survey", "analyze"]
+  if (level >= 5) return ["breathe", "journal", "burn", "survey"]
+  return ["breathe", "journal", "survey"]
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -53,7 +85,7 @@ export function startHavenFlow(
   _lossType?: string,   // kept for API compat, no longer affects sequence
 ): HavenFlowState {
   const state: HavenFlowState = {
-    sequence:        computeFlowSequence(),
+    sequence:        computeFlowSequence(emotion, intensity),
     currentIndex:    0,
     sessionId:       Date.now().toString(),
     emotion,

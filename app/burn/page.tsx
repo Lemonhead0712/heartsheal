@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, Flame, Sparkles } from "lucide-react"
+import { Flame, Sparkles } from "lucide-react"
 import { HavenMark } from "@/components/logo-mark"
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
 import { readHavenFlow, advanceHavenFlow, TOOL_HREFS } from "@/lib/haven-flow"
@@ -76,11 +76,10 @@ export default function BurnLetterPage() {
         <div className="flex items-center justify-between mb-6">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ChevronLeft className="h-4 w-4" />
-            <HavenMark className="w-5 h-5" />
-            <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
+            <HavenMark className="w-6 h-6" />
+            <span className="font-serif text-[15px] font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <div className="flex items-center gap-1.5 text-muted-foreground/60 text-sm">
             <Flame className="w-4 h-4" />
@@ -173,7 +172,7 @@ export default function BurnLetterPage() {
               className="flex flex-col flex-1"
             >
               <div className="mb-4">
-                <h2 className="font-serif text-xl font-semibold text-foreground mb-1">
+                <h2 className="font-serif text-2xl font-semibold text-foreground mb-1">
                   {inFlow ? "Write your letter" : "Your letter"}
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
@@ -229,7 +228,7 @@ export default function BurnLetterPage() {
               className="flex flex-col flex-1"
             >
               <div className="mb-5">
-                <h2 className="font-serif text-xl font-semibold text-foreground mb-1">Read it one last time</h2>
+                <h2 className="font-serif text-2xl font-semibold text-foreground mb-1">Read it one last time</h2>
                 <p className="text-sm text-muted-foreground">Are you ready to let this go?</p>
               </div>
 

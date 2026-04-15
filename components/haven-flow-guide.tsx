@@ -210,7 +210,7 @@ Respond with warmth, emotional intelligence, and continuity. Reference what they
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed bottom-0 inset-x-0 z-40"
+      className="fixed bottom-0 inset-x-0 z-[60]"
     >
       <div className="bg-background/92 backdrop-blur-xl border-t border-border/40 shadow-2xl shadow-black/10">
         <div className="w-full max-w-2xl mx-auto px-4 py-3 space-y-2.5">
@@ -232,7 +232,7 @@ Respond with warmth, emotional intelligence, and continuity. Reference what they
               className="flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors shrink-0 ml-2"
             >
               <X className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Exit Haven</span>
+              <span>Exit</span>
             </button>
           </div>
 
@@ -248,9 +248,9 @@ Respond with warmth, emotional intelligence, and continuity. Reference what they
               />
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center shadow-md shadow-primary/25 relative z-10"
-                style={{ background: "linear-gradient(135deg, #9b6fdf, #d472b0)" }}
+                style={{ background: "linear-gradient(135deg, var(--orb-from, #9b6fdf), var(--orb-to, #d472b0))" }}
               >
-                <span className="text-white text-xs font-bold select-none">✦</span>
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
             </div>
 
@@ -300,14 +300,13 @@ Respond with warmth, emotional intelligence, and continuity. Reference what they
             </button>
           </div>
 
-          {/* Row 4 — actions */}
-          {/* Mobile: full-width skip + continue side by side */}
+          {/* Row 4 — Skip (always visible) + Continue (when ready) */}
           <div className="flex gap-2">
             <button
               onClick={handleSkip}
-              className="flex-1 py-2.5 rounded-2xl border border-border/50 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40 active:scale-[0.98] transition-all"
+              className="flex-1 py-2.5 rounded-2xl bg-muted/70 border border-border/50 text-sm font-semibold text-foreground/70 hover:text-foreground hover:bg-muted active:scale-[0.98] transition-all"
             >
-              Skip this step →
+              Skip →
             </button>
             {showContinue && (
               <button

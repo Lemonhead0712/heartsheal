@@ -72,149 +72,130 @@ function getPhaseSequence(p: Pattern): { phase: Phase; duration: number }[] {
   return seq
 }
 
-// ── Per-pattern phrase banks (5 variations per phase — rotate by cycle index)
-type PhraseBanks = { inhale: string[]; hold1?: string[]; exhale: string[]; hold2?: string[] }
+// ── Session scripts keyed by emotion ──────────────────────────────────────
+type Script = {
+  open:   string
+  phases: Partial<Record<Phase, { first: string; repeat: string }>>
+  bridge: string[]
+  close:  string
+}
 
-const PHRASE_BANKS: Record<string, PhraseBanks> = {
-  "Box Breathing": {
-    inhale: [
-      "Breathe in slowly, letting your chest and belly rise.",
-      "A long, easy breath in. Filling all the way.",
-      "Inhale deeply. Feel your body open and expand.",
-      "Breathe in. Steady and full. All the way in.",
-      "One slow breath in, feeling your lungs fill completely.",
-    ],
-    hold1: [
-      "Hold. Soft and still. Rest in the fullness.",
-      "And hold. Gentle and quiet. Let it settle.",
-      "Hold now. Easy and easy. You're doing beautifully.",
-      "Rest here. Hold the breath lightly. Stay present.",
-      "Hold. Like a pause between thoughts. Quiet and full.",
-    ],
-    exhale: [
-      "And breathe out. Slow and complete. Releasing everything.",
-      "Exhale fully. Let it all go. Slow and easy.",
-      "Breathe out. Long and slow. Your body softening.",
-      "Release the breath. All the way. Nothing to hold.",
-      "Out, slow and complete. Your whole body letting go.",
-    ],
-    hold2: [
-      "And rest. Empty and open. Just for a moment.",
-      "Hold on empty. Quiet and spacious. You're safe here.",
-      "Rest here. A breath of stillness. Calm and open.",
-      "Hold. Before the next breath arrives. Soft and still.",
-      "And hold. The quiet between breaths. Open and free.",
-    ],
+const SESSION_SCRIPTS: Record<string, Script> = {
+  Anxious: {
+    open: "You're safe here. Let's slow everything down together.",
+    phases: {
+      inhale: { first: "Breathe in",   repeat: "In"   },
+      hold1:  { first: "Hold gently",  repeat: "Hold" },
+      exhale: { first: "Let it go",    repeat: "Out"  },
+      hold2:  { first: "Rest here",    repeat: "Rest" },
+    },
+    bridge: ["Good. Keep going.", "You're doing beautifully.", "Stay with it."],
+    close: "Breathe normally now. You just gave your nervous system real relief. Well done.",
   },
-  "4-7-8 Breathing": {
-    inhale: [
-      "Breathe in through your nose. Slow and full.",
-      "In through the nose. Quietly and completely.",
-      "A slow breath in through the nose. Gentle.",
-      "Breathe in. All the way deep, through the nose.",
-      "One quiet breath in through your nose.",
-    ],
-    hold1: [
-      "Hold. Feel the breath spread — your chest, your back, your shoulders. Rest in this quiet space.",
-      "And hold. Your body is absorbing the breath. Let every part of you soften. Stay right here.",
-      "Hold gently. Notice how still everything can become. Your nervous system is listening. Rest a moment.",
-      "Hold. The breath is working inside you. Let your jaw unclench, your hands relax. Stay here.",
-      "And hold. Rest in the fullness. Your whole body settling into this quiet pause.",
-    ],
-    exhale: [
-      "Now breathe out through your mouth. Long and slow. Let every last bit of tension go with the breath. All the way.",
-      "Release through your mouth. Take your time. Long and slow, until you're completely empty.",
-      "And out through the mouth. Long and slow. Your body fully releasing. Keep going all the way to the end.",
-      "Exhale slowly through your mouth. All the way. Feel each moment of release. Your whole body softening.",
-      "Out through the mouth. Long, slow, total. Let everything go. All the way to empty.",
-    ],
+  Grief: {
+    open: "Grief is heavy. Let your breath carry some of that weight.",
+    phases: {
+      inhale: { first: "Breathe in", repeat: "In"   },
+      hold1:  { first: "Hold",       repeat: "Hold" },
+      exhale: { first: "Release",    repeat: "Out"  },
+      hold2:  { first: "Rest",       repeat: "Rest" },
+    },
+    bridge: ["Still here with you.", "Keep breathing.", "You're not alone."],
+    close: "Breathe normally now. That took courage. Let the stillness stay as long as it needs to.",
   },
-  "Relaxing Breath": {
-    inhale: [
-      "Breathe in through your nose. Steady and full.",
-      "In through the nose. Gently and completely.",
-      "A slow breath in. Filling naturally and easily.",
-      "Breathe in. Easy and deep, through the nose.",
-      "One quiet breath in. Let your body receive it.",
-    ],
-    exhale: [
-      "Now breathe out through your mouth. Long and slow. Let your whole body soften.",
-      "Exhale slowly. Your shoulders dropping, your hands opening. All the way out.",
-      "And out. Your nervous system calming with each second of this breath. Let it go.",
-      "Release the breath slowly. Your body knows how to let go. Give it the full exhale.",
-      "Breathe out. All the way. Slow and complete. Letting everything release with you.",
-    ],
+  Angry: {
+    open: "That tension needs somewhere to go. Let your breath move it.",
+    phases: {
+      inhale: { first: "Breathe in",  repeat: "In"   },
+      hold1:  { first: "Hold steady", repeat: "Hold" },
+      exhale: { first: "Release it",  repeat: "Out"  },
+      hold2:  { first: "Rest",        repeat: "Rest" },
+    },
+    bridge: ["Good. Keep going.", "Feel the shift.", "Stay with it."],
+    close: "Breathe normally now. You moved through something real. Notice how much lighter you feel.",
   },
-  "Equal Breathing": {
-    inhale: [
-      "Breathe in steadily. Five counts. Balanced and even.",
-      "Inhale. One smooth flow, five counts, chest and belly rising.",
-      "Breathe in. Five counts. Steady and complete.",
-      "A long, even breath in. Five counts. Grounding and full.",
-      "In through the nose. Five counts. Equal and whole.",
-    ],
-    exhale: [
-      "And breathe out. Five counts. Matching the rhythm. Equal and steady.",
-      "Exhale. The mirror of the inhale. Even and complete.",
-      "Out through the nose. Five counts. Balanced and releasing.",
-      "Breathe out. Same length. The breath returning to stillness.",
-      "And release. Five counts. Steady. The rhythm completing itself.",
-    ],
+  Sad: {
+    open: "You showed up. That matters. Let's breathe through this together.",
+    phases: {
+      inhale: { first: "Breathe in", repeat: "In"   },
+      hold1:  { first: "Hold",       repeat: "Hold" },
+      exhale: { first: "Let go",     repeat: "Out"  },
+      hold2:  { first: "Rest",       repeat: "Rest" },
+    },
+    bridge: ["One more. You've got this.", "Beautiful.", "Keep breathing."],
+    close: "Breathe normally now. You stayed. That's the whole practice — just showing up.",
+  },
+  Numb: {
+    open: "Even when you can't feel much, breath is still there. Let's follow it.",
+    phases: {
+      inhale: { first: "Breathe in",  repeat: "In"   },
+      hold1:  { first: "Hold",        repeat: "Hold" },
+      exhale: { first: "Breathe out", repeat: "Out"  },
+      hold2:  { first: "Rest",        repeat: "Rest" },
+    },
+    bridge: ["Still here. Keep going.", "One breath at a time.", "Good."],
+    close: "Breathe normally now. You came back to your body. That's enough for today.",
+  },
+  Calm: {
+    open: "You're already in a good place. Let's deepen it.",
+    phases: {
+      inhale: { first: "Breathe in",  repeat: "In"   },
+      hold1:  { first: "Hold",        repeat: "Hold" },
+      exhale: { first: "Breathe out", repeat: "Out"  },
+      hold2:  { first: "Rest",        repeat: "Rest" },
+    },
+    bridge: ["Wonderful.", "Staying present.", "Beautiful rhythm."],
+    close: "Breathe normally now. You've deepened your calm. Carry that with you.",
+  },
+  Hopeful: {
+    open: "That hope in you is real. Let your breath match it.",
+    phases: {
+      inhale: { first: "Breathe in",  repeat: "In"   },
+      hold1:  { first: "Hold",        repeat: "Hold" },
+      exhale: { first: "Breathe out", repeat: "Out"  },
+      hold2:  { first: "Rest",        repeat: "Rest" },
+    },
+    bridge: ["Yes. Keep going.", "Feeling good.", "Beautiful."],
+    close: "Breathe normally now. You're building something. This session is part of it.",
+  },
+  Grateful: {
+    open: "Gratitude and breath go hand in hand. Let's honor both.",
+    phases: {
+      inhale: { first: "Breathe in",  repeat: "In"   },
+      hold1:  { first: "Hold",        repeat: "Hold" },
+      exhale: { first: "Breathe out", repeat: "Out"  },
+      hold2:  { first: "Rest",        repeat: "Rest" },
+    },
+    bridge: ["Keep going.", "Wonderful.", "Present and whole."],
+    close: "Breathe normally now. What a gift — to yourself, right here, right now.",
+  },
+  default: {
+    open: "Find a comfortable position and let your shoulders drop. I'll guide you through every breath.",
+    phases: {
+      inhale: { first: "Breathe in",  repeat: "In"   },
+      hold1:  { first: "Hold",        repeat: "Hold" },
+      exhale: { first: "Breathe out", repeat: "Out"  },
+      hold2:  { first: "Rest",        repeat: "Rest" },
+    },
+    bridge: ["Good. Keep going.", "Beautiful.", "Stay with it."],
+    close: "Breathe normally now. You did every cycle. That's real care for yourself.",
   },
 }
 
-// ── Inter-cycle bridge phrases (short — fit within REST_DURATION) ───────────
-const INTER_CYCLE: Record<number, string> = {
-  1: "Beautiful. Let's continue.",
-  2: "Two cycles. You're settling in.",
-  3: "Three complete. Stay right here.",
-  4: "Four down. One more.",
-  5: "Five cycles. Keep going.",
-  6: "Six. You're deep in it now.",
-  7: "Seven. Incredible presence.",
-  8: "Eight complete. Almost there.",
-  9: "Nine. Final round.",
-}
-const ONGOING_BRIDGES = [
-  "Wonderful. Let's continue.",
-  "Stay with it. Beautiful.",
-  "And again. You've got this.",
-  "Keep going. Beautifully done.",
-]
-
-// ── Loss labels ────────────────────────────────────────────────────────────
-const LOSS_LABELS: Record<string, string> = {
-  grief: "grief", breakup: "heartbreak", job: "a job loss",
-  family: "family distance", identity: "a shift in who you are", other: "something difficult",
+// ── Script helpers ─────────────────────────────────────────────────────────
+function getSessionScript(emotion?: string): Script {
+  if (emotion && emotion in SESSION_SCRIPTS) return SESSION_SCRIPTS[emotion]
+  return SESSION_SCRIPTS.default
 }
 
-// ── Closure scripts per cycle count ───────────────────────────────────────
-function buildClosureScript(n: number, emotion?: string, lossType?: string): string {
-  const emotionLine = emotion
-    ? ` You came here carrying ${emotion.toLowerCase()}${lossType ? ` and ${LOSS_LABELS[lossType] ?? "something difficult"}` : ""}, and you gave yourself something real.`
-    : ""
-  const closures = [
-    `And that is your session.${emotionLine} Take a breath now — your own breath, not guided — and just notice. Something has shifted. The space in your chest is real. That was all you. When you're ready, I'd love for you to write — even one sentence. The journal is waiting, and so is Haven.`,
-    `${n} cycles, complete.${emotionLine} You stayed with every single breath. That is presence. That is care. Sit here for just a moment. Let the stillness land. The journal is a beautiful next step when you're ready. Or come talk to me in Haven. I'm right here.`,
-    `You did every round.${emotionLine} What you just gave your nervous system — that's real. No prescription needed. Just breath, and intention, and the courage to show up for yourself. I'm proud of you. Notice the quiet. And when you're ready, the journal is waiting. Let's capture this before it fades.`,
-    `${n} complete cycles.${emotionLine} Every single one. You are more settled than when you started. Let that be more than enough. You are not broken. You are healing. And healing takes exactly the kind of presence you just showed. Come back to Haven whenever you're ready. I'll be right there.`,
-  ]
-  return closures[n % closures.length]
+function getPhaseCue(script: Script, phase: Phase, cycleIdx: number): string {
+  const entry = script.phases[phase]
+  if (!entry) return ""
+  return cycleIdx === 0 ? entry.first : entry.repeat
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-function pickPhrase(bank: string[], idx: number): string {
-  return bank[idx % bank.length]
-}
-
-function getPhasePhrase(patternName: string, p: Phase, cycleIdx: number): string {
-  const banks = PHRASE_BANKS[patternName]
-  if (!banks) return ""
-  if (p === "inhale") return pickPhrase(banks.inhale, cycleIdx)
-  if (p === "hold1"  && banks.hold1) return pickPhrase(banks.hold1, cycleIdx)
-  if (p === "exhale") return pickPhrase(banks.exhale, cycleIdx)
-  if (p === "hold2"  && banks.hold2) return pickPhrase(banks.hold2, cycleIdx)
-  return ""
+function getBridgeCue(script: Script, cycleIdx: number): string {
+  return script.bridge[cycleIdx % script.bridge.length]
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -247,6 +228,8 @@ export default function BreathePage() {
   const [postEmotion, setPostEmotion] = useState<string | null>(null)
   const [closureSpoken, setClosureSpoken] = useState(false)
   const [sessionCtx, setSessionCtx] = useState<SessionCtx>({})
+
+  const sessionScriptRef = useRef<Script>(SESSION_SCRIPTS.default)
 
   const { speak, prefetch, stop: stopSpeech, voiceEnabled, toggleVoice, voiceVolume, setVoiceVolume } = useTTS()
   const { play: playSound, stop: stopSound, current: currentSound, volume: ambientVolume, setVolume: setAmbientVolume } = useAmbientSound()
@@ -317,18 +300,17 @@ export default function BreathePage() {
   }
 
   // ── Prefetch ALL phrases for the upcoming session ─────────────────────────
-  const prefetchSessionAudio = useCallback((pattern: Pattern, nCycles: number) => {
-    const banks = PHRASE_BANKS[pattern.name]
-    if (!banks) return
+  const prefetchSessionAudio = useCallback((pattern: Pattern, nCycles: number, script: Script) => {
+    prefetch(script.open)
     for (let i = 0; i < nCycles; i++) {
-      prefetch(pickPhrase(banks.inhale, i))
-      if (banks.hold1) prefetch(pickPhrase(banks.hold1, i))
-      prefetch(pickPhrase(banks.exhale, i))
-      if (banks.hold2) prefetch(pickPhrase(banks.hold2, i))
-      if (i < nCycles - 1) {
-        prefetch(INTER_CYCLE[i + 1] ?? ONGOING_BRIDGES[i % ONGOING_BRIDGES.length])
+      const seq = getPhaseSequence(pattern)
+      for (const { phase } of seq) {
+        const cue = getPhaseCue(script, phase, i)
+        if (cue) prefetch(cue)
       }
+      if (i < nCycles - 1) prefetch(getBridgeCue(script, i))
     }
+    prefetch(script.close)
   }, [prefetch])
 
   // ── Stop & reset ──────────────────────────────────────────────────────────
@@ -367,8 +349,7 @@ export default function BreathePage() {
     setClosureSpoken(false)
 
     if (voiceEnabledRef.current) {
-      const msg = buildClosureScript(cyclesRef.current, sessionCtx.emotion, sessionCtx.lossType)
-      await speak(msg, { rate: 0.78, pitch: 0.88 })
+      await speak(sessionScriptRef.current.close, { rate: 0.80, pitch: 0.88 })
     }
     setClosureSpoken(true)
 
@@ -405,9 +386,8 @@ export default function BreathePage() {
         }
 
         // Inter-cycle bridge — fire and forget (plays during visual rest)
-        const bridge = INTER_CYCLE[cyclesRef.current]
-          ?? ONGOING_BRIDGES[(cyclesRef.current - 1) % ONGOING_BRIDGES.length]
-        if (voiceEnabledRef.current) void speak(bridge, { rate: 0.78, pitch: 0.88 })
+        const bridge = getBridgeCue(sessionScriptRef.current, cyclesRef.current - 1)
+        if (voiceEnabledRef.current) void speak(bridge, { rate: 0.84, pitch: 0.88 })
 
         // Rest phase
         phaseRef.current  = "rest"
@@ -420,9 +400,9 @@ export default function BreathePage() {
 
       // ── Next phase ──
       const next   = sequenceRef.current[seqIndexRef.current]
-      const phrase = getPhasePhrase(patternNameRef.current, next.phase, cyclesRef.current)
+      const phrase = getPhaseCue(sessionScriptRef.current, next.phase, cyclesRef.current)
       if (voiceEnabledRef.current && phrase) {
-        void speak(phrase, { rate: 0.78, pitch: 0.88 })
+        void speak(phrase, { rate: 0.84, pitch: 0.88 })
       }
       phaseRef.current = next.phase
       countRef.current = next.duration
@@ -443,9 +423,9 @@ export default function BreathePage() {
     const first           = sequenceRef.current[0]
     phaseRef.current      = first.phase
     countRef.current      = first.duration
-    const firstPhrase     = getPhasePhrase(selectedPattern.name, first.phase, 0)
+    const firstPhrase     = getPhaseCue(sessionScriptRef.current, first.phase, 0)
     if (voiceEnabledRef.current && firstPhrase) {
-      void speak(firstPhrase, { rate: 0.78, pitch: 0.88 })
+      void speak(firstPhrase, { rate: 0.84, pitch: 0.88 })
     }
     setPhase(first.phase)
     setCountdown(first.duration)
@@ -470,26 +450,19 @@ export default function BreathePage() {
     }
 
     if (voiceEnabledRef.current) {
-      // Kick off all prefetches while intro plays — zero gaps during session
-      prefetchSessionAudio(selectedPattern, totalCycles)
+      const script = getSessionScript(sessionCtx.emotion)
+      sessionScriptRef.current = script
 
-      // Personalized intro: weave in user's emotional context
-      let intro = selectedPattern.intro
-      if (sessionCtx.emotion) {
-        const intensityNote =
-          (sessionCtx.intensity ?? 5) >= 7
-            ? ` With ${sessionCtx.emotion.toLowerCase()} feeling as heavy as it does, this breath is especially for you.`
-            : ` Let this time be a gentle gift to yourself.`
-        const lossNote = sessionCtx.lossType
-          ? ` Navigating ${LOSS_LABELS[sessionCtx.lossType] ?? "something difficult"} takes a lot out of you.`
-          : ""
-        intro = `${sessionCtx.name ? sessionCtx.name + ". " : ""}I know you've been feeling ${sessionCtx.emotion.toLowerCase()} today.${lossNote}${intensityNote} ${selectedPattern.intro}`
-      } else if (sessionCtx.name) {
-        intro = `${sessionCtx.name}. ${selectedPattern.intro}`
-      }
+      let opener = script.open
+      if (sessionCtx.name) opener = `${sessionCtx.name}. ${opener}`
 
-      await speak(intro, { rate: 0.78, pitch: 0.88 })
+      // Prefetch all session audio while opener plays — zero gaps during cycles
+      prefetchSessionAudio(selectedPattern, totalCycles, script)
+
+      await speak(opener, { rate: 0.80, pitch: 0.88 })
       await new Promise<void>((res) => setTimeout(res, 500))
+    } else {
+      sessionScriptRef.current = getSessionScript(sessionCtx.emotion)
     }
 
     if (abortedRef.current) return

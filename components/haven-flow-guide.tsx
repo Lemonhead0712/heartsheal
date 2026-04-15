@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronRight, Send, X, Sparkles } from "lucide-react"
+import { useTTS } from "@/hooks/use-speech"
 import {
   readHavenFlow,
   advanceHavenFlow,
@@ -58,6 +59,7 @@ export function HavenFlowGuide({
   onAdvance,
 }: HavenFlowGuideProps) {
   const router = useRouter()
+  const { speak, stop: stopSpeech } = useTTS()
 
   // Hydration-safe: always null on server
   const [flow,        setFlow]        = useState<HavenFlowState | null>(null)
@@ -81,7 +83,8 @@ export function HavenFlowGuide({
       setDisplayText(msg.slice(0, ++i))
       if (i >= msg.length) clearInterval(typewriterRef.current!)
     }, 18)
-  }, [])
+    speak(msg)
+  }, [speak])
 
   // Call Haven AI with full session context
   const callHaven = useCallback(async (
@@ -165,7 +168,10 @@ Respond with warmth, emotional intelligence, and continuity. Reference what they
       )
     }
 
-    return () => { if (typewriterRef.current) clearInterval(typewriterRef.current) }
+    return () => {
+      if (typewriterRef.current) clearInterval(typewriterRef.current)
+      stopSpeech()
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

@@ -9,9 +9,9 @@ interface LogoProps {
 }
 
 const sizeConfig: Record<LogoSize, { img: string; text: string }> = {
-  small:  { img: "w-9 h-9",   text: "text-base md:text-sm font-semibold" },
-  medium: { img: "w-10 h-10",                text: "text-xl font-semibold" },
-  large:  { img: "w-14 h-14",                text: "text-3xl font-bold" },
+  small:  { img: "w-8 h-8",   text: "text-[15px] font-semibold tracking-tight" },
+  medium: { img: "w-10 h-10", text: "text-xl font-semibold tracking-tight" },
+  large:  { img: "w-14 h-14", text: "text-3xl font-bold tracking-tight" },
 }
 
 export function Logo({ size = "medium", className }: LogoProps) {

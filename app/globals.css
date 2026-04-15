@@ -64,9 +64,9 @@
     --shadow-lg:   0 12px 28px -4px rgba(0,0,0,0.08), 0 4px 10px -4px rgba(0,0,0,0.04);
     --shadow-card: 0 20px 40px rgba(0,0,0,0.02), 0 1px 3px rgba(0,0,0,0.04);
 
-    /* ── Orb gradient ── */
-    --orb-from: #6366F1;
-    --orb-to:   #8B5CF6;
+    /* ── Orb gradient — unified across logo, dashboard orb, and flow guide ── */
+    --orb-from: #9b6fdf;
+    --orb-to:   #d472b0;
   }
 
   .dark {

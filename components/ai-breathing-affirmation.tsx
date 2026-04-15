@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Heart, RefreshCw } from "lucide-react"
+import { Heart, RefreshCw, Volume2, VolumeX } from "lucide-react"
+import { useTTS } from "@/hooks/use-speech"
 
 interface Props {
   breathingPattern?: string
@@ -24,11 +25,24 @@ export function AiBreathingAffirmation({ breathingPattern, className }: Props) {
   const [isLoading, setIsLoading]     = useState(false)
   const [useAI, setUseAI]             = useState(false)
 
+  const { speak, stop: stopSpeech, isSpeaking } = useTTS()
+
   // Load a static affirmation immediately on mount
   useEffect(() => {
     const random = staticAffirmations[Math.floor(Math.random() * staticAffirmations.length)]
     setAffirmation(random)
   }, [])
+
+  // Auto-speak whenever affirmation text changes
+  useEffect(() => {
+    if (affirmation) speak(affirmation)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [affirmation])
+
+  const handleToggleSpeech = useCallback(() => {
+    if (isSpeaking) stopSpeech()
+    else speak(affirmation)
+  }, [isSpeaking, speak, stopSpeech, affirmation])
 
   const generateAIAffirmation = async () => {
     setIsLoading(true)
@@ -115,6 +129,13 @@ Rules:
           </div>
 
           <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <button
+              onClick={handleToggleSpeech}
+              title={isSpeaking ? "Stop" : "Read aloud"}
+              className="w-6 h-6 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {isSpeaking ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+            </button>
             <button
               onClick={refreshStatic}
               title="New affirmation"

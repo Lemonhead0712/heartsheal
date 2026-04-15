@@ -128,11 +128,11 @@ export default function ThoughtsPage() {
   }, [isSpeaking, ttsText, speak, stopSpeech])
   // Clear ttsText when speech ends
   useEffect(() => { if (!isSpeaking) setTtsText(null) }, [isSpeaking])
-  // Auto-speak AI interpretation when it arrives
+  // Auto-speak AI interpretation only outside of flow (flow audio handled by HavenFlowGuide)
   useEffect(() => {
-    if (aiInterpretation) { speak(aiInterpretation); setTtsText(aiInterpretation) }
+    if (aiInterpretation && !inFlow) { speak(aiInterpretation); setTtsText(aiInterpretation) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiInterpretation])
+  }, [aiInterpretation, inFlow])
 
   /* ── Generate AI prompt ── */
   const generateAiPrompt = async () => {

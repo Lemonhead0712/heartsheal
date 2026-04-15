@@ -50,11 +50,11 @@ export default function SelfDiscoveryPage() {
   const { speak, stop: stopSpeech, isSpeaking } = useTTS()
   const [ttsText, setTtsText] = useState<string | null>(null)
   useEffect(() => { if (!isSpeaking) setTtsText(null) }, [isSpeaking])
-  // Auto-speak AI interpretation when it arrives
+  // Auto-speak AI interpretation only outside of flow (flow audio handled by HavenFlowGuide)
   useEffect(() => {
-    if (aiInterpretation) { speak(aiInterpretation); setTtsText(aiInterpretation) }
+    if (aiInterpretation && !inFlow) { speak(aiInterpretation); setTtsText(aiInterpretation) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiInterpretation])
+  }, [aiInterpretation, inFlow])
 
   useEffect(() => {
     const flow = readHavenFlow()

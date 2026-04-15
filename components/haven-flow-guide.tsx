@@ -28,14 +28,6 @@ interface HavenFlowGuideProps {
   onAdvance?: (navigateFn: () => void) => void
 }
 
-const TOOL_INTROS: Record<FlowTool, string> = {
-  breathe: "Let's breathe together. Follow the rhythm — I'm right here with you the whole time.",
-  journal: "Take your time with this. Write what's real. I'll hold space while you do.",
-  burn:    "Say everything you haven't been able to say. This is just between you and the flame.",
-  quiz:    "Let's explore how you see yourself. There are no right or wrong answers here.",
-  survey:  "A gentle check-in on how you're doing. Take a moment to be honest with yourself.",
-  analyze: "Upload a conversation when you're ready. I'll help you understand what happened.",
-}
 
 function LoadingDots() {
   return (
@@ -146,27 +138,14 @@ Respond with warmth, emotional intelligence, and continuity. Reference what they
     const priorLog = f.conversationLog ?? []
     setApiMessages(priorLog)
 
-    // Opening message — use static intro, then let AI follow up if there's prior context
-    if (priorLog.length === 0) {
-      showMessage(TOOL_INTROS[currentTool])
-      // After showing intro, quietly let Haven acknowledge any prior emotion context
-      if (f.emotion) {
-        setTimeout(() => {
-          callHaven(
-            priorLog,
-            `[System: The user just arrived at ${TOOL_LABELS[currentTool]}. Their emotion: ${f.emotion}, intensity ${f.intensity ?? "?"}/10. Give them a short, warm opening.`,
-            f,
-          )
-        }, 1800)
-      }
-    } else {
-      // Returning to flow mid-session — Haven picks up where they left off
-      callHaven(
-        priorLog,
-        `[System: The user has moved to ${TOOL_LABELS[currentTool]}. Continue the conversation naturally.]`,
-        f,
-      )
-    }
+    // Single AI-generated opening — no static intro, no double audio
+    callHaven(
+      priorLog,
+      priorLog.length === 0
+        ? `[System: The user just arrived at ${TOOL_LABELS[currentTool]}.${f.emotion ? ` Their emotion: ${f.emotion}, intensity ${f.intensity ?? "?"}/10.` : ""} Give them a brief, warm opening — 1–2 sentences.]`
+        : `[System: The user has moved to ${TOOL_LABELS[currentTool]}. Continue the conversation naturally.]`,
+      f,
+    )
 
     return () => {
       if (typewriterRef.current) clearInterval(typewriterRef.current)

@@ -1,15 +1,24 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { ChevronLeft } from "lucide-react"
 import { ScreenshotAnalysis } from "@/components/screenshot-analysis"
 import { HavenMark } from "@/components/logo-mark"
-import { HavenFlowNav } from "@/components/haven-flow-nav"
+import { HavenFlowGuide } from "@/components/haven-flow-guide"
+import { readHavenFlow } from "@/lib/haven-flow"
 
 export default function AnalyzePage() {
+  const [inFlow, setInFlow] = useState(false)
+
+  useEffect(() => {
+    const flow = readHavenFlow()
+    if (flow && flow.sequence[flow.currentIndex] === "analyze") setInFlow(true)
+  }, [])
+
   return (
-    <div className="bg-background min-h-screen">
+    <div className={`bg-background min-h-screen${inFlow ? " pb-52" : ""}`}>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -30,7 +39,7 @@ export default function AnalyzePage() {
         <ScreenshotAnalysis />
       </motion.div>
 
-      <HavenFlowNav currentTool="analyze" />
+      <HavenFlowGuide currentTool="analyze" />
     </div>
   )
 }

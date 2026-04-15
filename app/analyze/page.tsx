@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ChevronLeft } from "lucide-react"
 import { ScreenshotAnalysis } from "@/components/screenshot-analysis"
 import { HavenMark } from "@/components/logo-mark"
 import { HavenFlowGuide } from "@/components/haven-flow-guide"
@@ -25,10 +24,9 @@ export default function AnalyzePage() {
         className="w-full max-w-5xl mx-auto px-4 md:px-8 py-3 md:py-5"
       >
         <div className="flex items-center justify-between gap-3 mb-5">
-          <Link href="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
-            <ChevronLeft className="h-4 w-4" />
-            <HavenMark className="w-5 h-5" />
-            <span className="font-serif font-semibold text-foreground tracking-tight">Back to Haven</span>
+          <Link href="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+            <HavenMark className="w-6 h-6" />
+            <span className="font-serif text-[15px] font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <div className="text-right">
             <h1 className="font-serif text-lg md:text-xl font-semibold text-foreground">Screenshot Analysis</h1>

@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 import { ChevronLeft, BookHeart, Brain, Save, RotateCcw, CheckCircle2, ChevronRight, Sparkles, Trash2, X, Volume2, VolumeX } from "lucide-react"
-import { HavenFlowNav } from "@/components/haven-flow-nav"
+import { HavenFlowGuide } from "@/components/haven-flow-guide"
+import { readHavenFlow } from "@/lib/haven-flow"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
@@ -85,6 +86,12 @@ function getScore(score: number): { label: string; color: string; message: strin
 /* ─── Main Component ─── */
 export default function ThoughtsPage() {
   const [tab, setTab] = useState<"journal" | "quiz">("journal")
+  const [inFlow, setInFlow] = useState(false)
+
+  useEffect(() => {
+    const flow = readHavenFlow()
+    if (flow && flow.sequence[flow.currentIndex] === "journal") setInFlow(true)
+  }, [])
 
   /* Journal state */
   const [activePrompt, setActivePrompt] = useState<string>(() =>
@@ -314,7 +321,7 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
   const item: Variants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } } }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className={`bg-background min-h-screen${inFlow ? " pb-52" : ""}`}>
       <motion.div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-3 md:py-5" variants={container} initial="hidden" animate="show">
 
         {/* Header */}
@@ -330,19 +337,21 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
           </Link>
         </motion.div>
 
-        {/* Tab switcher */}
-        <motion.div className="flex gap-2 mb-5 p-1 rounded-2xl bg-muted/50 border border-border/40" variants={item}>
-          {([["journal", "Journal", BookHeart], ["quiz", "Self-Reflection Quiz", Brain]] as const).map(([value, label, Icon]) => (
-            <button key={value} onClick={() => setTab(value)}
-              className={cn("flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-                tab === value ? "bg-card shadow-sm text-foreground border border-border/40" : "text-muted-foreground hover:text-foreground")}>
-              <Icon className="w-4 h-4" />{label}
-            </button>
-          ))}
-        </motion.div>
+        {/* Tab switcher — hidden in flow mode (journal only) */}
+        {!inFlow && (
+          <motion.div className="flex gap-2 mb-5 p-1 rounded-2xl bg-muted/50 border border-border/40" variants={item}>
+            {([["journal", "Journal", BookHeart], ["quiz", "Self-Reflection Quiz", Brain]] as const).map(([value, label, Icon]) => (
+              <button key={value} onClick={() => setTab(value)}
+                className={cn("flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+                  tab === value ? "bg-card shadow-sm text-foreground border border-border/40" : "text-muted-foreground hover:text-foreground")}>
+                <Icon className="w-4 h-4" />{label}
+              </button>
+            ))}
+          </motion.div>
+        )}
 
-        {/* Two-column grid */}
-        <motion.div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-8 items-start" variants={item}>
+        {/* Two-column grid — single column in flow mode */}
+        <motion.div className={`grid grid-cols-1 gap-6 lg:gap-8 items-start${inFlow ? "" : " lg:grid-cols-[1fr_320px]"}`} variants={item}>
 
           {/* ── Main column ── */}
           <div className="min-w-0">
@@ -581,8 +590,8 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
             </AnimatePresence>
           </div>
 
-          {/* ── Sidebar ── */}
-          <aside className="lg:sticky lg:top-[76px] lg:self-start space-y-4 min-w-0">
+          {/* ── Sidebar — hidden in flow mode ── */}
+          {!inFlow && <aside className="lg:sticky lg:top-[76px] lg:self-start space-y-4 min-w-0">
 
             {/* Journal: past entries */}
             {tab === "journal" && journalEntries.length > 0 && (
@@ -691,7 +700,7 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
               </div>
             )}
 
-          </aside>
+          </aside>}
 
         </motion.div>
       </motion.div>
@@ -761,7 +770,10 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
         )}
       </AnimatePresence>
 
-      <HavenFlowNav currentTool="journal" />
+      <HavenFlowGuide
+        currentTool="journal"
+        exerciseData={journalEntries[0]?.entry ? `User's journal entry: "${journalEntries[0].entry.slice(0, 200)}"` : undefined}
+      />
     </div>
   )
 }

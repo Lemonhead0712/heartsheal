@@ -149,11 +149,10 @@ export default function SelfDiscoveryPage() {
         <div className="flex items-center justify-between mb-6">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ChevronLeft className="h-4 w-4" />
-            <HavenMark className="w-5 h-5" />
-            <span className="font-serif font-semibold text-foreground tracking-tight">Haven</span>
+            <HavenMark className="w-6 h-6" />
+            <span className="font-serif text-[15px] font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
           <div className="flex items-center gap-1.5 text-muted-foreground/60 text-sm">
             <Brain className="w-4 h-4" />

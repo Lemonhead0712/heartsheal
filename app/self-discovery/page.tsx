@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, Brain, Sparkles, CheckCircle2, RotateCcw } from "lucide-react"
+import { ChevronLeft, Brain, Sparkles, CheckCircle2, RotateCcw, Volume2, VolumeX } from "lucide-react"
 import { HavenMark } from "@/components/logo-mark"
 import { HavenFlowGuide } from "@/components/haven-flow-guide"
 import { readHavenFlow } from "@/lib/haven-flow"
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/storage"
 import { cn } from "@/lib/utils"
+import { useTTS } from "@/hooks/use-speech"
 
 type QuizQuestion = { id: string; question: string; options: string[]; scores: number[]; category: string }
 
@@ -44,6 +45,16 @@ export default function SelfDiscoveryPage() {
   const [categoryScores, setCategoryScores] = useState<Record<string, number[]>>({})
   const [aiInterpretation, setAiInterpretation] = useState<string | null>(null)
   const [interpretationLoading, setInterpretationLoading] = useState(false)
+
+  /* TTS */
+  const { speak, stop: stopSpeech, isSpeaking } = useTTS()
+  const [ttsText, setTtsText] = useState<string | null>(null)
+  useEffect(() => { if (!isSpeaking) setTtsText(null) }, [isSpeaking])
+  // Auto-speak AI interpretation when it arrives
+  useEffect(() => {
+    if (aiInterpretation) { speak(aiInterpretation); setTtsText(aiInterpretation) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiInterpretation])
 
   useEffect(() => {
     const flow = readHavenFlow()
@@ -373,9 +384,25 @@ export default function SelfDiscoveryPage() {
                       </div>
                     ) : (
                       <>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-primary/60 flex items-center gap-1.5 mb-2">
-                          <Sparkles className="w-3 h-3" /> Haven's Reflection
-                        </p>
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary/60 flex items-center gap-1.5">
+                            <Sparkles className="w-3 h-3" /> Haven's Reflection
+                          </p>
+                          {aiInterpretation && (
+                            <button
+                              onClick={() => {
+                                if (isSpeaking && ttsText === aiInterpretation) { stopSpeech(); setTtsText(null) }
+                                else { speak(aiInterpretation); setTtsText(aiInterpretation) }
+                              }}
+                              className="p-1 rounded-lg text-primary/50 hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+                              aria-label={ttsText === aiInterpretation && isSpeaking ? "Stop" : "Read aloud"}
+                            >
+                              {ttsText === aiInterpretation && isSpeaking
+                                ? <VolumeX className="w-3.5 h-3.5" />
+                                : <Volume2 className="w-3.5 h-3.5" />}
+                            </button>
+                          )}
+                        </div>
                         <p className="text-sm text-foreground/90 leading-relaxed font-serif italic">"{aiInterpretation}"</p>
                       </>
                     )}

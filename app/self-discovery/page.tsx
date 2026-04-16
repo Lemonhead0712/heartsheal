@@ -198,19 +198,48 @@ export default function SelfDiscoveryPage() {
               transition={{ duration: 0.35 }}
               className="flex flex-col flex-1"
             >
-              <div className="text-center mb-8">
+              <div className="text-center mb-6">
                 <div className="text-5xl mb-4">🧠</div>
                 <h1 className="font-serif text-2xl font-semibold text-foreground mb-2">Emotional Awareness</h1>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Understand how well you recognise, express, and regulate your emotions.
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
+                  Understand how well you recognise, express, and regulate your emotions — and where to gently focus your growth.
                 </p>
               </div>
 
-              <div className="bg-card/60 border border-border/40 rounded-2xl p-5 mb-8">
-                <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">What to expect</p>
-                <p className="text-sm text-foreground/80 leading-relaxed">
-                  5 short questions. No right or wrong answers — just honest reflection. Your results are private, saved only to your device, and used to personalise your healing insights.
-                </p>
+              {/* Three areas explored */}
+              <div className="grid grid-cols-3 gap-2 mb-5">
+                {[
+                  { icon: "👁️", label: "Recognition", desc: "Naming what you feel" },
+                  { icon: "💬", label: "Expression", desc: "Sharing with others" },
+                  { icon: "⚖️", label: "Regulation", desc: "Returning to balance" },
+                ].map(({ icon, label, desc }) => (
+                  <div key={label} className="bg-card/60 border border-border/40 rounded-2xl p-3 text-center">
+                    <div className="text-2xl mb-1.5">{icon}</div>
+                    <p className="text-[11px] font-semibold text-foreground">{label}</p>
+                    <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{desc}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col gap-3 mb-8">
+                <div className="bg-card/60 border border-border/40 rounded-2xl p-4">
+                  <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1.5">What to expect</p>
+                  <p className="text-sm text-foreground/80 leading-relaxed">
+                    5 short questions across recognition, expression, and regulation. Each question asks you to reflect honestly — there are no right or wrong answers, only useful ones.
+                  </p>
+                </div>
+                <div className="bg-card/60 border border-border/40 rounded-2xl p-4">
+                  <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1.5">How it helps</p>
+                  <p className="text-sm text-foreground/80 leading-relaxed">
+                    Emotional awareness is the foundation of healing. When you can name what you feel, you can begin to understand it — and from there, choose how to respond rather than react.
+                  </p>
+                </div>
+                <div className="bg-card/60 border border-border/40 rounded-2xl p-4">
+                  <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1.5">Your privacy</p>
+                  <p className="text-sm text-foreground/80 leading-relaxed">
+                    Results are stored only on your device and used to personalise your healing insights. Nothing leaves your phone unless you choose to sync.
+                  </p>
+                </div>
               </div>
 
               <div className="mt-auto flex flex-col gap-3">
@@ -265,6 +294,12 @@ export default function SelfDiscoveryPage() {
                   transition={{ duration: 0.3 }}
                   className="bg-card/60 border border-border/40 rounded-2xl p-6 mb-4"
                 >
+                  {/* Category badge */}
+                  <div className="mb-3">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-primary/60 bg-primary/8 px-2.5 py-1 rounded-full">
+                      {({ recognition: "👁️ Recognition", expression: "💬 Expression", regulation: "⚖️ Regulation" } as Record<string,string>)[questions[questionIndex].category] ?? questions[questionIndex].category}
+                    </span>
+                  </div>
                   <p className="font-serif text-lg text-foreground leading-snug mb-6">
                     {questions[questionIndex].question}
                   </p>
@@ -328,11 +363,12 @@ export default function SelfDiscoveryPage() {
               transition={{ duration: 0.5 }}
               className="flex flex-col flex-1"
             >
-              <div className="bg-card/60 border border-border/40 rounded-2xl p-6 text-center mb-4">
-                <div className="text-4xl mb-2">🧠</div>
-                <h2 className="font-serif text-xl font-semibold text-foreground mb-1">Emotional Awareness</h2>
-                <div className={cn("text-4xl font-bold my-4", getScore(avgScore).color)}>{avgScore}</div>
-                <div className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-3 bg-primary/10", getScore(avgScore).color)}>
+              <div className="rounded-2xl p-6 text-center mb-4 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+                <div className="text-4xl mb-3">🧠</div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/50 mb-1">Your Score</p>
+                <h2 className="font-serif text-xl font-semibold text-foreground mb-2">Emotional Awareness</h2>
+                <div className={cn("text-5xl font-bold my-3", getScore(avgScore).color)}>{avgScore}<span className="text-lg font-normal text-muted-foreground">/100</span></div>
+                <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold mb-3 bg-background/60", getScore(avgScore).color)}>
                   <Sparkles className="w-3 h-3" /> {getScore(avgScore).label}
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">{getScore(avgScore).message}</p>

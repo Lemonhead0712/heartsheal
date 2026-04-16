@@ -177,23 +177,54 @@ export default function BurnLetterPage() {
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {inFlow
-                    ? "Say what you need to say. No filter, no rules — just you and the page."
-                    : "Write to whoever or whatever you need to release. No judgment, no filter."}
+                    ? "Say exactly what needs to be said. No filter, no judgment — just you, the page, and the flame waiting at the end."
+                    : "Write to whoever or whatever you need to release. A person, a feeling, a version of yourself. Nothing is too much."}
                 </p>
               </div>
 
-              <textarea
-                ref={textareaRef}
-                value={letter}
-                onChange={(e) => setLetter(e.target.value)}
-                placeholder="Dear…"
-                className="flex-1 w-full min-h-[260px] bg-card/60 border border-border/40 rounded-2xl p-5 text-sm text-foreground placeholder:text-muted-foreground/50 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-              />
+              {/* Writing prompts hint */}
+              {letter.trim().length === 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="mb-3 p-3.5 rounded-xl bg-muted/40 border border-border/30"
+                >
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">If you're not sure where to start…</p>
+                  <ul className="space-y-1">
+                    {[
+                      "What have you never been able to say out loud?",
+                      "What has this person, situation, or feeling taken from you?",
+                      "What do you need them to understand?",
+                      "What would feel like a true release?",
+                    ].map(p => (
+                      <li key={p} className="text-xs text-muted-foreground/80 flex gap-2">
+                        <span className="text-primary/40 shrink-0">–</span>
+                        <span>{p}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              )}
 
-              <div className="flex items-center justify-between mt-3 mb-5">
-                <span className="text-xs text-muted-foreground/60">{letter.length} characters</span>
+              {/* Paper-styled textarea */}
+              <div className="flex-1 relative">
+                <textarea
+                  ref={textareaRef}
+                  value={letter}
+                  onChange={(e) => setLetter(e.target.value)}
+                  placeholder="Dear…"
+                  className="w-full h-full min-h-[220px] bg-card/70 border border-border/40 rounded-2xl p-5 pt-4 text-sm text-foreground placeholder:text-muted-foreground/40 leading-[1.8] font-serif resize-none focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all shadow-inner"
+                  style={{ backgroundImage: "repeating-linear-gradient(transparent, transparent 28px, rgba(var(--border), 0.15) 28px, rgba(var(--border), 0.15) 29px)" }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between mt-2.5 mb-5">
+                <span className="text-xs text-muted-foreground/50">
+                  {letter.trim().length > 0 ? `${letter.split(/\s+/).filter(Boolean).length} words` : "Your words stay between you and the flame"}
+                </span>
                 {letter.trim().length > 0 && (
-                  <span className="text-xs text-muted-foreground/60">Take your time</span>
+                  <span className="text-xs text-muted-foreground/50">Take your time ·</span>
                 )}
               </div>
 
@@ -229,19 +260,25 @@ export default function BurnLetterPage() {
             >
               <div className="mb-5">
                 <h2 className="font-serif text-2xl font-semibold text-foreground mb-1">Read it one last time</h2>
-                <p className="text-sm text-muted-foreground">Are you ready to let this go?</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Take a breath. Read what you wrote. When you're ready, let the flame carry it away.
+                </p>
               </div>
 
-              <div className="flex-1 bg-card/60 border border-border/40 rounded-2xl p-5 mb-6 overflow-y-auto max-h-[320px]">
-                <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap font-serif italic">
+              <div className="flex-1 bg-card/60 border border-amber-500/15 rounded-2xl p-5 mb-3 overflow-y-auto max-h-[300px] shadow-inner">
+                <p className="text-sm text-foreground/90 leading-[1.9] whitespace-pre-wrap font-serif italic">
                   {letter}
                 </p>
               </div>
 
+              <p className="text-[11px] text-muted-foreground/50 text-center mb-5">
+                {letter.split(/\s+/).filter(Boolean).length} words · This will be gone forever once you burn it
+              </p>
+
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => setStep(4)}
-                  className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-md shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-primary text-white font-semibold text-sm shadow-md shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
                   🔥 Burn it
                 </button>

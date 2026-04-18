@@ -520,7 +520,7 @@ export default function BreathePage() {
         {/* Header */}
         <motion.div className="flex items-center justify-between mb-3" variants={item}>
           <Link href="/"
-            className="hidden text-muted-foreground hover:text-foreground transition-colors">
+            className="md:hidden inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <HavenMark className="w-6 h-6" />
             <span className="font-serif text-[15px] font-semibold text-foreground tracking-tight">Haven</span>
           </Link>

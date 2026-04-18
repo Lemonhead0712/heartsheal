@@ -14,42 +14,30 @@ const SLIDERS = [
   {
     key: "emotionalState" as const,
     label: "Emotional State",
-    icon: "🌊",
-    description: "How steady and balanced do you feel emotionally right now? Honest is better than optimistic.",
+    description: "How steady and balanced do you feel emotionally right now?",
     low: "Very unsettled",
     high: "Very balanced",
-    accent: "from-sky-500/10 to-sky-500/5",
-    accentBorder: "border-sky-500/20",
   },
   {
     key: "selfConnection" as const,
     label: "Self-Connection",
-    icon: "🪞",
-    description: "How connected do you feel to yourself — your thoughts, needs, and values right now?",
+    description: "How connected do you feel to yourself — your thoughts, needs, and values?",
     low: "Disconnected",
     high: "Deeply connected",
-    accent: "from-violet-500/10 to-violet-500/5",
-    accentBorder: "border-violet-500/20",
   },
   {
     key: "selfCompassion" as const,
     label: "Self-Compassion",
-    icon: "💜",
-    description: "How kindly are you treating yourself today? Would you speak to a friend this way?",
+    description: "How kindly are you treating yourself today?",
     low: "Very hard on myself",
     high: "Very kind to myself",
-    accent: "from-primary/10 to-primary/5",
-    accentBorder: "border-primary/20",
   },
   {
     key: "selfCare" as const,
     label: "Self-Care",
-    icon: "🌱",
-    description: "How well are you tending to your basic needs — rest, nourishment, movement, and stillness?",
+    description: "How well are you tending to your basic needs — rest, nourishment, movement?",
     low: "Neglecting myself",
     high: "Taking great care",
-    accent: "from-emerald-500/10 to-emerald-500/5",
-    accentBorder: "border-emerald-500/20",
   },
 ]
 
@@ -115,7 +103,7 @@ export default function WellbeingPage() {
         <div className="flex items-center justify-between mb-6">
           <Link
             href="/"
-            className="hidden text-muted-foreground hover:text-foreground transition-colors"
+            className="md:hidden inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <HavenMark className="w-6 h-6" />
             <span className="font-serif text-[15px] font-semibold text-foreground tracking-tight">Haven</span>
@@ -154,51 +142,33 @@ export default function WellbeingPage() {
               className="flex flex-col flex-1"
             >
               <div className="mb-6">
-                <h1 className="font-serif text-2xl font-semibold text-foreground mb-2">How are you doing?</h1>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                  A gentle, honest check-in across four dimensions of your wellbeing. There are no right answers — just where you genuinely are right now.
+                <h1 className="font-serif text-2xl font-semibold text-foreground mb-1">How are you doing?</h1>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  A gentle check-in on four dimensions of your wellbeing. Move each slider to where you honestly are right now.
                 </p>
-                <div className="flex gap-2 flex-wrap">
-                  {["🌊 Emotional", "🪞 Connection", "💜 Compassion", "🌱 Self-Care"].map(d => (
-                    <span key={d} className="text-[11px] text-muted-foreground/70 px-2.5 py-1 rounded-full bg-muted/50 border border-border/30">{d}</span>
-                  ))}
-                </div>
               </div>
 
-              <div className="space-y-4 flex-1">
-                {SLIDERS.map(({ key, label, icon, description, low, high, accent, accentBorder }) => {
+              <div className="space-y-6 flex-1">
+                {SLIDERS.map(({ key, label, description, low, high }) => {
                   const value = scores[key]
                   const { text, color } = getLabel(value)
                   return (
-                    <div key={key} className={cn("rounded-2xl p-5 border bg-gradient-to-br", accent, accentBorder)}>
+                    <div key={key} className="bg-card/60 border border-border/40 rounded-2xl p-5">
                       <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg leading-none">{icon}</span>
-                          <p className="text-sm font-semibold text-foreground">{label}</p>
-                        </div>
-                        <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full bg-background/60", color)}>{text}</span>
+                        <p className="text-sm font-semibold text-foreground">{label}</p>
+                        <span className={cn("text-xs font-semibold", color)}>{text}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground mb-4 leading-relaxed pl-7">{description}</p>
-
-                      {/* Score dots */}
-                      <div className="flex justify-between mb-2 px-0.5">
-                        {[1,2,3,4,5].map(n => (
-                          <button
-                            key={n}
-                            onClick={() => setScores((prev) => ({ ...prev, [key]: n }))}
-                            className={cn(
-                              "w-8 h-8 rounded-full text-xs font-bold transition-all duration-200",
-                              value === n
-                                ? "bg-primary text-primary-foreground shadow-md shadow-primary/30 scale-110"
-                                : "bg-background/70 border border-border/50 text-muted-foreground hover:border-primary/40 hover:text-primary"
-                            )}
-                          >
-                            {n}
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="flex justify-between text-[10px] text-muted-foreground/60 mt-1 px-1">
+                      <p className="text-xs text-muted-foreground mb-4 leading-relaxed">{description}</p>
+                      <input
+                        type="range"
+                        min={1}
+                        max={5}
+                        step={1}
+                        value={value}
+                        onChange={(e) => setScores((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
+                        className="w-full h-2 rounded-full accent-primary cursor-pointer"
+                      />
+                      <div className="flex justify-between text-[10px] text-muted-foreground/60 mt-1.5">
                         <span>{low}</span>
                         <span>{high}</span>
                       </div>

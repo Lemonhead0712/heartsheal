@@ -331,7 +331,7 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
 
         {/* Header */}
         <motion.div className="flex items-center justify-between mb-3" variants={item}>
-          <Link href="/" className="hidden text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/" className="md:hidden inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <HavenMark className="w-6 h-6" />
             <span className="font-serif text-[15px] font-semibold text-foreground tracking-tight">Haven</span>
           </Link>
@@ -365,34 +365,12 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
               {tab === "journal" && (
                 <motion.div key="journal" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }} className="space-y-5">
 
-                  {/* Intro description (shown outside flow — in-flow the HavenFlowGuide provides context) */}
-                  {!inFlow && (
-                    <div className="rounded-2xl p-4 bg-gradient-to-br from-primary/8 to-primary/4 border border-primary/15">
-                      <p className="text-xs font-semibold text-primary/70 uppercase tracking-wide mb-1.5">Your private space</p>
-                      <p className="text-sm text-foreground/80 leading-relaxed">
-                        Journaling is one of the most powerful tools in healing. Writing externalises what lives inside — it creates space between you and the pain, so you can begin to understand it rather than just feel it.
-                      </p>
-                    </div>
-                  )}
-
                   <div className="glass-card rounded-2xl p-5">
-                    {/* Date header */}
-                    <div className="flex items-center justify-between mb-4">
-                      <p className="text-xs text-muted-foreground/60 font-medium">
-                        {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-                      </p>
-                      {entry.trim().length > 0 && (
-                        <span className="text-[11px] text-muted-foreground/50">
-                          {entry.trim().split(/\s+/).filter(Boolean).length} words
-                        </span>
-                      )}
-                    </div>
-
                     {/* Prompt display */}
                     <div className="bg-primary/8 rounded-xl p-4 mb-4 border border-primary/15">
                       <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="text-[10px] font-semibold text-primary/70 uppercase tracking-wide flex items-center gap-1.5">
-                          {isAiPrompt ? <><Sparkles className="w-3 h-3" /> AI Prompt</> : "Reflection Prompt"}
+                        <span className="text-[10px] font-semibold text-primary/70 uppercase tracking-wide">
+                          {isAiPrompt ? "AI Generated" : "Reflection Prompt"}
                         </span>
                         <div className="flex items-center gap-2">
                           <button
@@ -409,7 +387,7 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
                           >
                             {generatingPrompt
                               ? <><RotateCcw className="w-3 h-3 animate-spin" /> Generating…</>
-                              : <><Sparkles className="w-3 h-3" /> New prompt</>}
+                              : <><Sparkles className="w-3 h-3" /> Generate with AI</>}
                           </button>
                         </div>
                       </div>
@@ -420,12 +398,9 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
                     <Textarea
                       value={entry}
                       onChange={(e) => setEntry(e.target.value)}
-                      placeholder="Take your time. Write whatever comes — even if it starts as a single word…"
-                      className="min-h-[160px] resize-none rounded-xl border-border/40 text-sm leading-[1.8] font-serif focus-visible:ring-primary/30 mb-1.5"
+                      placeholder="Take your time. Write whatever comes…"
+                      className="min-h-[140px] resize-none rounded-xl border-border/40 text-sm leading-relaxed focus-visible:ring-primary/30 mb-3"
                     />
-                    <p className="text-[11px] text-muted-foreground/40 mb-3 px-1">
-                      Your entries are saved privately on this device.
-                    </p>
                     <Button
                       onClick={saveEntry}
                       disabled={!entry.trim() || saved}
@@ -444,34 +419,16 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
 
                   {quizPhase === "select" && (
                     <div className="space-y-4">
-                      <div className="rounded-2xl p-4 bg-muted/40 border border-border/30 mb-2">
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          These short reflections help you understand yourself better. 5 questions each — no right or wrong answers, just honest ones. Your results are saved to your Healing Insights.
-                        </p>
-                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">These short reflections help you understand yourself better. There are no right or wrong answers.</p>
                       {(Object.entries(QUIZ_META) as [QuizType, typeof QUIZ_META["self-compassion"]][]).map(([type, meta]) => (
                         <button key={type} onClick={() => startQuiz(type)}
                           className={cn("w-full text-left glass-card rounded-2xl p-5 border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md", meta.border)}>
                           <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-3 bg-gradient-to-r", meta.color)}>
                             <span>{meta.emoji}</span> {meta.label}
                           </div>
-                          <p className="text-sm text-muted-foreground leading-relaxed mb-4">{meta.description}</p>
-                          {type === "emotional-awareness" && (
-                            <div className="flex gap-1.5 mb-3 flex-wrap">
-                              {["👁️ Recognition", "💬 Expression", "⚖️ Regulation"].map(t => (
-                                <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-background/60 border border-border/40 text-muted-foreground">{t}</span>
-                              ))}
-                            </div>
-                          )}
-                          {type === "self-compassion" && (
-                            <div className="flex gap-1.5 mb-3 flex-wrap">
-                              {["💛 Self-Kindness", "🤝 Common Humanity", "🧘 Mindfulness"].map(t => (
-                                <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-background/60 border border-border/40 text-muted-foreground">{t}</span>
-                              ))}
-                            </div>
-                          )}
+                          <p className="text-sm text-muted-foreground leading-relaxed mb-3">{meta.description}</p>
                           <div className="flex items-center gap-1 text-xs font-semibold text-primary/70">
-                            Begin · 5 questions <ChevronRight className="w-3.5 h-3.5" />
+                            5 questions <ChevronRight className="w-3.5 h-3.5" />
                           </div>
                         </button>
                       ))}
@@ -507,15 +464,6 @@ Mirror the user's emotional situation and language. Keep them compassionate and 
                       <AnimatePresence mode="wait">
                         <motion.div key={questionIndex} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}
                           transition={{ duration: 0.3 }} className="glass-card rounded-2xl p-6">
-                          {/* Category badge */}
-                          <div className="mb-3">
-                            <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-primary/60 bg-primary/8 px-2.5 py-1 rounded-full">
-                              {({
-                                recognition: "👁️ Recognition", expression: "💬 Expression", regulation: "⚖️ Regulation",
-                                "self-kindness": "💛 Self-Kindness", "common-humanity": "🤝 Common Humanity", mindfulness: "🧘 Mindfulness",
-                              } as Record<string,string>)[questions[questionIndex].category] ?? questions[questionIndex].category}
-                            </span>
-                          </div>
                           <p className="font-serif text-lg text-foreground leading-snug mb-6">{questions[questionIndex].question}</p>
                           <div className="space-y-2.5">
                             {questions[questionIndex].options.map((option, i) => (

@@ -24,14 +24,6 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-  // Exclude legacy Hearts_Journal subfolder from build
-  webpack(config) {
-    config.watchOptions = {
-      ...config.watchOptions,
-      ignored: ["**/node_modules/**", "**/Hearts_Journal/**"],
-    }
-    return config
-  },
 }
 
 export default nextConfig

@@ -24,13 +24,11 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-  // Exclude legacy Hearts_Journal subfolder from build (webpack only — Turbopack ignores it natively)
-  webpack(config, { dev }) {
-    if (dev) {
-      config.watchOptions = {
-        ...config.watchOptions,
-        ignored: /node_modules|Hearts_Journal/,
-      }
+  // Exclude legacy Hearts_Journal subfolder from build
+  webpack(config) {
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: ["**/node_modules/**", "**/Hearts_Journal/**"],
     }
     return config
   },
